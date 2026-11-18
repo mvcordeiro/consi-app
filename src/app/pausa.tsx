@@ -64,7 +64,7 @@ export default function Pausa() {
   const { cores } = useTema();
   const params = useLocalSearchParams<{ grupo?: string; app?: string }>();
   const grupos = useGrupos();
-  const { grupo, app } = regraDaPausa(grupos, params);
+  const { grupo } = regraDaPausa(grupos, params);
   const timer = useTimer(grupo.pausaSegundos * 1000);
 
   const { width } = useWindowDimensions();
@@ -384,7 +384,8 @@ export default function Pausa() {
 
       {etapa === 'tempo' ? (
         <View style={[styles.cheia, { paddingTop: top, paddingBottom: bottom }]}>
-          <TempoNoApp app={app} onEscolher={() => router.back()} />
+          {/* escolher um tempo segue para o app (por enquanto, fecha a pausa); Sair volta para a Home */}
+          <TempoNoApp onEscolher={() => router.back()} onSair={sumir} />
         </View>
       ) : null}
     </View>

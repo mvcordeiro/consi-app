@@ -20,10 +20,12 @@ export function regraDaPausa(grupos: Grupo[], params: { grupo?: string; app?: st
 }
 
 /**
- * Depois da pausa, "Quanto tempo você precisa nesse app?" só faz sentido no "Apenas pausar".
- * No "Cuidar tempo" (quando ignorar o lembrete leva à pausa) o grupo já tem o próprio intervalo.
+ * Depois da pausa, "Quanto tempo você precisa?" só faz sentido no "Apenas pausar": no
+ * "Cuidar tempo" (quando ignorar o lembrete leva à pausa) o grupo já tem o próprio intervalo.
+ * PROVISÓRIO (pedido do produto, para testes): aparece sempre. Depois, voltar a depender do grupo:
+ *   return g.modo === 'apenas-pausar';
  */
-export const perguntaTempoNoApp = (g: Grupo) => g.modo === 'apenas-pausar';
+export const perguntaTempoNoApp = (g: Grupo) => true;
 
 // ─── "Dessa vez não abro" ───────────────────────────────────────────────────
 const CHAVE_RESISTENCIAS = 'consi:pausa:nao-abri';
