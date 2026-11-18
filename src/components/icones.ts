@@ -50,6 +50,7 @@ import LinguaSinais from '../../assets/icones/lingua-sinais.svg';
 import ListaMarcadores from '../../assets/icones/lista-marcadores.svg';
 import ListaNumerada from '../../assets/icones/lista-numerada.svg';
 import ListaTarefas from '../../assets/icones/lista-tarefas.svg';
+import LivroMarcador from '../../assets/icones/livro-marcador.svg';
 import Lixeira from '../../assets/hobbies/lixeira.svg';
 import MaoDoacao from '../../assets/icones/mao-doacao.svg';
 import Mapa from '../../assets/icones/mapa.svg';
@@ -145,6 +146,7 @@ export const icones = {
   'lista-marcadores': [ListaMarcadores, 22.9591, 24.0293],
   'lista-numerada': [ListaNumerada, 22.627, 24.0237],
   'lista-tarefas': [ListaTarefas, 24.0196, 23.8351],
+  'livro-marcador': [LivroMarcador, 24.0063, 19.6628],
   'lixeira': [Lixeira, 20.907, 23.9766],
   'mao-doacao': [MaoDoacao, 23.4103, 24.0337],
   'mapa': [Mapa, 20.9752, 24.0123],

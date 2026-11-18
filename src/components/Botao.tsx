@@ -36,6 +36,11 @@ type Props = Omit<PressableProps, 'children' | 'style'> & {
    * passa para text/primary. Usado nas respostas dos padrões da Home.
    */
   selecionado?: boolean;
+  /**
+   * Aparência "Desabilitado", mas continua tocável. Para uma saída discreta que precisa
+   * funcionar (ex.: "Sair" na tela de "não abri" da pausa).
+   */
+  apagado?: boolean;
 };
 
 export function Botao({
@@ -46,6 +51,7 @@ export function Botao({
   corRotulo,
   ativo,
   selecionado = false,
+  apagado = false,
   disabled,
   onPressIn,
   onPressOut,
@@ -54,7 +60,7 @@ export function Botao({
   const { cores } = useTema();
   const desabilitado = disabled || estado === 'desabilitado';
   // `disabled` também mostra o estado Desabilitado do componente (não só bloqueia o toque).
-  const estadoVisual: EstadoBotao = desabilitado ? 'desabilitado' : estado;
+  const estadoVisual: EstadoBotao = desabilitado || apagado ? 'desabilitado' : estado;
   const [escala] = useState(() => new Animated.Value(1));
   const [cheio] = useState(() => new Animated.Value(selecionado ? 1 : 0));
 

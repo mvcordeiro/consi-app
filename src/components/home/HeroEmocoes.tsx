@@ -1,11 +1,10 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import {
   Animated,
   BackHandler,
   Easing,
   LayoutAnimation,
-  PanResponder,
   Platform,
   Pressable,
   StyleSheet,
@@ -26,7 +25,7 @@ import {
   type Emocao,
   type RegistroEmocao,
 } from '@/data/emocoes';
-import { duration, easing, radius, space, useCoresSvg, useTema } from '@/theme';
+import { duration, easing, radius, space, useTema } from '@/theme';
 
 import BolhaPensamento from '../../../assets/home/bolha-pensamento.svg';
 import PessoaPensando from '../../../assets/home/pessoa-pensando.svg';
@@ -34,7 +33,8 @@ import { Aparecer, TextoAnimado, fimDoTexto } from '../animacao';
 import { Etiqueta } from '../Etiqueta';
 import { useModoImersivo } from '../ModoImersivo';
 import { Texto } from '../Texto';
-import { BalaoEmocao, LADO_BALAO, LADO_SVG_BALAO } from './BalaoEmocao';
+import { BalaoArrastavel, sortearLugares, type Lugar } from './BalaoArrastavel';
+import { BalaoEmocao } from './BalaoEmocao';
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
@@ -42,10 +42,6 @@ const curva = Easing.bezier(...easing.standard);
 const PESSOA = { largura: 151, altura: 155 };
 /** Centro da cabeça do boneco, medido a partir do canto do boneco (Figma 665:8412). */
 const CABECA = { x: 79, y: 37 };
-/** Quanto o balão cresce ao chegar na cabeça (1 = tamanho normal). */
-const ESCALA_NA_CABECA = 1.5;
-/** Até onde (em px) do centro da cabeça o balão é aceito ao soltar. */
-const RAIO_SOLTAR = 80;
 /** "Leve a emoção até aqui ↓": 22 + 10 + 22 px, 10 px acima do boneco. */
 const ALTURA_INSTRUCAO = 64;
 /** Etiquetas de emoção visíveis antes do "•••". */
@@ -60,7 +56,6 @@ const RESPIRO_TEXTO = 72;
 const RESPIRO_PE = space[8];
 
 type Etapa = 'inicio' | 'escolhendo' | 'soltou';
-type Lugar = { x: number; y: number; tamanho: number };
 
 type Props = {
   nome: string;
@@ -386,6 +381,7 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
                 aparecer={nuvem}
                 aproximacao={aproximacao}
                 selecionada={selecionada === e.id}
+                opacidade={OPACIDADE_EMOCAO}
                 travado={etapa === 'soltou'}
                 onSelecionar={() => setSelecionada(e.id)}
                 onArrastando={onArrastando}
@@ -407,49 +403,6 @@ function Entrada({ animar, atraso, children }: { animar: boolean; atraso: number
       {children}
     </Aparecer>
   );
-}
-
-/**
- * Espalha as emoções numa grade com folga e sorteia quase tudo: o número de colunas (entre
- * as opções que deixam os balões grandes), quais células ficam vazias, qual emoção vai em
- * cada célula e a posição dentro dela. Os balões não se sobrepõem (cada um fica na sua célula)
- * e diminuem se a tela for baixa.
- */
-function sortearLugares(n: number, largura: number, topo: number, fundo: number): Lugar[] {
-  const margem = space[8];
-  const areaL = largura - margem * 2;
-  const areaA = Math.max(1, fundo - topo);
-  const opcoes = [3, 4].map((colunas) => {
-    const linhas = Math.ceil(n / colunas);
-    return { colunas, linhas, celula: Math.min(areaL / colunas, areaA / linhas) };
-  });
-  const maior = Math.max(...opcoes.map((o) => o.celula));
-  const boas = opcoes.filter((o) => o.celula >= maior * 0.85);
-  const { colunas, linhas } = boas[Math.floor(Math.random() * boas.length)];
-  const cw = areaL / colunas;
-  const ch = areaA / linhas;
-  const tamanho = Math.min(LADO_BALAO, Math.min(cw, ch) * 0.8);
-  const lado = (LADO_SVG_BALAO * tamanho) / LADO_BALAO;
-
-  const embaralhar = <T,>(lista: T[]) => {
-    for (let i = lista.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [lista[i], lista[j]] = [lista[j], lista[i]];
-    }
-    return lista;
-  };
-  const celulas = embaralhar(Array.from({ length: colunas * linhas }, (_, i) => i)).slice(0, n);
-  // cada fileira ganha um deslocamento próprio, para não parecer uma grade
-  const desvioLinha = Array.from({ length: linhas }, () => (Math.random() - 0.5) * 0.5);
-  return celulas.map((c) => {
-    const col = c % colunas;
-    const lin = Math.floor(c / colunas);
-    const folgaX = Math.max(0, cw - lado);
-    const folgaY = Math.max(0, ch - lado);
-    const fx = Math.min(1, Math.max(0, 0.5 + desvioLinha[lin] + (Math.random() - 0.5) * 0.9));
-    const fy = Math.random();
-    return { x: margem + col * cw + folgaX * fx, y: topo + lin * ch + folgaY * fy, tamanho };
-  });
 }
 
 /**
@@ -486,175 +439,6 @@ function BolhaFlutuante() {
   );
 }
 
-type PropsBalao = {
-  emocao: Emocao;
-  indice: number;
-  lugar: Lugar;
-  cabeca: { x: number; y: number };
-  aparecer: Animated.Value;
-  /** Proximidade compartilhada com a hero (para apagar a instrução). */
-  aproximacao: Animated.Value;
-  selecionada: boolean;
-  travado: boolean;
-  onSelecionar: () => void;
-  onArrastando: (a: boolean) => void;
-  onSoltarNaCabeca: () => void;
-};
-
-function BalaoArrastavel({
-  emocao,
-  indice,
-  lugar,
-  cabeca,
-  aparecer,
-  aproximacao,
-  selecionada,
-  travado,
-  onSelecionar,
-  onArrastando,
-  onSoltarNaCabeca,
-}: PropsBalao) {
-  const svg = useCoresSvg();
-  const [pan] = useState(() => new Animated.ValueXY({ x: 0, y: 0 }));
-  // 0 = onde começou o arraste, 1 = em cima da cabeça. O balão cresce conforme se aproxima.
-  const [perto] = useState(() => new Animated.Value(0));
-  const [realce] = useState(() => new Animated.Value(0));
-  const lado = (LADO_SVG_BALAO * lugar.tamanho) / LADO_BALAO;
-  const centro = { x: lugar.x + lado / 2, y: lugar.y + lado / 2 };
-  // na cabeça, o balão chega a 1,5 × o tamanho do Figma, mesmo que na grade esteja menor
-  const escalaFinal = (ESCALA_NA_CABECA * LADO_BALAO) / lugar.tamanho;
-
-  useEffect(() => {
-    Animated.timing(realce, {
-      toValue: selecionada ? 1 : 0,
-      duration: duration.base,
-      easing: curva,
-      useNativeDriver: nativo,
-    }).start();
-  }, [selecionada, realce]);
-
-  const responder = useMemo(() => {
-    const distanciaInicial = Math.max(1, Math.hypot(centro.x - cabeca.x, centro.y - cabeca.y));
-    const proximidade = (dx: number, dy: number) =>
-      Math.min(1, Math.max(0, 1 - Math.hypot(centro.x + dx - cabeca.x, centro.y + dy - cabeca.y) / distanciaInicial));
-    const voltar = () => {
-      onArrastando(false);
-      Animated.parallel([
-        Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: nativo, bounciness: 6 }),
-        Animated.spring(perto, { toValue: 0, useNativeDriver: nativo, bounciness: 6 }),
-        Animated.timing(aproximacao, { toValue: 0, duration: duration.slow, easing: curva, useNativeDriver: nativo }),
-      ]).start();
-    };
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => !travado,
-      onMoveShouldSetPanResponder: () => !travado,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => {
-        onSelecionar();
-        onArrastando(true);
-      },
-      onPanResponderMove: (_, g) => {
-        pan.setValue({ x: g.dx, y: g.dy });
-        const p = proximidade(g.dx, g.dy);
-        perto.setValue(p);
-        aproximacao.setValue(p);
-      },
-      onPanResponderRelease: (_, g) => {
-        const dx = centro.x + g.dx - cabeca.x;
-        const dy = centro.y + g.dy - cabeca.y;
-        if (Math.hypot(dx, dy) <= RAIO_SOLTAR) {
-          Animated.parallel([
-            Animated.timing(pan, {
-              toValue: { x: cabeca.x - centro.x, y: cabeca.y - centro.y },
-              duration: duration.base,
-              easing: curva,
-              useNativeDriver: nativo,
-            }),
-            Animated.timing(perto, { toValue: 1, duration: duration.base, easing: curva, useNativeDriver: nativo }),
-          ]).start();
-          onSoltarNaCabeca();
-        } else {
-          voltar();
-        }
-      },
-      onPanResponderTerminate: voltar,
-    });
-  }, [pan, perto, aproximacao, travado, centro.x, centro.y, cabeca.x, cabeca.y, onSelecionar, onArrastando, onSoltarNaCabeca]);
-
-  // Os balões surgem em sequência (fade + leve zoom), um pouco depois do anterior.
-  const atraso = indice * 0.03;
-  const progresso = aparecer.interpolate({
-    inputRange: [0, Math.min(0.6, atraso), Math.min(1, atraso + 0.4)],
-    outputRange: [0, 0, 1],
-    extrapolate: 'clamp',
-  });
-  const crescer = perto.interpolate({ inputRange: [0, 1], outputRange: [1, escalaFinal] });
-  // 50% normalmente; 100% quando tocado/selecionado
-  const opacidade = realce.interpolate({ inputRange: [0, 1], outputRange: [OPACIDADE_EMOCAO, 1] });
-
-  return (
-    <Animated.View
-      {...responder.panHandlers}
-      accessible
-      accessibilityRole="button"
-      accessibilityLabel={emocao.nome}
-      accessibilityHint="Arraste até a cabeça do boneco para registrar"
-      accessibilityActions={[{ name: 'activate', label: `Registrar ${emocao.nome}` }]}
-      onAccessibilityAction={onSoltarNaCabeca}
-      style={[
-        styles.balao,
-        {
-          left: lugar.x,
-          top: lugar.y,
-          width: lado,
-          height: lado,
-          zIndex: selecionada ? 2 : 1,
-          opacity: progresso,
-          transform: [
-            { translateX: pan.x },
-            { translateY: pan.y },
-            { scale: progresso.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) },
-          ],
-        },
-      ]}
-    >
-      {selecionada && !travado ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.nome,
-            { bottom: lado - (lado - lugar.tamanho) / 2 + space[16] },
-            // o nome sobe junto com a borda de cima do balão, que cresce a partir do centro
-            {
-              transform: [
-                {
-                  translateY: perto.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, (-(escalaFinal - 1) * lugar.tamanho) / 2],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <Texto estilo="Títulos/Pequeno" cor={svg.corTraco} style={styles.centro}>
-            {emocao.nome}
-          </Texto>
-        </Animated.View>
-      ) : null}
-      <Animated.View style={{ opacity: opacidade, transform: [{ scale: crescer }] }}>
-        <BalaoEmocao
-          Svg={emocao.Svg}
-          Textura={emocao.Textura}
-          circulo={emocao.circulo}
-          tamanho={lugar.tamanho}
-          deriva
-        />
-      </Animated.View>
-    </Animated.View>
-  );
-}
-
 const styles = StyleSheet.create({
   hero: { alignItems: 'center' },
   vinheta: { position: 'absolute', left: 0 },
@@ -677,7 +461,4 @@ const styles = StyleSheet.create({
   invisivel: { opacity: 0 },
   pessoa: { width: PESSOA.largura, height: PESSOA.altura },
   instrucao: { position: 'absolute', left: 0, right: 0, alignItems: 'center', gap: 10 },
-  balao: { position: 'absolute' },
-  nome: { position: 'absolute', left: -40, right: -40 },
-  centro: { textAlign: 'center' },
 });

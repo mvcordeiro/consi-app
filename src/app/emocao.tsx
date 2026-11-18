@@ -1,19 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Texto } from '@/components';
 import { Aparecer, TextoAnimado, fimDoTexto } from '@/components/animacao';
 import { BalaoEmocao } from '@/components/home/BalaoEmocao';
+import { BotaoContagem } from '@/components/home/BotaoContagem';
 import { emocaoPorId } from '@/data/emocoes';
-import { borderWidth, radius, space, useTema } from '@/theme';
-
-import IconeEscrever from '../../assets/home/icone-escrever.svg';
+import { space, useTema } from '@/theme';
 
 const nativo = Platform.OS !== 'web';
-/** "HOME - BOTÃO DURA 2.5 SEGUNDOS" no Figma. */
-const DURACAO_BOTAO = 2500;
 const DESCRICAO = 'Registramos essa emoção para você.\nVocê pode editá-la depois se quiser.';
 
 /**
@@ -66,91 +62,9 @@ export default function EmocaoRegistrada() {
   );
 }
 
-/**
- * Ação / Botão com contagem: começa cheio (action/primary) e vai esvaziando até a
- * borda (border/focus); o que resta fica em bg/raised, como nos frames do Figma.
- */
-function BotaoContagem({ inicio, onPress, onFim }: { inicio: number; onPress: () => void; onFim: () => void }) {
-  const { cores } = useTema();
-  const [restante] = useState(() => new Animated.Value(1));
-  const [cor] = useState(() => new Animated.Value(0));
-  const acabou = useRef(false);
-
-  useEffect(() => {
-    const a = Animated.sequence([
-      Animated.delay(inicio),
-      Animated.parallel([
-        Animated.timing(cor, { toValue: 1, duration: 300, useNativeDriver: false }),
-        Animated.timing(restante, {
-          toValue: 0,
-          duration: DURACAO_BOTAO,
-          easing: Easing.linear,
-          useNativeDriver: false,
-        }),
-      ]),
-    ]);
-    a.start(({ finished }) => {
-      if (finished && !acabou.current) {
-        acabou.current = true;
-        onFim();
-      }
-    });
-    return () => a.stop();
-  }, [inicio, cor, restante, onFim]);
-
-  const tocar = () => {
-    if (acabou.current) return;
-    acabou.current = true;
-    onPress();
-  };
-
-  return (
-    <Pressable
-      onPress={tocar}
-      accessibilityRole="button"
-      accessibilityLabel="Quero explorar essa emoção"
-      accessibilityHint="Disponível por alguns segundos"
-      style={[styles.botao, { borderColor: cores.border.focus }]}
-    >
-      <Animated.View
-        style={[
-          styles.preenchimento,
-          {
-            width: restante.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
-            backgroundColor: cor.interpolate({
-              inputRange: [0, 1],
-              outputRange: [cores.action.primary.default, cores.bg.raised],
-            }),
-          },
-        ]}
-      />
-      {/* Num View: na web, o preenchimento absoluto seria pintado por cima do SVG. */}
-      <View style={styles.conteudoBotao}>
-        <IconeEscrever width={23.91} height={23.22} corTraco={cores.icon.primary} />
-        <Texto estilo="Texto/Botões e rótulos" cor={cores.icon.primary}>
-          Quero explorar essa emoção
-        </Texto>
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   tela: { flex: 1 },
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[64], paddingHorizontal: space[24] },
   textos: { alignItems: 'center', gap: 17, maxWidth: 283 },
   rodape: { paddingHorizontal: space[24], paddingBottom: space[40] },
-  botao: {
-    height: 53,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[8],
-    paddingHorizontal: space[20],
-    borderRadius: radius.full,
-    borderWidth: borderWidth.thin,
-    overflow: 'hidden',
-  },
-  conteudoBotao: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
-  preenchimento: { position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: radius.full },
 });
