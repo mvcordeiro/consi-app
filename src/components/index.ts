@@ -1,5 +1,10 @@
 // Ponto único de importação dos componentes: import { Botao, Texto } from '@/components';
+export * from './BarraNavegacao';
 export * from './Botao';
+export * from './CabecalhoSecao';
+export * from './DiaCalendario';
 export * from './EmConstrucao';
+export * from './Etiqueta';
+export * from './ProgressoSegmentos';
 export * from './Tela';
 export * from './Texto';

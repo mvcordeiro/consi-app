@@ -19,9 +19,22 @@ type Props = Omit<PressableProps, 'children' | 'style'> & {
   estilo?: EstiloBotao;
   estado?: EstadoBotao;
   icone?: ReactNode;
+  /**
+   * Cor do rótulo no estado Normal, quando a instância do Figma sobrescreve a do componente
+   * (ex.: na Home o primário usa text/primary em vez de text/on-neutral).
+   */
+  corRotulo?: string;
 };
 
-export function Botao({ rotulo, estilo = 'primario', estado = 'normal', icone, disabled, ...rest }: Props) {
+export function Botao({
+  rotulo,
+  estilo = 'primario',
+  estado = 'normal',
+  icone,
+  corRotulo,
+  disabled,
+  ...rest
+}: Props) {
   const { cores } = useTema();
   const desabilitado = disabled || estado === 'desabilitado';
 
@@ -36,7 +49,14 @@ export function Botao({ rotulo, estilo = 'primario', estado = 'normal', icone, d
       {({ pressed }) => (
         <>
           {icone ? <View style={styles.icone}>{icone}</View> : null}
-          <Texto estilo="Texto/Botões e rótulos" cor={corDoRotulo(cores, estilo, pressed ? 'ativo' : estado)}>
+          <Texto
+            estilo="Texto/Botões e rótulos"
+            cor={
+              corRotulo && !pressed && estado === 'normal'
+                ? corRotulo
+                : corDoRotulo(cores, estilo, pressed ? 'ativo' : estado)
+            }
+          >
             {rotulo}
           </Texto>
         </>

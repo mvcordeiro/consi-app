@@ -156,10 +156,11 @@ const light: Cores = {
     inverse: neutral[900],
     scrim: overlay['black-40'],
     disabled: neutral[100],
-    'success-subtle': green[100],
-    'warning-subtle': orange[100],
-    'error-subtle': red[100],
-    'info-subtle': blue[100],
+    // Valores Light lidos nas variáveis do Figma (Home, nó 574:3865).
+    'success-subtle': green[300],
+    'warning-subtle': orange[200],
+    'error-subtle': red[300],
+    'info-subtle': blue[200],
   },
   text: {
     primary: neutral[900],

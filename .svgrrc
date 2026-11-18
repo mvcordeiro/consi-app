@@ -4,6 +4,7 @@
     "#6A82EA": "{props.corLinha || '#6A82EA'}",
     "#FAAA27": "{props.corPreenchimento || '#FAAA27'}",
     "#2F4ACB": "{props.corDecor || '#2F4ACB'}",
-    "#F2A0A3": "{props.corAlerta || '#F2A0A3'}"
+    "#F2A0A3": "{props.corAlerta || '#F2A0A3'}",
+    "#4D4D4B": "{props.corSuave || '#4D4D4B'}"
   }
 }

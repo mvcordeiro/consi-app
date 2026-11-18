@@ -1,37 +1,73 @@
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Botao, Tela, Texto } from '@/components';
-import { refazerOnboarding } from '@/data/onboarding';
-import { radius, space, useTema } from '@/theme';
+import { useEspacoBarra } from '@/components';
+import { Aparecer } from '@/components/animacao';
+import {
+  ConfirmacaoPadroes,
+  Conteudos,
+  Drops,
+  Grupos,
+  Reflexoes,
+  Saudacao,
+  SuaSemana,
+  TopoHome,
+} from '@/components/home';
+import { respostasSalvas } from '@/data/onboarding';
+import { space } from '@/theme';
+
+const ALTURA_TOPO = 40;
+const ESPACO_SECAO = space[64];
+
+/** Telas ainda sem design abrem o marcador "Em construção". */
+function emConstrucao(titulo: string) {
+  router.push({ pathname: '/em-construcao', params: { titulo } });
+}
 
 /**
- * Home (provisória). Será substituída pela Home do Figma na próxima etapa.
- * Por enquanto oferece um atalho para refazer o onboarding durante os testes.
+ * Home (Figma: seção "// HOME", frames Dark 488:1726 e Light 574:3865).
+ * A saudação ocupa a primeira tela; as seções seguem com 64 px entre elas.
  */
 export default function Inicio() {
-  const { cores } = useTema();
+  const { top } = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+  const espacoBarra = useEspacoBarra();
+  const [nome, setNome] = useState('');
 
-  const refazer = async () => {
-    await refazerOnboarding();
-    router.replace('/onboarding');
-  };
+  useEffect(() => {
+    respostasSalvas().then((r) => setNome(r.nome));
+  }, []);
+
+  const topo = top + space[8];
+  const alturaSaudacao = height - topo - ALTURA_TOPO - ESPACO_SECAO - espacoBarra;
 
   return (
-    <Tela>
-      <Texto estilo="Títulos/Grande">Home</Texto>
-      <Texto cor={cores.text.secondary}>Onboarding concluído. A Home será implementada a seguir.</Texto>
-      <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
-        <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
-          PARA TESTES
-        </Texto>
-        <Botao rotulo="Refazer onboarding" onPress={refazer} />
-        <Botao rotulo="Abrir tela de pausa" estilo="secundario" onPress={() => router.push('/pausa')} />
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[styles.conteudo, { paddingTop: topo, paddingBottom: espacoBarra + ESPACO_SECAO }]}
+    >
+      <View>
+        <TopoHome />
+        <View style={styles.saudacao}>
+          <Saudacao nome={nome} altura={alturaSaudacao} />
+        </View>
       </View>
-    </Tela>
+      <Aparecer atraso={300}>
+        <Reflexoes onExplorar={() => emConstrucao('Explorar essa relação')} />
+      </Aparecer>
+      <ConfirmacaoPadroes />
+      <Conteudos onVerTudo={(secao) => emConstrucao(secao)} onAbrir={(c) => emConstrucao(c.titulo)} />
+      <Drops onAbrirDrop={() => emConstrucao('Drop')} />
+      <Grupos onAbrir={(g) => emConstrucao(g.nome)} onCriar={() => emConstrucao('Criar grupo')} />
+      <SuaSemana />
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  cartao: { gap: space[12], padding: space[16], borderRadius: radius.card },
+  conteudo: { paddingHorizontal: space[24], gap: ESPACO_SECAO },
+  // Frame 71 do Figma começa 2 px antes da margem e é 4 px mais largo (392 em 436).
+  saudacao: { marginTop: ESPACO_SECAO, marginHorizontal: -2 },
 });

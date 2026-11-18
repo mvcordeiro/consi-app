@@ -63,6 +63,16 @@ export async function onboardingConcluido() {
   }
 }
 
+/** Respostas gravadas ao fim do onboarding (ou as vazias, se não houver). */
+export async function respostasSalvas(): Promise<RespostasOnboarding> {
+  try {
+    const bruto = await AsyncStorage.getItem(CHAVE_RESPOSTAS);
+    return bruto ? { ...vazio, ...JSON.parse(bruto) } : vazio;
+  } catch {
+    return vazio;
+  }
+}
+
 /** Apaga o onboarding salvo (útil para testar o fluxo de novo). */
 export async function refazerOnboarding() {
   await AsyncStorage.multiRemove([CHAVE_CONCLUIDO, CHAVE_RESPOSTAS]);

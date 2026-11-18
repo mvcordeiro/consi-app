@@ -43,5 +43,6 @@ export function useCoresSvg() {
     corPreenchimento: cores.action.secondary.default,
     corDecor: cores.action.primary.hover,
     corAlerta: cores.feedback.error,
+    corSuave: cores.border.subtle,
   };
 }

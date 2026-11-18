@@ -1,15 +1,17 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 
+import { BarraNavegacao } from '@/components';
 import { onboardingConcluido } from '@/data/onboarding';
-import { tipografia, useTema } from '@/theme';
+import { useTema } from '@/theme';
+
+/** Abre em Início, mesmo com Hobbies e Diário antes dele na barra. */
+export const unstable_settings = { initialRouteName: 'index' };
 
 /**
- * Barra de abas — espelha o componente "Top bar" do Figma:
- * Início, Hobbies, Diário, Social, Ajustes.
+ * Abas do app — barra flutuante do componente "Top bar" do Figma, fixa no rodapé:
+ * Hobbies, Diário, Início, Social, Ajustes. Abre em Início.
  * Quem ainda não fez o onboarding é levado para ele.
- *
- * A FAZER: visual do Figma (ícones e fundo ativo) quando implementarmos a Home.
  */
 export default function LayoutAbas() {
   const { cores } = useTema();
@@ -24,19 +26,15 @@ export default function LayoutAbas() {
 
   return (
     <Tabs
+      tabBar={(props) => <BarraNavegacao {...props} />}
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: cores.bg.base },
-        tabBarStyle: { backgroundColor: cores.bg.sunken, borderTopColor: cores.border.subtle },
-        tabBarActiveTintColor: cores.text.primary,
-        tabBarInactiveTintColor: cores.text.tertiary,
-        tabBarLabelStyle: tipografia['Legenda/Pequena'],
-        tabBarIcon: () => null,
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Início' }} />
       <Tabs.Screen name="hobbies" options={{ title: 'Hobbies' }} />
       <Tabs.Screen name="diario" options={{ title: 'Diário' }} />
+      <Tabs.Screen name="index" options={{ title: 'Início' }} />
       <Tabs.Screen name="social" options={{ title: 'Social' }} />
       <Tabs.Screen name="ajustes" options={{ title: 'Ajustes' }} />
     </Tabs>

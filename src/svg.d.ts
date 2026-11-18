@@ -17,6 +17,8 @@ declare module '*.svg' {
     corDecor?: string;
     /** #F2A0A3 (red/300) → feedback/error */
     corAlerta?: string;
+    /** #4D4D4B (neutral/600) → border/subtle */
+    corSuave?: string;
   };
 
   const content: FC<SvgProps & CoresSvg>;
