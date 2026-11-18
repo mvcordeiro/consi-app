@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,11 +10,12 @@ import {
   Conteudos,
   Drops,
   Grupos,
+  HeroEmocoes,
   Reflexoes,
-  Saudacao,
   SuaSemana,
   TopoHome,
 } from '@/components/home';
+import type { Emocao } from '@/data/emocoes';
 import { respostasSalvas } from '@/data/onboarding';
 import { space } from '@/theme';
 
@@ -28,30 +29,38 @@ function emConstrucao(titulo: string) {
 
 /**
  * Home (Figma: seção "// HOME", frames Dark 488:1726 e Light 574:3865).
- * A saudação ocupa a primeira tela; as seções seguem com 64 px entre elas.
+ * A hero (escolha da emoção, Figma 667:9661) ocupa a primeira tela; as seções seguem com 64 px entre elas.
  */
 export default function Inicio() {
   const { top } = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const espacoBarra = useEspacoBarra();
   const [nome, setNome] = useState('');
+  const [rolagem, setRolagem] = useState(true);
 
   useEffect(() => {
     respostasSalvas().then((r) => setNome(r.nome));
   }, []);
 
   const topo = top + space[8];
-  const alturaSaudacao = height - topo - ALTURA_TOPO - ESPACO_SECAO - espacoBarra;
+  // O palco da hero vai do fim do topo até a barra de navegação.
+  const alturaHero = height - topo - ALTURA_TOPO - espacoBarra;
+  const arrastando = useCallback((a: boolean) => setRolagem(!a), []);
+  const escolher = useCallback(
+    (e: Emocao) => router.push({ pathname: '/emocao', params: { id: e.id } }),
+    [],
+  );
 
   return (
     <ScrollView
+      scrollEnabled={rolagem}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.conteudo, { paddingTop: topo, paddingBottom: espacoBarra + ESPACO_SECAO }]}
     >
       <View>
         <TopoHome />
-        <View style={styles.saudacao}>
-          <Saudacao nome={nome} altura={alturaSaudacao} />
+        <View style={styles.hero}>
+          <HeroEmocoes nome={nome} altura={alturaHero} onArrastando={arrastando} onEscolher={escolher} />
         </View>
       </View>
       <Aparecer atraso={300}>
@@ -68,6 +77,6 @@ export default function Inicio() {
 
 const styles = StyleSheet.create({
   conteudo: { paddingHorizontal: space[24], gap: ESPACO_SECAO },
-  // Frame 71 do Figma começa 2 px antes da margem e é 4 px mais largo (392 em 436).
-  saudacao: { marginTop: ESPACO_SECAO, marginHorizontal: -2 },
+  // O palco usa a largura toda da tela: as posições dos balões são do frame de 436 px.
+  hero: { marginHorizontal: -space[24] },
 });

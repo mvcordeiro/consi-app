@@ -4,5 +4,7 @@ export * from './Conteudos';
 export * from './Drops';
 export * from './Grupos';
 export * from './Reflexoes';
-export * from './Saudacao';
+export * from './BalaoEmocao';
+export * from './HeroEmocoes';
 export * from './SuaSemana';
+export * from './TopoHome';

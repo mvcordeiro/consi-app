@@ -19,6 +19,8 @@ declare module '*.svg' {
     corAlerta?: string;
     /** #4D4D4B (neutral/600) → border/subtle */
     corSuave?: string;
+    /** #4362E5 (blue/500) → action/primary (balões de emoção da Home) */
+    corBalao?: string;
   };
 
   const content: FC<SvgProps & CoresSvg>;

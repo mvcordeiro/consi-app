@@ -44,5 +44,6 @@ export function useCoresSvg() {
     corDecor: cores.action.primary.hover,
     corAlerta: cores.feedback.error,
     corSuave: cores.border.subtle,
+    corBalao: cores.action.primary.default,
   };
 }

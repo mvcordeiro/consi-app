@@ -24,6 +24,8 @@ type Props = Omit<PressableProps, 'children' | 'style'> & {
    * (ex.: na Home o primário usa text/primary em vez de text/on-neutral).
    */
   corRotulo?: string;
+  /** Mantém a aparência "Ativo" mesmo sem o dedo (ex.: resposta escolhida). */
+  ativo?: boolean;
 };
 
 export function Botao({
@@ -32,6 +34,7 @@ export function Botao({
   estado = 'normal',
   icone,
   corRotulo,
+  ativo,
   disabled,
   ...rest
 }: Props) {
@@ -43,10 +46,12 @@ export function Botao({
       accessibilityRole="button"
       accessibilityState={{ disabled: desabilitado }}
       disabled={desabilitado}
-      style={({ pressed }) => [styles.base, aparencia(cores, estilo, pressed ? 'ativo' : estado)]}
+      style={({ pressed }) => [styles.base, aparencia(cores, estilo, pressed || ativo ? 'ativo' : estado)]}
       {...rest}
     >
-      {({ pressed }) => (
+      {({ pressed: dedo }) => {
+        const pressed = dedo || !!ativo;
+        return (
         <>
           {icone ? <View style={styles.icone}>{icone}</View> : null}
           <Texto
@@ -60,7 +65,8 @@ export function Botao({
             {rotulo}
           </Texto>
         </>
-      )}
+        );
+      }}
     </Pressable>
   );
 }

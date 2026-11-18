@@ -16,7 +16,6 @@ import IconeNotificacao from '../../../assets/home/icone-notificacao.svg';
 import IconeRelogio from '../../../assets/home/icone-relogio.svg';
 import IconeRepetir from '../../../assets/home/icone-repetir.svg';
 import IconeSocial from '../../../assets/home/icone-social.svg';
-import IlustracaoSentimentos from '../../../assets/home/ilustracao-sentimentos.svg';
 import LogoHome from '../../../assets/home/logo.svg';
 import MarcadorManha08 from '../../../assets/home/marcador-manha-08.svg';
 import MarcadorManha09 from '../../../assets/home/marcador-manha-09.svg';
@@ -62,7 +61,6 @@ export {
   IconeRelogio,
   IconeRepetir,
   IconeSocial,
-  IlustracaoSentimentos,
   LogoHome,
   MarcadorManha08,
   MarcadorManha09,

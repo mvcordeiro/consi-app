@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { radius, space, useTema, type Cores } from '@/theme';
@@ -15,6 +16,10 @@ type Props = {
   rotulo: string;
   tom?: TomEtiqueta;
   icone?: IconeSvg;
+  /** Ícone já montado (ex.: um balão de emoção), no lugar de `icone`. */
+  iconeNode?: ReactNode;
+  /** Fundo fora dos tons (ex.: action/primary/pressed na etiqueta de emoção da Home). */
+  fundo?: string;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -33,11 +38,11 @@ export function fundoDoTom(c: Cores, tom: TomEtiqueta) {
   }
 }
 
-export function Etiqueta({ rotulo, tom = 'neutro', icone: Icone, style }: Props) {
+export function Etiqueta({ rotulo, tom = 'neutro', icone: Icone, iconeNode, fundo, style }: Props) {
   const { cores } = useTema();
   return (
-    <View style={[styles.base, { backgroundColor: fundoDoTom(cores, tom) }, style]}>
-      {Icone ? <Icone width={16} height={16} corTraco={cores.text.primary} /> : null}
+    <View style={[styles.base, { backgroundColor: fundo ?? fundoDoTom(cores, tom) }, style]}>
+      {iconeNode ?? (Icone ? <Icone width={16} height={16} corTraco={cores.text.primary} /> : null)}
       <Texto estilo="Texto/Botões e rótulos" style={styles.rotulo}>
         {rotulo}
       </Texto>

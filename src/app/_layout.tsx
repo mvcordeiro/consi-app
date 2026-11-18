@@ -39,6 +39,7 @@ function Pilha() {
         <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
         <Stack.Screen name="pausa" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="em-construcao" />
+        <Stack.Screen name="emocao" options={{ animation: 'fade', gestureEnabled: false }} />
       </Stack>
     </>
   );
