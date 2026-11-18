@@ -6,12 +6,20 @@ import { easing, tipografia, useTema, type EstiloDeTexto } from '@/theme';
 /**
  * Texto que aparece palavra por palavra (fade + leve subida), no estilo das
  * apresentações da Apple. Quebras de linha com "\n" são respeitadas.
+ * Por padrão é centralizado (combinado para o onboarding).
  */
 export const PASSO_PALAVRA_MS = 70;
 export const DURACAO_PALAVRA_MS = 700;
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
+
+/** Largura do espaço (em "em") de cada arquivo de fonte, medida no próprio arquivo. */
+const ESPACO_EM: Record<string, number> = {
+  'ConsiSans-Book': 0.273,
+  'ConsiSans-Medium': 0.27,
+  'ConsiFlare-SemiBold': 0.265,
+};
 
 /** Momento (ms) em que o último trecho do texto termina de começar a aparecer. */
 export function fimDoTexto(texto: string, inicioMs: number) {
@@ -25,15 +33,24 @@ type Props = {
   cor?: string;
   /** Atraso antes da primeira palavra, em ms. */
   atraso?: number;
+  /** Padrão: true. Use false para alinhar à esquerda. */
   centralizado?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-export function TextoAnimado({ texto, estilo = 'Texto/Médio', cor, atraso = 0, centralizado, style }: Props) {
+export function TextoAnimado({
+  texto,
+  estilo = 'Texto/Médio',
+  cor,
+  atraso = 0,
+  centralizado = true,
+  style,
+}: Props) {
   const { cores } = useTema();
   const tipo = tipografia[estilo];
-  // largura do espaço na Limkin (0,27 em) somada ao tracking do estilo (−1 nos títulos)
-  const espaco = (tipo.fontSize ?? 16) * 0.27 + (tipo.letterSpacing ?? 0);
+  const tamanho = tipo.fontSize ?? 16;
+  const tracking = tipo.letterSpacing ?? 0;
+  const espaco = tamanho * (ESPACO_EM[tipo.fontFamily ?? ''] ?? 0.27) + tracking;
   const linhas = texto.split('\n');
   let indice = 0;
 
@@ -44,14 +61,24 @@ export function TextoAnimado({ texto, estilo = 'Texto/Médio', cor, atraso = 0, 
           {linha
             .split(' ')
             .filter(Boolean)
-            .map((palavra, i) => {
+            .map((palavra, i, todas) => {
               const ordem = indice++;
+              const ultima = i === todas.length - 1;
               return (
                 <Palavra
                   key={`${l}-${i}`}
                   texto={palavra}
                   atraso={atraso + ordem * PASSO_PALAVRA_MS}
-                  estilo={[tipo, { color: cor ?? cores.text.primary, marginRight: espaco }]}
+                  estilo={[
+                    tipo,
+                    {
+                      color: cor ?? cores.text.primary,
+                      // tracking negativo encolhe a caixa medida e o Android corta a última
+                      // letra; devolvemos esse pedaço como padding e tiramos da margem
+                      paddingRight: tracking < 0 ? -tracking : 0,
+                      marginRight: ultima ? 0 : espaco - (tracking < 0 ? -tracking : 0),
+                    },
+                  ]}
                 />
               );
             })}

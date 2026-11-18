@@ -4,17 +4,15 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Texto } from '@/components';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
-import { Bolha, BotaoContinuar, IconeGrande, TelaOnboarding, useTransicao } from '@/components/onboarding';
-import { IconeBrincalhao82 } from '@/components/onboarding/assets';
+import { Bolha, BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { hobbies, MAX_HOBBIES } from '@/data/hobbies';
 import { useOnboarding, type Hobby } from '@/data/onboarding';
-import { space, useTema } from '@/theme';
+import { gap, space, useTema } from '@/theme';
 
 /**
  * D4 · Hobbies (bolhas) — "Quais são seus hobbies?" Escolha até três.
  * Posições e tamanhos das bolhas iguais ao Figma (frame de 412), escalados pela largura.
- * Ao tocar: onda ao redor + preenchimento action/secondary/pressed.
- * As bolhas flutuam devagar, como se estivessem na água.
+ * Ao tocar: onda ao redor + fundo bg/raised. As bolhas flutuam devagar, como na água.
  */
 const bolhas: { id: Hobby; x: number; y: number; tamanho: number }[] = [
   { id: 'leitura', x: 37, y: 40, tamanho: 112 },
@@ -36,13 +34,12 @@ export default function D4Hobbies() {
   const s = Math.min(width / 412, 1.15);
   const { respostas, atualizar } = useOnboarding();
   const [escolhidos, setEscolhidos] = useState<Hobby[]>(respostas.hobbies);
+  const transicao = useTransicao();
 
   const alternar = (id: Hobby) =>
     setEscolhidos((atual) =>
       atual.includes(id) ? atual.filter((h) => h !== id) : atual.length < MAX_HOBBIES ? [...atual, id] : atual,
     );
-
-  const transicao = useTransicao();
 
   const seguir = () => {
     atualizar({ hobbies: escolhidos });
@@ -52,21 +49,18 @@ export default function D4Hobbies() {
   return (
     <TelaOnboarding
       transicao={transicao}
-      etapa={3}
       atrasoRodape={T_BOLHAS + 500}
-      aoLadoDoProgresso={
-        <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-          {`${escolhidos.length} de ${MAX_HOBBIES}`}
-        </Texto>
-      }
       rodape={<BotaoContinuar disabled={escolhidos.length === 0} onPress={seguir} />}
     >
-      <Aparecer escalaInicial={0.9}>
-        <IconeGrande Icone={IconeBrincalhao82} />
-      </Aparecer>
       <View style={styles.cabecalho}>
         <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />
         <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.secondary} atraso={T_SUB} />
+        {/* o contador ficava ao lado do progresso; sem ele, vira uma legenda */}
+        <Aparecer atraso={T_BOLHAS}>
+          <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
+            {`${escolhidos.length} de ${MAX_HOBBIES}`}
+          </Texto>
+        </Aparecer>
       </View>
 
       <View style={styles.flex}>
@@ -100,7 +94,8 @@ export default function D4Hobbies() {
 }
 
 const styles = StyleSheet.create({
-  cabecalho: { marginTop: space[64], gap: space[16] },
-  flex: { flex: 1, justifyContent: 'center' },
-  area: { marginHorizontal: -space[32] },
+  cabecalho: { gap: gap.default },
+  centro: { textAlign: 'center' },
+  flex: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: space[16] },
+  area: {},
 });

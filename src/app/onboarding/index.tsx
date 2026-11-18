@@ -4,7 +4,7 @@ import { Animated, Easing, Platform, StyleSheet } from 'react-native';
 
 import { TelaOnboarding } from '@/components/onboarding';
 import { Logo } from '@/components/onboarding/assets';
-import { easing } from '@/theme';
+import { easing, useCoresSvg } from '@/theme';
 
 /**
  * A1 · Logo — o logo surge (fade + leve zoom), fica cerca de 2 s e
@@ -16,6 +16,7 @@ const SAIDA_MS = 600;
 
 export default function A1Logo() {
   const v = useRef(new Animated.Value(0)).current;
+  const coresSvg = useCoresSvg();
 
   useEffect(() => {
     const curva = Easing.bezier(...easing.standard);
@@ -40,12 +41,13 @@ export default function A1Logo() {
           },
         ]}
       >
-        <Logo width={180} height={67} accessibilityLabel="Consi" />
+        <Logo width={180} height={67} accessibilityLabel="Consi" {...coresSvg} />
       </Animated.View>
     </TelaOnboarding>
   );
 }
 
 const styles = StyleSheet.create({
-  centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // centro da tela inteira (ignora o respiro do topo do TelaOnboarding)
+  centro: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
 });

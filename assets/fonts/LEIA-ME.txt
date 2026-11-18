@@ -1,0 +1,15 @@
+Fontes do Consi
+
+TMT-LimkinVF.ttf
+  Fonte original (variável), de Gabriel Drozdov, licença SIL OFL 1.1 (TMT-Limkin-OFL.txt).
+
+ConsiSans-Book.ttf, ConsiSans-Medium.ttf, ConsiFlare-SemiBold.ttf
+  Versões estáticas geradas a partir da TMT-LimkinVF.ttf com fontTools (varLib.instancer):
+    ConsiSans-Book      = wght 400, SRFF 0   ("Book Sans" no Figma)
+    ConsiSans-Medium    = wght 500, SRFF 0   ("Medium Sans")
+    ConsiFlare-SemiBold = wght 600, SRFF 50  ("Semi Bold Flare")
+  Por que existem: no celular, o React Native mede o texto com o estilo padrão da fonte
+  variável e desenha com o estilo escolhido, o que cortava letras e criava espaços.
+  Arquivos estáticos medem e desenham igual.
+  Por que o nome é outro: a OFL não permite que versões modificadas usem o nome
+  reservado "Limkin". Elas continuam sob a mesma licença (TMT-Limkin-OFL.txt).

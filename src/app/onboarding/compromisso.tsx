@@ -2,10 +2,9 @@ import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
-import { BotaoSegurar, IconeGrande, TelaOnboarding, useTransicao } from '@/components/onboarding';
-import { IconeAprovacao } from '@/components/onboarding/assets';
+import { BotaoSegurar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { useOnboarding } from '@/data/onboarding';
-import { space, useTema } from '@/theme';
+import { gap, space, useTema } from '@/theme';
 
 /**
  * F2 · Compromisso — segurar conclui o onboarding e abre a Home.
@@ -28,16 +27,11 @@ export default function F2Compromisso() {
   };
 
   return (
-    <TelaOnboarding transicao={transicao} etapa={5} progressoCentralizado>
+    <TelaOnboarding transicao={transicao}>
       <View style={styles.conteudo}>
-        <View style={styles.topo}>
-          <Aparecer escalaInicial={0.9}>
-            <IconeGrande Icone={IconeAprovacao} />
-          </Aparecer>
-          <View style={styles.textos}>
-            <TextoAnimado texto={TITULO} estilo="Títulos/Grande" centralizado atraso={250} />
-            <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.link} centralizado atraso={T_SUB} />
-          </View>
+        <View style={styles.textos}>
+          <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={250} />
+          <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.link} atraso={T_SUB} />
         </View>
 
         <View style={styles.base}>
@@ -48,7 +42,6 @@ export default function F2Compromisso() {
             texto="Aperte e segure por 3 segundos."
             estilo="Texto/Pequeno"
             cor={cores.text.link}
-            centralizado
             atraso={T_BOTAO + 200}
           />
         </View>
@@ -58,8 +51,8 @@ export default function F2Compromisso() {
 }
 
 const styles = StyleSheet.create({
-  conteudo: { flex: 1, justifyContent: 'space-between', paddingBottom: space[64] },
-  topo: { alignItems: 'center', gap: space[64] },
-  textos: { gap: space[12], alignSelf: 'stretch' },
-  base: { alignItems: 'center', gap: space[48] },
+  // combinado: texto e botão agrupados no meio da tela, a 64 px um do outro
+  conteudo: { flex: 1, justifyContent: 'center', gap: space[64], paddingBottom: space[48] },
+  textos: { gap: gap.default },
+  base: { alignItems: 'center', gap: gap.loose },
 });

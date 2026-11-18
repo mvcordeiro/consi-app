@@ -1,20 +1,21 @@
-import { useRef, type FC } from 'react';
+import { useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
-import type { SvgProps } from 'react-native-svg';
 
-import { borderWidth, duration, radius, space, useTema } from '@/theme';
+import { borderWidth, radius, space, useCoresSvg, useTema } from '@/theme';
 
 import { Texto } from '../Texto';
 import { AnelProgresso } from './AnelProgresso';
+import type { IconeSvg } from './assets';
 
 /**
  * Opção que se escolhe segurando (telas C1 e C2 do Figma).
  * Ao segurar: o card encolhe levemente (349×84 → 338×80), um preenchimento
- * action/secondary cresce da esquerda e o anel de progresso se completa.
+ * bg/raised (combinado: superfície do modo, não a cor secundária) cresce da
+ * esquerda e o anel de progresso se completa.
  * Soltar antes do tempo desfaz o progresso.
  */
 type Props = {
-  Icone: FC<SvgProps>;
+  Icone: IconeSvg;
   texto: string;
   /** Tempo que é preciso segurar, em ms. */
   duracaoMs: number;
@@ -29,6 +30,7 @@ const nativo = false; // largura e props de SVG não rodam no driver nativo
 
 export function OpcaoSegurar({ Icone, texto, duracaoMs, esmaecida, onInicio, onCancelar, onCompleto }: Props) {
   const { cores } = useTema();
+  const coresSvg = useCoresSvg();
   const progresso = useRef(new Animated.Value(0)).current;
   const pressao = useRef(new Animated.Value(0)).current;
   const animacao = useRef<Animated.CompositeAnimation | null>(null);
@@ -36,7 +38,7 @@ export function OpcaoSegurar({ Icone, texto, duracaoMs, esmaecida, onInicio, onC
 
   const iniciar = () => {
     onInicio?.();
-    Animated.timing(pressao, { toValue: 1, duration: duration.fast, useNativeDriver: nativo }).start();
+    Animated.timing(pressao, { toValue: 1, duration: 180, useNativeDriver: nativo }).start();
     animacao.current = Animated.timing(progresso, {
       toValue: 1,
       duration: duracaoMs,
@@ -57,8 +59,8 @@ export function OpcaoSegurar({ Icone, texto, duracaoMs, esmaecida, onInicio, onC
     animacao.current?.stop();
     onCancelar?.();
     Animated.parallel([
-      Animated.timing(progresso, { toValue: 0, duration: duration.base, useNativeDriver: nativo }),
-      Animated.timing(pressao, { toValue: 0, duration: duration.fast, useNativeDriver: nativo }),
+      Animated.timing(progresso, { toValue: 0, duration: 400, useNativeDriver: nativo }),
+      Animated.timing(pressao, { toValue: 0, duration: 250, useNativeDriver: nativo }),
     ]).start();
   };
 
@@ -78,14 +80,14 @@ export function OpcaoSegurar({ Icone, texto, duracaoMs, esmaecida, onInicio, onC
           style={[
             styles.preenchimento,
             {
-              backgroundColor: cores.action.secondary.default,
+              backgroundColor: cores.bg.raised,
               width: progresso.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
             },
           ]}
         />
         <View style={styles.conteudo}>
           <View style={styles.icone}>
-            <Icone />
+            <Icone {...coresSvg} />
           </View>
           <Texto estilo="Texto/Médio" style={styles.texto}>
             {texto}

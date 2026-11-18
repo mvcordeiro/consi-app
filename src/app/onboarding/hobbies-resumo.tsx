@@ -1,22 +1,27 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, type ReactNode } from 'react';
-import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { Bolha, BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
-import { D5Onda1, D5Onda2 } from '@/components/onboarding/assets';
 import { hobbies } from '@/data/hobbies';
 import { useOnboarding } from '@/data/onboarding';
-import { space, useTema } from '@/theme';
+import { borderWidth, gap, space, useTema } from '@/theme';
 
 /**
- * D5 · Respiração (resumo dos hobbies) — "Leitura, música e escrita. Boas ideias para o tempo que sobrar."
+ * D5 · Resumo dos hobbies — "Leitura, música e escrita. Boas ideias para o tempo que sobrar."
  * Figma desenhado para 3 escolhas (triângulo). Com 2: lado a lado; com 1: no centro.
- * Os dois anéis externos "respiram" (crescem e encolhem), um defasado do outro.
+ *
+ * Os dois anéis "respiram" (crescem e encolhem, um defasado do outro) e têm
+ * tamanho proporcional ao grupo de bolhas do centro: mantêm a mesma folga do
+ * Figma (anel 1 a 28 px do grupo, anel 2 a 82 px) e nunca passam da largura da tela.
  */
 const TAMANHO = 103;
+const FOLGA_ANEL_1 = 28;
+const FOLGA_ANEL_2 = 82;
 const SUB = 'É aqui que a gente vai abrir espaço.';
-// deslocamento do centro de cada bolha em relação ao centro das ondas (Figma)
+
+// deslocamento do centro de cada bolha em relação ao centro dos anéis (Figma)
 const POSICOES: Record<number, { dx: number; dy: number }[]> = {
   1: [{ dx: 0, dy: 0 }],
   2: [
@@ -30,11 +35,19 @@ const POSICOES: Record<number, { dx: number; dy: number }[]> = {
   ],
 };
 
+/** Raio do grupo: do centro até a borda da bolha mais distante. */
+function raioDoGrupo(n: number) {
+  const pos = POSICOES[n] ?? POSICOES[1];
+  return Math.max(...pos.map((p) => Math.hypot(p.dx, p.dy))) + TAMANHO / 2;
+}
+
 export default function D5HobbiesResumo() {
   const { cores } = useTema();
-  const transicao = useTransicao();
+  const { width } = useWindowDimensions();
   const { respostas } = useOnboarding();
+  const transicao = useTransicao();
   const escolhidos = respostas.hobbies;
+
   const nomes = escolhidos.map((h, i) => (i === 0 ? hobbies[h].nome : hobbies[h].nome.toLowerCase()));
   const lista =
     nomes.length > 1 ? `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}` : (nomes[0] ?? '');
@@ -45,10 +58,16 @@ export default function D5HobbiesResumo() {
   const tSub = fimDoTexto(titulo, 100);
   const tCirculos = fimDoTexto(SUB, tSub);
 
+  const grupo = raioDoGrupo(Math.max(1, escolhidos.length));
+  const limite = width / 2 - space[8];
+  const raio2 = Math.min(grupo + FOLGA_ANEL_2, limite);
+  const raio1 = Math.min(grupo + FOLGA_ANEL_1, raio2 - space[24]);
+  const lado = raio2 * 2;
+  const centro = lado / 2;
+
   return (
     <TelaOnboarding
       transicao={transicao}
-      etapa={3}
       atrasoRodape={tCirculos + 600}
       rodape={<BotaoContinuar onPress={() => transicao.sair(() => router.push('/onboarding/aplicativos'))} />}
     >
@@ -58,13 +77,9 @@ export default function D5HobbiesResumo() {
       </View>
 
       <View style={styles.area}>
-        <Aparecer atraso={tCirculos} escalaInicial={0.85} deslocamento={0} style={styles.ondas}>
-          <Respirando atraso={0}>
-            <D5Onda2 />
-          </Respirando>
-          <Respirando atraso={700}>
-            <D5Onda1 />
-          </Respirando>
+        <Aparecer atraso={tCirculos} escalaInicial={0.85} deslocamento={0} style={{ width: lado, height: lado }}>
+          <Anel raio={raio2} centro={centro} cor={cores.border.focus} atraso={0} />
+          <Anel raio={raio1} centro={centro} cor={cores.border.focus} atraso={700} />
           {escolhidos.map((h, i) => {
             const p = POSICOES[escolhidos.length][i];
             return (
@@ -75,8 +90,8 @@ export default function D5HobbiesResumo() {
                 deslocamento={0}
                 style={{
                   position: 'absolute',
-                  left: 196 + p.dx - TAMANHO / 2,
-                  top: 196 + p.dy - TAMANHO / 2,
+                  left: centro + p.dx - TAMANHO / 2,
+                  top: centro + p.dy - TAMANHO / 2,
                 }}
               >
                 <Bolha
@@ -96,7 +111,7 @@ export default function D5HobbiesResumo() {
 }
 
 /** Anel que cresce e encolhe devagar, como uma respiração. */
-function Respirando({ children, atraso }: { children: ReactNode; atraso: number }) {
+function Anel({ raio, centro, cor, atraso }: { raio: number; centro: number; cor: string; atraso: number }) {
   const v = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -116,27 +131,23 @@ function Respirando({ children, atraso }: { children: ReactNode; atraso: number 
 
   return (
     <Animated.View
-      style={[
-        styles.centro,
-        { transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1.05] }) }] },
-      ]}
-    >
-      {children}
-    </Animated.View>
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        left: centro - raio,
+        top: centro - raio,
+        width: raio * 2,
+        height: raio * 2,
+        borderRadius: raio,
+        borderWidth: borderWidth.thin,
+        borderColor: cor,
+        transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.96, 1.04] }) }],
+      }}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  cabecalho: { gap: space[16] },
-  area: { flex: 1, alignItems: 'center', justifyContent: 'center', marginHorizontal: -space[32] },
-  ondas: { width: 392, height: 392 },
-  centro: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  cabecalho: { gap: gap.default },
+  area: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: space[16] },
 });

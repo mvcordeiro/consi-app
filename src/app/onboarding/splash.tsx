@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Aparecer, TextoAnimado } from '@/components/animacao';
 import { TelaOnboarding } from '@/components/onboarding';
 import { Logo, SplashTraco } from '@/components/onboarding/assets';
-import { easing, space, tipografia, useTema } from '@/theme';
+import { easing, space, tipografia, useCoresSvg, useTema } from '@/theme';
 
 /**
  * A1 · Splash — "Você consigo, no seu ritmo."
@@ -21,6 +21,7 @@ const nativo = Platform.OS !== 'web';
 
 export default function A1Splash() {
   const { cores } = useTema();
+  const coresSvg = useCoresSvg();
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const s = width / 412;
@@ -83,15 +84,15 @@ export default function A1Splash() {
     <TelaOnboarding>
       <Animated.View style={[StyleSheet.absoluteFill, subir(1.3), sumir(height * 0.6)]} pointerEvents="none">
         <Aparecer duracao={1200} deslocamento={0} escalaInicial={1.04} style={StyleSheet.absoluteFill}>
-          <Traco x={-131 * s} y={-207 * s} s={s} />
-          <Traco x={155 * s} y={422 * s} s={s} />
+          <Traco x={-131 * s} y={-207 * s} s={s} cor={coresSvg.corDecor} />
+          <Traco x={155 * s} y={422 * s} s={s} cor={coresSvg.corDecor} />
         </Aparecer>
       </Animated.View>
 
       <View style={StyleSheet.absoluteFill} {...gesto.panHandlers} accessibilityLabel="Arraste para cima para começar">
         <Animated.View style={[styles.logo, subir(1.1), sumir(240)]}>
           <Aparecer atraso={100}>
-            <Logo width={67} height={25} accessibilityLabel="Consi" />
+            <Logo width={67} height={25} accessibilityLabel="Consi" {...coresSvg} />
           </Aparecer>
         </Animated.View>
 
@@ -120,7 +121,7 @@ export default function A1Splash() {
 }
 
 /** "Vector 78": caixa de 558,78 × 598,25 com o traço (476 × 376) girado 61,21°. */
-function Traco({ x, y, s }: { x: number; y: number; s: number }) {
+function Traco({ x, y, s, cor }: { x: number; y: number; s: number; cor: string }) {
   return (
     <View
       style={{
@@ -134,7 +135,7 @@ function Traco({ x, y, s }: { x: number; y: number; s: number }) {
       }}
     >
       <View style={{ transform: [{ rotate: '61.21deg' }, { scale: s }] }}>
-        <SplashTraco />
+        <SplashTraco corDecor={cor} />
       </View>
     </View>
   );

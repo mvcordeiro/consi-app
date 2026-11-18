@@ -3,14 +3,13 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
-import { BotaoContinuar, IconeGrande, TelaOnboarding, useTransicao } from '@/components/onboarding';
-import { IconePessoa } from '@/components/onboarding/assets';
+import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { useOnboarding } from '@/data/onboarding';
-import { borderWidth, space, tipografia, useTema } from '@/theme';
+import { borderWidth, gap, space, tipografia, useTema } from '@/theme';
 
 /**
  * B1 · Nome — "Como podemos te chamar?"
- * Combinado: botão Continuar como nas outras telas, ativo só com nome preenchido.
+ * Combinado: sem ícone/progresso, tudo centralizado; Continuar ativo só com nome.
  */
 // quebra de linha igual ao Figma (caixa de 262 px)
 const TITULO = 'Como podemos\nte chamar?';
@@ -33,14 +32,10 @@ export default function B1Nome() {
   return (
     <TelaOnboarding
       transicao={transicao}
-      etapa={1}
       evitarTeclado
       atrasoRodape={T_CAMPO + 150}
       rodape={<BotaoContinuar disabled={!valido} onPress={seguir} />}
     >
-      <Aparecer escalaInicial={0.9}>
-        <IconeGrande Icone={IconePessoa} />
-      </Aparecer>
       <View style={styles.bloco}>
         <TextoAnimado texto={TITULO} estilo="Títulos/Destaque" atraso={T_TITULO} />
         <Aparecer atraso={T_CAMPO} style={[styles.campo, { borderBottomColor: cores.icon.primary }]}>
@@ -63,11 +58,11 @@ export default function B1Nome() {
 }
 
 const styles = StyleSheet.create({
-  bloco: { marginTop: space[64], gap: space[64] },
+  bloco: { gap: gap.section + space[24] },
   campo: {
     borderBottomWidth: borderWidth.thin,
     paddingHorizontal: space[8],
     paddingVertical: space[16],
   },
-  entrada: { padding: 0, outlineStyle: 'none' } as object,
+  entrada: { padding: 0, textAlign: 'center', outlineStyle: 'none' } as object,
 });

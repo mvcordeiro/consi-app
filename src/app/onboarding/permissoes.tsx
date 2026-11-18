@@ -4,35 +4,34 @@ import { StyleSheet, View } from 'react-native';
 
 import { Texto } from '@/components';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
-import { BotaoContinuar, IconeGrande, TelaOnboarding, useTransicao } from '@/components/onboarding';
-import { IconeDownload, IconeSino, PontoNotificacao, SetaVoltar, SwitchLigado } from '@/components/onboarding/assets';
-import { borderWidth, radius, space, useTema } from '@/theme';
+import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
+import { IconeDownload, PontoNotificacao, SetaVoltar, SwitchLigado } from '@/components/onboarding/assets';
+import { borderWidth, gap, radius, space, useCoresSvg, useTema } from '@/theme';
 
 /**
  * F1 · Permissões — passo a passo ilustrado (caminho do Android).
  * Combinado: por enquanto é só ilustrativo; a versão do iPhone e a permissão real
  * (módulo nativo) vêm depois. O conteúdo rola e o botão fica fixo embaixo.
+ * Títulos centralizados; os cartões imitam a tela do sistema, então ficam à esquerda.
  */
 const TITULO = 'Precisamos de algumas permissões para seguir';
 const SUB = 'Você pode editar isso depois.';
 const T_SUB = fimDoTexto(TITULO, 150);
 const T_PASSOS = fimDoTexto(SUB, T_SUB);
+
 export default function F1Permissoes() {
   const { cores } = useTema();
   const transicao = useTransicao();
+  const coresSvg = useCoresSvg();
 
   return (
     <TelaOnboarding
       transicao={transicao}
-      etapa={5}
       comTextura={false}
       rolavel
       atrasoRodape={T_PASSOS + 500}
       rodape={<BotaoContinuar onPress={() => transicao.sair(() => router.push('/onboarding/compromisso'))} />}
     >
-      <Aparecer escalaInicial={0.9}>
-        <IconeGrande Icone={IconeSino} tamanho={83.35} />
-      </Aparecer>
       <View style={styles.cabecalho}>
         <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />
         <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.link} atraso={T_SUB} />
@@ -42,12 +41,12 @@ export default function F1Permissoes() {
         <Passo ordem={0} titulo="1. Clique em aplicativos instalados">
           <View style={styles.linha}>
             <View style={[styles.iconeDownload, { backgroundColor: cores.action.secondary.pressed }]}>
-              <IconeDownload />
+              <IconeDownload {...coresSvg} />
             </View>
             <View style={styles.comPonto}>
               <Texto estilo="Texto/Pequeno">Aplicativos instalados</Texto>
               <View style={styles.ponto}>
-                <PontoNotificacao />
+                <PontoNotificacao {...coresSvg} />
               </View>
             </View>
           </View>
@@ -59,7 +58,7 @@ export default function F1Permissoes() {
             <View style={styles.comPonto}>
               <Texto estilo="Texto/Pequeno">Consi</Texto>
               <View style={[styles.ponto, { right: -9 }]}>
-                <PontoNotificacao />
+                <PontoNotificacao {...coresSvg} />
               </View>
             </View>
             <Texto estilo="Legenda/Pequena" cor={cores.text.link}>
@@ -72,7 +71,7 @@ export default function F1Permissoes() {
           <Voltar rotulo="Consi" estilo="Texto/Médio" />
           <View style={[styles.alternar, { borderColor: cores.border.focus }]}>
             <Texto estilo="Texto/Botões e rótulos">Ativado</Texto>
-            <SwitchLigado />
+            <SwitchLigado {...coresSvg} />
           </View>
         </Passo>
       </View>
@@ -84,17 +83,20 @@ function Passo({ titulo, ordem, children }: { titulo: string; ordem: number; chi
   const { cores } = useTema();
   return (
     <Aparecer atraso={T_PASSOS + ordem * 150} deslocamento={16} style={styles.passo}>
-      <Texto estilo="Títulos/Pequeno">{titulo}</Texto>
+      <Texto estilo="Títulos/Pequeno" style={styles.centro}>
+        {titulo}
+      </Texto>
       <View style={[styles.cartao, { borderColor: cores.icon.primary }]}>{children}</View>
     </Aparecer>
   );
 }
 
 function Voltar({ rotulo, estilo }: { rotulo: string; estilo: 'Texto/Pequeno' | 'Texto/Médio' }) {
+  const coresSvg = useCoresSvg();
   return (
     <View style={styles.linha}>
       <View style={styles.seta}>
-        <SetaVoltar />
+        <SetaVoltar {...coresSvg} />
       </View>
       <Texto estilo={estilo}>{rotulo}</Texto>
     </View>
@@ -102,8 +104,9 @@ function Voltar({ rotulo, estilo }: { rotulo: string; estilo: 'Texto/Pequeno' | 
 }
 
 const styles = StyleSheet.create({
-  cabecalho: { marginTop: space[64], gap: space[12] },
-  passos: { marginTop: space[32], gap: space[40] },
+  cabecalho: { gap: gap.default },
+  centro: { textAlign: 'center' },
+  passos: { marginTop: gap.section, gap: gap.section },
   passo: { gap: space[16] },
   cartao: {
     borderWidth: borderWidth.thin,

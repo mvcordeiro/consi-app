@@ -9,7 +9,10 @@ import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
 // Mantém a splash na tela até as fontes carregarem.
 SplashScreen.preventAutoHideAsync();
 
-/** Layout raiz: carrega a fonte Limkin, define o modo de cor (Dark) e a pilha principal. */
+/**
+ * Layout raiz: carrega as fontes, aplica o modo de cor do celular
+ * (claro → Light/laranja, escuro → Dark/azul) e define a pilha principal.
+ */
 export default function RootLayout() {
   const [carregou, erro] = useFonts(arquivosDeFonte);
 
@@ -20,20 +23,22 @@ export default function RootLayout() {
   if (!carregou && !erro) return null;
 
   return (
-    <ModoDeCor modo="dark">
-      <StatusBar style="light" />
+    <ModoDeCor>
       <Pilha />
     </ModoDeCor>
   );
 }
 
 function Pilha() {
-  const { cores } = useTema();
+  const { cores, modo } = useTema();
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cores.bg.base } }}>
-      <Stack.Screen name="(abas)" />
-      <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
-      <Stack.Screen name="pausa" options={{ presentation: 'fullScreenModal' }} />
-    </Stack>
+    <>
+      <StatusBar style={modo === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cores.bg.base } }}>
+        <Stack.Screen name="(abas)" />
+        <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+        <Stack.Screen name="pausa" options={{ presentation: 'fullScreenModal' }} />
+      </Stack>
+    </>
   );
 }

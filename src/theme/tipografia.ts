@@ -3,34 +3,31 @@ import type { TextStyle } from 'react-native';
 /**
  * 04 Typography — espelho da coleção de tipografia do Figma (modo Mobile).
  *
- * A fonte é a TMT Limkin variável (assets/fonts/TMT-LimkinVF.ttf, licença SIL OFL).
- * Ela tem dois eixos: `wght` (peso, 100–900) e `SRFF` (serifa, 0–100).
- * Os "estilos" do Figma são combinações desses eixos:
- *   Book Sans       → wght 400, SRFF 0
- *   Medium Sans     → wght 500, SRFF 0
- *   Semi Bold Flare → wght 600, SRFF 50
+ * No Figma a família é a TMT Limkin (variável, eixos wght e SRFF). No app usamos
+ * três versões estáticas geradas dela (ver assets/fonts/LEIA-ME.txt):
+ *   Book Sans       → ConsiSans-Book       (wght 400, SRFF 0)
+ *   Medium Sans     → ConsiSans-Medium     (wght 500, SRFF 0)
+ *   Semi Bold Flare → ConsiFlare-SemiBold  (wght 600, SRFF 50)
  *
- * Precisa de Expo SDK 58+ / React Native 0.88+ (fontVariationSettings).
+ * Motivo: com a fonte variável, o celular media o texto com o estilo padrão
+ * e desenhava com outro — letras cortadas e espaços sobrando.
  */
-
-export const FONTE_LIMKIN = 'TMTLimkin';
-
 export const arquivosDeFonte = {
-  [FONTE_LIMKIN]: require('../../assets/fonts/TMT-LimkinVF.ttf'),
+  'ConsiSans-Book': require('../../assets/fonts/ConsiSans-Book.ttf'),
+  'ConsiSans-Medium': require('../../assets/fonts/ConsiSans-Medium.ttf'),
+  'ConsiFlare-SemiBold': require('../../assets/fonts/ConsiFlare-SemiBold.ttf'),
 };
 
-type EstiloDaFonte = { wght: number; SRFF: number };
-
-/** font/style/* — estilos nomeados da Limkin usados no Design System. */
+/** font/style/* — estilos nomeados do Design System e o arquivo de cada um. */
 export const fontStyle = {
-  'Book Sans': { wght: 400, SRFF: 0 },
-  'Medium Sans': { wght: 500, SRFF: 0 },
-  'Semi Bold Flare': { wght: 600, SRFF: 50 },
-} as const satisfies Record<string, EstiloDaFonte>;
+  'Book Sans': 'ConsiSans-Book',
+  'Medium Sans': 'ConsiSans-Medium',
+  'Semi Bold Flare': 'ConsiFlare-SemiBold',
+} as const satisfies Record<string, keyof typeof arquivosDeFonte>;
 
 /** font/family/* e font/style/* (variáveis). */
 export const font = {
-  family: { display: FONTE_LIMKIN, body: FONTE_LIMKIN },
+  family: { display: 'TMT Limkin', body: 'TMT Limkin' },
   style: { display: 'Semi Bold Flare', body: 'Book Sans' },
 } as const;
 
@@ -59,18 +56,14 @@ export const lineHeight = {
 export const tracking = { title: -1, body: 0, caption: 0 } as const;
 
 /** Converte um estilo nomeado ("Book Sans") em estilo de texto do React Native. */
-export function estiloDaFonte(familia: string, estilo: keyof typeof fontStyle): TextStyle {
-  const { wght, SRFF } = fontStyle[estilo];
-  return {
-    fontFamily: familia,
-    fontWeight: String(wght) as TextStyle['fontWeight'],
-    fontVariationSettings: `'wght' ${wght}, 'SRFF' ${SRFF}`,
-  } as TextStyle;
+export function estiloDaFonte(estilo: keyof typeof fontStyle): TextStyle {
+  // o peso já está no arquivo; "normal" evita negrito sintético por cima
+  return { fontFamily: fontStyle[estilo], fontWeight: 'normal' };
 }
 
-const display = estiloDaFonte(font.family.display, font.style.display);
-const body = estiloDaFonte(font.family.body, font.style.body);
-const rotulo = estiloDaFonte(font.family.body, 'Medium Sans');
+const display = estiloDaFonte(font.style.display);
+const body = estiloDaFonte(font.style.body);
+const rotulo = estiloDaFonte('Medium Sans');
 
 const papel = (
   base: TextStyle,

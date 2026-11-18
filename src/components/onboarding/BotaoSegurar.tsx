@@ -1,13 +1,13 @@
 import { useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
-import { duration, radius, space, useTema } from '@/theme';
+import { radius, space, useTema } from '@/theme';
 
 import { AnelProgresso } from './AnelProgresso';
 import { IconeGesto80 } from './assets';
 
 /**
- * Botão de compromisso (tela F2 do Figma): círculo action/secondary com o
+ * Botão de compromisso (tela F2 do Figma): círculo da ação primária do modo com o
  * ícone de gesto de toque. É preciso segurar pelo tempo indicado.
  * Retorno visual (combinado com o Miguel): um anel ao redor se completa enquanto segura.
  */
@@ -22,7 +22,7 @@ export function BotaoSegurar({ duracaoMs, onCompleto }: { duracaoMs: number; onC
 
   const iniciar = () => {
     completou.current = false;
-    Animated.timing(escala, { toValue: 0.95, duration: duration.fast, useNativeDriver: false }).start();
+    Animated.timing(escala, { toValue: 0.95, duration: 200, useNativeDriver: false }).start();
     Animated.timing(progresso, {
       toValue: 1,
       duration: duracaoMs,
@@ -40,8 +40,8 @@ export function BotaoSegurar({ duracaoMs, onCompleto }: { duracaoMs: number; onC
     if (completou.current) return;
     progresso.stopAnimation();
     Animated.parallel([
-      Animated.timing(progresso, { toValue: 0, duration: duration.slow, useNativeDriver: false }),
-      Animated.timing(escala, { toValue: 1, duration: duration.fast, useNativeDriver: false }),
+      Animated.timing(progresso, { toValue: 0, duration: 500, useNativeDriver: false }),
+      Animated.timing(escala, { toValue: 1, duration: 250, useNativeDriver: false }),
     ]).start();
   };
 
@@ -57,10 +57,10 @@ export function BotaoSegurar({ duracaoMs, onCompleto }: { duracaoMs: number; onC
         accessibilityLabel="Aperte e segure para confirmar"
       >
         <Animated.View
-          style={[styles.botao, { backgroundColor: cores.action.secondary.default, transform: [{ scale: escala }] }]}
+          style={[styles.botao, { backgroundColor: cores.action.primary.default, transform: [{ scale: escala }] }]}
         >
           <View style={styles.icone}>
-            <IconeGesto80 />
+            <IconeGesto80 corTraco={cores.text['on-primary']} />
           </View>
         </Animated.View>
       </Pressable>

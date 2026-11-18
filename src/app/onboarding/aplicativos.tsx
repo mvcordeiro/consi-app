@@ -1,12 +1,12 @@
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useRef, useState, type FC } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
-import type { SvgProps } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Texto } from '@/components';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
-import { BotaoContinuar, IconeGrande, TelaOnboarding, useTransicao } from '@/components/onboarding';
+import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import {
   Caixa1,
   Caixa2,
@@ -14,50 +14,53 @@ import {
   CaixaPareIcone,
   CaixaSinoIcone,
   CaixaSorrisoIcone,
-  IconeGrupoApoio,
+  type IconeSvg,
 } from '@/components/onboarding/assets';
 import { useOnboarding, type CaixaDeApp } from '@/data/onboarding';
-import { duration, easing, primitivas, radius, space, useTema } from '@/theme';
+import { easing, gap, primitivas, radius, space, useCoresSvg, useTema } from '@/theme';
 
 /**
  * E1 · Aplicativos — "Quais apps mais te incomodam?"
  * O usuário arrasta cada app até uma das três caixas. Com o dedo sobre a caixa,
  * ela cresce um pouco; ao soltar dentro, o app "cai" e some.
- * Combinado: com pelo menos 3 apps nas caixas, aparece o Continuar embaixo.
- *
- * Apps de exemplo (combinado): ícones genéricos até termos a lista real do aparelho.
- * Posições dos apps e das caixas seguem o Figma (frame de 412), escalados pela largura.
+ * Combinado:
+ *  - os apps ficam espalhados pela área livre (não amontoados);
+ *  - as caixas começam lá embaixo e sobem quando o Continuar aparece (≥ 3 apps).
+ * Apps de exemplo até termos a lista real do aparelho.
  */
-type App = { id: string; nome: string; icone: string; x: number; y: number };
-
 const MINIMO_APPS = 3;
 const nativo = Platform.OS !== 'web';
 const TITULO = 'Quais apps mais te incomodam?';
-const SUB = 'Pegamos apenas os essenciais, arraste eles para as caixinhas de acordo com seu comportamento.';
-const LEGENDA = 'Arraste pelo menos 3 aplicativos. Você pode editar isso depois.';
+// combinado: a antiga legenda entra no subtítulo (só título + subtítulo)
+const SUB =
+  'Pegamos apenas os essenciais, arraste eles para as caixinhas de acordo com seu comportamento. ' +
+  'Arraste pelo menos 3 aplicativos. Você pode editar isso depois.';
 const T_SUB = fimDoTexto(TITULO, 150);
-const T_LEGENDA = fimDoTexto(SUB, T_SUB);
-const T_APPS = T_LEGENDA + 200;
+const T_APPS = fimDoTexto(SUB, T_SUB) + 200;
 
+/**
+ * Posição de cada app como fração da área livre (0 = topo/esquerda, 1 = base/direita),
+ * numa grade 3 × 3 "bagunçada" e com um leve giro, para parecerem soltos.
+ */
+type App = { id: string; nome: string; icone: string; fx: number; fy: number; giro: number };
 const APPS: App[] = [
-  { id: 'instagram', nome: 'Instagram', icone: 'instagram', x: 56, y: 14 },
-  { id: 'tiktok', nome: 'TikTok', icone: 'tiktok', x: 128, y: 36 },
-  { id: 'youtube', nome: 'YouTube', icone: 'youtube', x: 197, y: 80 },
-  { id: 'spotify', nome: 'Spotify', icone: 'spotify', x: 278, y: 0 },
-  { id: 'whatsapp', nome: 'WhatsApp', icone: 'whatsapp', x: 291, y: 80 },
-  { id: 'x', nome: 'X', icone: 'x-twitter', x: 105, y: 119 },
-  { id: 'facebook', nome: 'Facebook', icone: 'facebook', x: 268, y: 150 },
-  { id: 'pinterest', nome: 'Pinterest', icone: 'pinterest', x: 189, y: 160 },
-  { id: 'reddit', nome: 'Reddit', icone: 'reddit', x: 197, y: 0 },
+  { id: 'instagram', nome: 'Instagram', icone: 'instagram', fx: 0.04, fy: 0.06, giro: -6 },
+  { id: 'tiktok', nome: 'TikTok', icone: 'tiktok', fx: 0.5, fy: 0.0, giro: 4 },
+  { id: 'spotify', nome: 'Spotify', icone: 'spotify', fx: 0.96, fy: 0.1, giro: -3 },
+  { id: 'youtube', nome: 'YouTube', icone: 'youtube', fx: 0.2, fy: 0.5, giro: 5 },
+  { id: 'reddit', nome: 'Reddit', icone: 'reddit', fx: 0.58, fy: 0.44, giro: -5 },
+  { id: 'whatsapp', nome: 'WhatsApp', icone: 'whatsapp', fx: 0.92, fy: 0.58, giro: 3 },
+  { id: 'x', nome: 'X', icone: 'x-twitter', fx: 0.02, fy: 0.96, giro: 4 },
+  { id: 'facebook', nome: 'Facebook', icone: 'facebook', fx: 0.4, fy: 1.0, giro: -4 },
+  { id: 'pinterest', nome: 'Pinterest', icone: 'pinterest', fx: 0.78, fy: 0.94, giro: 6 },
 ];
 const LADO_APP = 62;
-const ALTURA_APPS = 222;
 
 type Caixa = {
   id: CaixaDeApp;
   rotulo: string;
-  Caixa: FC<SvgProps>;
-  Icone: FC<SvgProps>;
+  Caixa: IconeSvg;
+  Icone: IconeSvg;
   /** centro da caixa no frame do Figma (y relativo ao topo da área das caixas, 770) */
   cx: number;
   cy: number;
@@ -104,6 +107,8 @@ const CAIXAS: Caixa[] = [
   },
 ];
 const ALTURA_CAIXAS = 147;
+/** Altura do botão Continuar (padding 16 + rótulo 20 + padding 16). */
+const ALTURA_BOTAO = 52;
 
 type Retangulo = { x: number; y: number; w: number; h: number };
 type Medivel = { measureInWindow: (cb: (x: number, y: number, w: number, h: number) => void) => void };
@@ -111,12 +116,14 @@ type Medivel = { measureInWindow: (cb: (x: number, y: number, w: number, h: numb
 export default function E1Aplicativos() {
   const { cores } = useTema();
   const transicao = useTransicao();
+  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const s = Math.min(width / 412, 1.15);
   const { atualizar } = useOnboarding();
 
   const [restantes, setRestantes] = useState(APPS.map((a) => a.id));
   const [sobre, setSobre] = useState<CaixaDeApp | null>(null);
+  const [areaApps, setAreaApps] = useState({ w: 0, h: 0 });
   const classificacao = useRef<Record<string, CaixaDeApp>>({});
   const retangulos = useRef<Partial<Record<CaixaDeApp, Retangulo>>>({});
   const refsCaixas = useRef<Partial<Record<CaixaDeApp, Medivel | null>>>({});
@@ -145,19 +152,17 @@ export default function E1Aplicativos() {
     setRestantes((atual) => atual.filter((id) => id !== appId));
   };
 
-  // Em telas mais baixas, as posições verticais dos apps se comprimem para caber
-  const [alturaLivre, setAlturaLivre] = useState(ALTURA_APPS * s + space[16]);
-  const sy = Math.max(0.5, Math.min(s, (alturaLivre - space[16] - LADO_APP * s) / (ALTURA_APPS - LADO_APP)));
-
-  // Combinado: o Continuar aparece depois que pelo menos 3 apps foram para as caixas
-  const arrastados = APPS.length - restantes.length;
-  const liberado = arrastados >= MINIMO_APPS;
+  // Continuar aparece com ≥ 3 apps; as caixas sobem para dar lugar a ele
+  const liberado = APPS.length - restantes.length >= MINIMO_APPS;
   const botao = useRef(new Animated.Value(0)).current;
+  const fundo = Math.max(insets.bottom, space[16]);
+  // quanto as caixas ficam abaixo da posição final enquanto não há botão
+  const descida = ALTURA_BOTAO + gap.default + fundo;
 
   useEffect(() => {
     Animated.timing(botao, {
       toValue: liberado ? 1 : 0,
-      duration: 600,
+      duration: 700,
       easing: Easing.bezier(...easing.standard),
       useNativeDriver: nativo,
     }).start();
@@ -168,80 +173,78 @@ export default function E1Aplicativos() {
     transicao.sair(() => router.push('/onboarding/permissoes'));
   };
 
+  const lado = Math.min(LADO_APP * s, areaApps.h / 3.2 || LADO_APP);
+
   return (
-    <TelaOnboarding
-      transicao={transicao}
-      etapa={4}
-      atrasoRodape={0}
-      rodape={
+    <TelaOnboarding transicao={transicao}>
+      <View style={styles.cabecalho}>
+        <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />
+        <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.link} atraso={T_SUB} />
+      </View>
+
+      <View
+        style={styles.areaApps}
+        onLayout={(e) => setAreaApps({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+      >
+        {areaApps.h > 0
+          ? APPS.filter((a) => restantes.includes(a.id)).map((a) => (
+              <AppArrastavel
+                key={a.id}
+                app={a}
+                lado={lado}
+                left={a.fx * (areaApps.w - lado)}
+                top={a.fy * (areaApps.h - lado)}
+                atraso={T_APPS + APPS.indexOf(a) * 70}
+                aoComecar={medirCaixas}
+                caixaNoPonto={caixaNoPonto}
+                aoPassarSobre={setSobre}
+                aoSoltar={(caixa) => soltarNaCaixa(a.id, caixa)}
+              />
+            ))
+          : null}
+      </View>
+
+      <View style={{ height: ALTURA_CAIXAS * s + gap.default + ALTURA_BOTAO + fundo }}>
+        <Animated.View
+          style={{
+            transform: [{ translateY: botao.interpolate({ inputRange: [0, 1], outputRange: [descida, 0] }) }],
+          }}
+        >
+          <Aparecer atraso={T_APPS} deslocamento={24} style={[styles.areaCaixas, { width: 412 * s, height: ALTURA_CAIXAS * s }]}>
+            {CAIXAS.map((c) => (
+              <CaixaAlvo
+                key={c.id}
+                caixa={c}
+                s={s}
+                destacada={sobre === c.id}
+                corRotulo={cores.text.link}
+                refCaixa={(v) => {
+                  refsCaixas.current[c.id] = v;
+                }}
+              />
+            ))}
+          </Aparecer>
+        </Animated.View>
         <Animated.View
           pointerEvents={liberado ? 'auto' : 'none'}
           style={{
+            marginTop: gap.default,
             opacity: botao,
-            transform: [{ translateY: botao.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }],
+            transform: [{ translateY: botao.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
           }}
         >
           <BotaoContinuar onPress={seguir} disabled={!liberado} />
         </Animated.View>
-      }
-    >
-      <Aparecer escalaInicial={0.9}>
-        <IconeGrande Icone={IconeGrupoApoio} />
-      </Aparecer>
-      <View style={styles.cabecalho}>
-        <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />
-        <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.link} atraso={T_SUB} />
-        <Aparecer atraso={T_LEGENDA}>
-          <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-            {LEGENDA}
-          </Texto>
-        </Aparecer>
       </View>
-
-      <View style={styles.flex} onLayout={(e) => setAlturaLivre(e.nativeEvent.layout.height)}>
-        <View style={[styles.areaApps, { width: 412 * s, height: ALTURA_APPS * sy + LADO_APP * s - LADO_APP * sy }]}>
-          {APPS.filter((a) => restantes.includes(a.id)).map((a) => (
-            <AppArrastavel
-              key={a.id}
-              app={a}
-              s={s}
-              sy={sy}
-              atraso={T_APPS + APPS.indexOf(a) * 60}
-              aoComecar={medirCaixas}
-              caixaNoPonto={caixaNoPonto}
-              aoPassarSobre={setSobre}
-              aoSoltar={(caixa) => soltarNaCaixa(a.id, caixa)}
-            />
-          ))}
-        </View>
-      </View>
-
-      <Aparecer
-        atraso={T_APPS}
-        deslocamento={24}
-        style={[styles.areaCaixas, { width: 412 * s, height: ALTURA_CAIXAS * s }]}
-      >
-        {CAIXAS.map((c) => (
-          <CaixaAlvo
-            key={c.id}
-            caixa={c}
-            s={s}
-            destacada={sobre === c.id}
-            corRotulo={cores.text.link}
-            refCaixa={(v) => {
-              refsCaixas.current[c.id] = v;
-            }}
-          />
-        ))}
-      </Aparecer>
     </TelaOnboarding>
   );
 }
 
 function AppArrastavel({
   app,
-  s,
-  sy,
+  lado,
+  left,
+  top,
   atraso,
   aoComecar,
   caixaNoPonto,
@@ -249,9 +252,9 @@ function AppArrastavel({
   aoSoltar,
 }: {
   app: App;
-  s: number;
-  /** escala vertical das posições (comprime em telas baixas) */
-  sy: number;
+  lado: number;
+  left: number;
+  top: number;
   atraso: number;
   aoComecar: () => void;
   caixaNoPonto: (x: number, y: number) => CaixaDeApp | null;
@@ -265,7 +268,7 @@ function AppArrastavel({
 
   // entra com um pequeno "pop"
   useEffect(() => {
-    const a = Animated.spring(entrada, { toValue: 1, delay: atraso, friction: 6, useNativeDriver: false });
+    const a = Animated.spring(entrada, { toValue: 1, delay: atraso, friction: 7, useNativeDriver: false });
     a.start();
     return () => a.stop();
   }, [atraso, entrada]);
@@ -292,11 +295,7 @@ function AppArrastavel({
             // cai dentro da caixa: encolhe e some
             Animated.parallel([
               Animated.timing(escala, { toValue: 0, duration: 380, useNativeDriver: false }),
-              Animated.timing(pos, {
-                toValue: { x: g.dx, y: g.dy + 24 },
-                duration: 380,
-                useNativeDriver: false,
-              }),
+              Animated.timing(pos, { toValue: { x: g.dx, y: g.dy + 24 }, duration: 380, useNativeDriver: false }),
             ]).start(() => aoSoltar(caixa));
           } else {
             setArrastando(false);
@@ -318,17 +317,21 @@ function AppArrastavel({
       style={[
         styles.app,
         {
-          left: app.x * s,
-          top: app.y * sy,
-          width: LADO_APP * s,
-          height: LADO_APP * s,
+          left,
+          top,
+          width: lado,
+          height: lado,
           zIndex: arrastando ? 10 : 1,
           opacity: entrada.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }),
-          transform: [...pos.getTranslateTransform(), { scale: Animated.multiply(escala, entrada) }],
+          transform: [
+            ...pos.getTranslateTransform(),
+            { rotate: arrastando ? '0deg' : `${app.giro}deg` },
+            { scale: Animated.multiply(escala, entrada) },
+          ],
         },
       ]}
     >
-      <FontAwesome6 name={app.icone as 'instagram'} brand size={30 * s} color={primitivas.neutral[950]} />
+      <FontAwesome6 name={app.icone as 'instagram'} brand size={lado * 0.48} color={primitivas.neutral[950]} />
     </Animated.View>
   );
 }
@@ -346,10 +349,11 @@ function CaixaAlvo({
   corRotulo: string;
   refCaixa: (v: Medivel | null) => void;
 }) {
+  const coresSvg = useCoresSvg();
   const escala = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.spring(escala, { toValue: destacada ? 1.12 : 1, useNativeDriver: false, speed: 20 }).start();
+    Animated.spring(escala, { toValue: destacada ? 1.12 : 1, useNativeDriver: false, speed: 14 }).start();
   }, [destacada, escala]);
 
   const L = 114.47;
@@ -383,9 +387,14 @@ function CaixaAlvo({
           transform: [{ scale: Animated.multiply(escala, s) }, { rotate: `${c.giro}deg` }],
         }}
       >
-        <c.Caixa />
-        <View style={[StyleSheet.absoluteFill, styles.centro, { transform: [{ translateX: c.icone.dx }, { translateY: c.icone.dy }] }]}>
-          <c.Icone />
+        <c.Caixa {...coresSvg} />
+        <View
+          style={[
+            styles.icone,
+            { transform: [{ translateX: c.icone.dx }, { translateY: c.icone.dy }] },
+          ]}
+        >
+          <c.Icone {...coresSvg} />
         </View>
       </Animated.View>
     </>
@@ -393,16 +402,25 @@ function CaixaAlvo({
 }
 
 const styles = StyleSheet.create({
-  cabecalho: { marginTop: space[64], gap: space[12] },
-  flex: { flex: 1, justifyContent: 'center' },
-  areaApps: { marginHorizontal: -space[32] },
+  cabecalho: { gap: gap.default },
+  centro: { textAlign: 'center' },
+  // área livre entre o texto e as caixas, com respiro em cima e embaixo
+  areaApps: { flex: 1, marginTop: space[32], marginBottom: gap.section + space[8] },
   app: {
     position: 'absolute',
     backgroundColor: primitivas.neutral[100],
-    borderRadius: radius.sm,
+    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  areaCaixas: { marginHorizontal: -space[32] },
-  centro: { alignItems: 'center', justifyContent: 'center' },
+  areaCaixas: { alignSelf: 'center' },
+  icone: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

@@ -2,8 +2,6 @@ export * from './AnelProgresso';
 export * from './Bolha';
 export * from './BotaoContinuar';
 export * from './BotaoSegurar';
-export * from './IconeGrande';
 export * from './OpcaoSegurar';
-export * from './ProgressoOnboarding';
 export * from './Respiracao';
 export * from './TelaOnboarding';

@@ -39,6 +39,9 @@ import SwitchLigado from '../../../assets/onboarding/switch-ligado.svg';
 
 export const textura = require('../../../assets/onboarding/textura.png');
 
+/** Componente de um SVG exportado do Figma, com as cores trocáveis (ver src/svg.d.ts). */
+export type IconeSvg = typeof IconeTempo;
+
 export {
   AnelProgressoVazio,
   Caixa1,

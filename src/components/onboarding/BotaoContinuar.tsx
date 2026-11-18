@@ -5,9 +5,9 @@ import { radius, space, useTema } from '@/theme';
 import { Texto } from '../Texto';
 
 /**
- * Botão "Continuar" das telas do onboarding: pílula de largura total,
- * fundo action/secondary/hover e rótulo text/primary ("Texto/Botões e rótulos").
- * Desabilitado: bg/disabled + text/disabled (regra do Design System).
+ * Botão "Continuar" do onboarding: pílula de largura total com a ação primária
+ * do modo (azul no Dark, laranja no Light) e rótulo text/on-primary.
+ * Pressionado: action/primary/pressed. Desabilitado: bg/disabled + text/disabled.
  */
 type Props = Omit<PressableProps, 'children' | 'style'> & { rotulo?: string };
 
@@ -24,15 +24,15 @@ export function BotaoContinuar({ rotulo = 'Continuar', disabled, ...rest }: Prop
           backgroundColor: disabled
             ? cores.bg.disabled
             : pressed
-              ? cores.action.secondary.pressed
-              : cores.action.secondary.hover,
+              ? cores.action.primary.pressed
+              : cores.action.primary.default,
         },
       ]}
       {...rest}
     >
       <Texto
         estilo="Texto/Botões e rótulos"
-        cor={disabled ? cores.text.disabled : cores.text.primary}
+        cor={disabled ? cores.text.disabled : cores.text['on-primary']}
         style={styles.rotulo}
       >
         {rotulo}

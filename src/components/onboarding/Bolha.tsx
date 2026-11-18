@@ -1,18 +1,18 @@
-import { useEffect, useRef, type FC } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
-import type { SvgProps } from 'react-native-svg';
 
-import { borderWidth, duration, radius, useTema } from '@/theme';
+import { borderWidth, radius, useCoresSvg, useTema } from '@/theme';
 
 import { Texto } from '../Texto';
+import type { IconeSvg } from './assets';
 
 /**
  * Bolha de hobby (telas D4 e D5 do Figma).
- * Contorno border/focus; selecionada: fundo action/secondary/pressed.
+ * Contorno border/focus; selecionada: fundo bg/raised e contorno grosso.
  * Ao tocar, uma "Onda" (anel border/focus) se expande ao redor e some.
  */
 type Props = {
-  Icone: FC<SvgProps>;
+  Icone: IconeSvg;
   rotulo: string;
   tamanho: number;
   /** Largura do texto (no Figma: tamanho − 20). */
@@ -31,6 +31,7 @@ const nativo = Platform.OS !== 'web';
 
 export function Bolha({ Icone, rotulo, tamanho, larguraRotulo, selecionada, onPress, flutuar, style }: Props) {
   const { cores } = useTema();
+  const coresSvg = useCoresSvg();
   const onda = useRef(new Animated.Value(0)).current;
   const x = useRef(new Animated.Value(0)).current;
   const y = useRef(new Animated.Value(0)).current;
@@ -83,12 +84,14 @@ export function Bolha({ Icone, rotulo, tamanho, larguraRotulo, selecionada, onPr
           width: tamanho,
           height: tamanho,
           borderColor: cores.border.focus,
-          backgroundColor: selecionada ? cores.action.secondary.pressed : 'transparent',
+          // combinado: selecionada usa a superfície elevada do modo (bg/raised), não a cor secundária
+          borderWidth: selecionada ? borderWidth.thick : borderWidth.thin,
+          backgroundColor: selecionada ? cores.bg.raised : 'transparent',
         },
       ]}
     >
       <View style={styles.icone}>
-        <Icone />
+        <Icone {...coresSvg} />
       </View>
       <Texto
         estilo="Legenda/Pequena"
