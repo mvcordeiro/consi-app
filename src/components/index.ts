@@ -8,3 +8,4 @@ export * from './Etiqueta';
 export * from './ProgressoSegmentos';
 export * from './Tela';
 export * from './Texto';
+export * from './ModoImersivo';

@@ -83,26 +83,35 @@ export type RegistroEmocao = { id: string; em: number };
 const mesmoDia = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
-export async function salvarEmocao(id: string) {
-  const registro: RegistroEmocao = { id, em: Date.now() };
-  try {
-    await AsyncStorage.setItem(CHAVE, JSON.stringify(registro));
-  } catch {
-    // sem armazenamento, a emoção vale só enquanto o app estiver aberto
-  }
-  return registro;
-}
-
-/** A emoção registrada hoje, ou null (a de ontem não conta mais). */
-export async function emocaoDeHoje(): Promise<RegistroEmocao | null> {
+/** Lê o histórico salvo. Aceita o formato antigo (um registro só). */
+async function lerHistorico(): Promise<RegistroEmocao[]> {
   try {
     const bruto = await AsyncStorage.getItem(CHAVE);
-    if (!bruto) return null;
-    const r = JSON.parse(bruto) as RegistroEmocao;
-    return mesmoDia(new Date(r.em), new Date()) ? r : null;
+    if (!bruto) return [];
+    const dado = JSON.parse(bruto) as RegistroEmocao | RegistroEmocao[];
+    return Array.isArray(dado) ? dado : [dado];
   } catch {
-    return null;
+    return [];
   }
+}
+
+/** Registra a emoção e devolve as de hoje, da mais recente para a mais antiga. */
+export async function salvarEmocao(id: string): Promise<RegistroEmocao[]> {
+  const hoje = [{ id, em: Date.now() }, ...(await emocoesDeHoje())];
+  try {
+    await AsyncStorage.setItem(CHAVE, JSON.stringify(hoje));
+  } catch {
+    // sem armazenamento, as emoções valem só enquanto o app estiver aberto
+  }
+  return hoje;
+}
+
+/** As emoções registradas hoje, da mais recente para a mais antiga (as de ontem não contam mais). */
+export async function emocoesDeHoje(): Promise<RegistroEmocao[]> {
+  const agora = new Date();
+  return (await lerHistorico())
+    .filter((r) => mesmoDia(new Date(r.em), agora))
+    .sort((a, b) => b.em - a.em);
 }
 
 /** "agora" no primeiro minuto, "há X min" até 1 h e depois "às HH:MM". */

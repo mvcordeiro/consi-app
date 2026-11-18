@@ -10,6 +10,7 @@ import IconeDiario from '../../assets/home/icone-diario.svg';
 import IconeHobbies from '../../assets/home/icone-hobbies.svg';
 import IconeInicio from '../../assets/home/icone-inicio.svg';
 import IconeSocial from '../../assets/home/icone-social.svg';
+import { useModoImersivo } from './ModoImersivo';
 import type { IconeSvg } from './onboarding/assets';
 
 /** Altura da barra (componente "Top bar" do Figma). */
@@ -39,11 +40,26 @@ export function useEspacoBarra() {
 export function BarraNavegacao({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const { cores } = useTema();
   const { bottom } = useSafeAreaInsets();
+  const { imersivo, saida } = useModoImersivo();
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[styles.posicao, { bottom: bottom + MARGEM_BARRA }]}
+    <Animated.View
+      pointerEvents={imersivo ? 'none' : 'box-none'}
+      style={[
+        styles.posicao,
+        {
+          bottom: bottom + MARGEM_BARRA,
+          // no modo imersivo desce para fora da tela pela parte de baixo, e volta subindo
+          transform: [
+            {
+              translateY: saida.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, ALTURA_BARRA + MARGEM_BARRA + bottom + space[16]],
+              }),
+            },
+          ],
+        },
+      ]}
     >
       <View style={[styles.barra, { backgroundColor: cores.bg.raised }]}>
         {state.routes.map((rota, i) => {
@@ -65,7 +81,7 @@ export function BarraNavegacao({ state, descriptors, emitter, navigateToTab }: B
           );
         })}
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

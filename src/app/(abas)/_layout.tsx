@@ -1,7 +1,7 @@
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 
-import { BarraNavegacao } from '@/components';
+import { BarraNavegacao, ModoImersivoProvider } from '@/components';
 import { onboardingConcluido } from '@/data/onboarding';
 import { useTema } from '@/theme';
 
@@ -25,6 +25,7 @@ export default function LayoutAbas() {
   if (estado === 'pendente') return <Redirect href="/onboarding" />;
 
   return (
+    <ModoImersivoProvider>
     <Tabs
       tabBar={(props) => <BarraNavegacao {...props} />}
       screenOptions={{
@@ -38,5 +39,6 @@ export default function LayoutAbas() {
       <Tabs.Screen name="social" options={{ title: 'Social' }} />
       <Tabs.Screen name="ajustes" options={{ title: 'Ajustes' }} />
     </Tabs>
+    </ModoImersivoProvider>
   );
 }

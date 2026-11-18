@@ -1,15 +1,19 @@
-import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type PressableProps } from 'react-native';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Animated, Easing, Platform, Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 
-import { borderWidth, radius, space, useTema, type Cores } from '@/theme';
+import { borderWidth, duration, easing, radius, space, useTema, type Cores } from '@/theme';
 
 import { Texto } from './Texto';
+
+const nativo = Platform.OS !== 'web';
+const curva = Easing.bezier(...easing.standard);
 
 /**
  * Ação / Botão — componente do Design System (página Átomos, nó 125:9).
  * Variantes: Estilo = Primário | Secundário
  *            Estado = Normal | Ativo | Aviso | Sucesso | Erro | Desabilitado
- * "Ativo" é aplicado automaticamente enquanto o botão está pressionado.
+ * "Ativo" é aplicado automaticamente enquanto o botão está pressionado, com um leve
+ * "afundar" (escala) animado.
  */
 export type EstiloBotao = 'primario' | 'secundario';
 export type EstadoBotao = 'normal' | 'aviso' | 'sucesso' | 'erro' | 'desabilitado';
@@ -18,14 +22,20 @@ type Props = Omit<PressableProps, 'children' | 'style'> & {
   rotulo: string;
   estilo?: EstiloBotao;
   estado?: EstadoBotao;
-  icone?: ReactNode;
+  /** Ícone à esquerda. Pode ser uma função que recebe a cor atual do rótulo. */
+  icone?: ReactNode | ((cor: string) => ReactNode);
   /**
-   * Cor do rótulo no estado Normal, quando a instância do Figma sobrescreve a do componente
+   * Cor do rótulo, quando a instância do Figma sobrescreve a do componente
    * (ex.: na Home o primário usa text/primary em vez de text/on-neutral).
    */
   corRotulo?: string;
-  /** Mantém a aparência "Ativo" mesmo sem o dedo (ex.: resposta escolhida). */
+  /** Mantém a aparência "Ativo" mesmo sem o dedo. */
   ativo?: boolean;
+  /**
+   * Escolhido (ex.: resposta marcada): o fundo action/primary entra com fade e o rótulo
+   * passa para text/primary. Usado nas respostas dos padrões da Home.
+   */
+  selecionado?: boolean;
 };
 
 export function Botao({
@@ -35,39 +45,82 @@ export function Botao({
   icone,
   corRotulo,
   ativo,
+  selecionado = false,
   disabled,
+  onPressIn,
+  onPressOut,
   ...rest
 }: Props) {
   const { cores } = useTema();
   const desabilitado = disabled || estado === 'desabilitado';
+  const [escala] = useState(() => new Animated.Value(1));
+  const [cheio] = useState(() => new Animated.Value(selecionado ? 1 : 0));
+
+  useEffect(() => {
+    Animated.timing(cheio, {
+      toValue: selecionado ? 1 : 0,
+      duration: duration.slow,
+      easing: curva,
+      useNativeDriver: nativo,
+    }).start();
+  }, [selecionado, cheio]);
+
+  const afundar = (para: number) =>
+    Animated.spring(escala, { toValue: para, useNativeDriver: nativo, speed: 40, bounciness: 6 }).start();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ disabled: desabilitado }}
-      disabled={desabilitado}
-      style={({ pressed }) => [styles.base, aparencia(cores, estilo, pressed || ativo ? 'ativo' : estado)]}
-      {...rest}
-    >
-      {({ pressed: dedo }) => {
-        const pressed = dedo || !!ativo;
-        return (
-        <>
-          {icone ? <View style={styles.icone}>{icone}</View> : null}
-          <Texto
-            estilo="Texto/Botões e rótulos"
-            cor={
-              corRotulo && !pressed && estado === 'normal'
-                ? corRotulo
-                : corDoRotulo(cores, estilo, pressed ? 'ativo' : estado)
-            }
-          >
-            {rotulo}
-          </Texto>
-        </>
-        );
-      }}
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale: escala }] }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: desabilitado, selected: selecionado }}
+        disabled={desabilitado}
+        onPressIn={(e) => {
+          afundar(0.97);
+          onPressIn?.(e);
+        }}
+        onPressOut={(e) => {
+          afundar(1);
+          onPressOut?.(e);
+        }}
+        style={({ pressed }) => [
+          styles.base,
+          aparencia(cores, estilo, (pressed || ativo) && !selecionado ? 'ativo' : estado),
+          selecionado && { borderColor: 'transparent' },
+        ]}
+        {...rest}
+      >
+        {({ pressed: dedo }) => {
+          const pressed = (dedo || !!ativo) && !selecionado;
+          const cor = selecionado
+            ? cores.text.primary
+            : corDoRotulo(cores, estilo, pressed ? 'ativo' : estado, corRotulo);
+          return (
+            <>
+              {/* Fundo do estado "selecionado", entra com fade e um leve zoom */}
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFill,
+                  styles.cheio,
+                  {
+                    backgroundColor: cores.action.primary.default,
+                    opacity: cheio,
+                    transform: [{ scale: cheio.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }],
+                  },
+                ]}
+              />
+              {/* Num View: na web, o fundo absoluto seria pintado por cima do conteúdo */}
+              <View style={styles.conteudo}>
+                {icone ? <View style={styles.icone}>{typeof icone === 'function' ? icone(cor) : icone}</View> : null}
+                <Texto estilo="Texto/Botões e rótulos" cor={cor}>
+                  {rotulo}
+                </Texto>
+              </View>
+            </>
+          );
+        }}
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -101,18 +154,22 @@ function aparencia(c: Cores, estilo: EstiloBotao, estado: EstadoVisual) {
     case 'erro':
       return contorno(c.feedback.error);
     case 'desabilitado':
-      return {};
+      return { ...contorno('transparent') };
     default:
       return contorno(c.border.focus);
   }
 }
 
-function corDoRotulo(c: Cores, estilo: EstiloBotao, estado: EstadoVisual) {
+function corDoRotulo(c: Cores, estilo: EstiloBotao, estado: EstadoVisual, corRotulo?: string) {
   if (estado === 'desabilitado') return c.text.disabled;
   if (estado === 'aviso') return c.feedback.warning;
+  // A sobrescrita da instância vale também enquanto o dedo está no botão.
+  if (corRotulo && (estado === 'normal' || estado === 'ativo')) return corRotulo;
+  // Secundário pressionado: no componente o rótulo vira text/on-neutral, que some sobre o
+  // fundo escuro (só a borda muda); mantemos text/primary para continuar legível.
+  if (estilo === 'secundario') return c.text.primary;
   if (estado === 'ativo') return c.text['on-neutral'];
-  if (estilo === 'primario') return estado === 'normal' ? c.text['on-neutral'] : c.text['on-primary'];
-  return c.text.primary;
+  return estado === 'normal' ? c.text['on-neutral'] : c.text['on-primary'];
 }
 
 const styles = StyleSheet.create({
@@ -121,10 +178,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: space[8],
     paddingHorizontal: space[20],
     paddingVertical: space[12],
     borderRadius: radius.full,
+    // a borda existe sempre (transparente no primário) para a altura não mudar entre estados
+    borderWidth: borderWidth.thin,
+    borderColor: 'transparent',
+    overflow: 'hidden',
   },
+  cheio: { borderRadius: radius.full },
+  conteudo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[8] },
   icone: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
 });

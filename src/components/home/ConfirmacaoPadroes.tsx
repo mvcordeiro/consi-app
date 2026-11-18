@@ -84,15 +84,14 @@ export function ConfirmacaoPadroes({ onResponder }: { onResponder?: (id: string,
               Só você sabe se esse padrão é real.
             </Texto>
           </View>
-          <Animated.View
-            style={[
-              styles.secao,
-              {
+          <View style={styles.secao}>
+            {/* Só o card troca: o atual sai com fade e o próximo entra com appear-in; as respostas ficam */}
+            <Animated.View
+              style={{
                 opacity: saida,
                 transform: [{ translateY: saida.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }],
-              },
-            ]}
-          >
+              }}
+            >
             <Aparecer key={padrao.id} deslocamento={12} duracao={700}>
               <View style={[styles.card, { backgroundColor: cores.bg.raised }]}>
                 <Etiqueta rotulo="Padrão encontrado" />
@@ -102,21 +101,23 @@ export function ConfirmacaoPadroes({ onResponder }: { onResponder?: (id: string,
                 </Texto>
               </View>
             </Aparecer>
+            </Animated.View>
             <View style={styles.respostas}>
               {respostas.map(({ id, rotulo, icone: Icone, largura, altura }) => (
                 <Botao
                   key={id}
-                  // a escolhida fica preenchida, como o primário da Home (texto text/primary)
-                  estilo={escolhida === id ? 'primario' : 'secundario'}
-                  corRotulo={escolhida === id ? cores.text.primary : undefined}
+                  estilo="secundario"
+                  // a escolhida fica preenchida (fade de action/primary) até o próximo padrão entrar
+                  selecionado={escolhida === id}
+                  disabled={!!escolhida && escolhida !== id}
                   rotulo={rotulo}
-                  icone={
+                  icone={(cor) => (
                     <Icone
                       width={largura}
                       height={altura}
-                      corTraco={escolhida === id ? cores.text.primary : cores.action.neutral.default}
+                      corTraco={escolhida === id ? cor : cores.action.neutral.default}
                     />
-                  }
+                  )}
                   onPress={() => responder(id)}
                 />
               ))}
@@ -131,7 +132,7 @@ export function ConfirmacaoPadroes({ onResponder }: { onResponder?: (id: string,
                 Pular por enquanto
               </Texto>
             </Pressable>
-          </Animated.View>
+          </View>
         </>
       )}
     </View>

@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Animated, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useEspacoBarra } from '@/components';
+import { useEspacoBarra, useModoImersivo } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import {
   ConfirmacaoPadroes,
@@ -29,23 +29,35 @@ function emConstrucao(titulo: string) {
 
 /**
  * Home (Figma: seção "// HOME", frames Dark 488:1726 e Light 574:3865).
- * A hero (escolha da emoção, Figma 667:9661) ocupa a primeira tela; as seções seguem com 64 px entre elas.
+ * A primeira tela (100vh) é o topo + a hero (escolha da emoção, Figma 667:9661), com o boneco
+ * colado na barra de navegação; as seções seguem com 64 px entre elas.
+ * Enquanto a pessoa escolhe a emoção (modo imersivo), o topo sobe e sai da tela e a rolagem trava.
  */
 export default function Inicio() {
   const { top } = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const espacoBarra = useEspacoBarra();
   const [nome, setNome] = useState('');
-  const [rolagem, setRolagem] = useState(true);
+  const [arrastandoBalao, setArrastandoBalao] = useState(false);
+  // Altura real da área da Home (no Android edge-to-edge pode diferir da janela).
+  const [alturaTela, setAlturaTela] = useState(height);
+  const { imersivo, saida } = useModoImersivo();
+  const rolagem = useRef<{ scrollTo: (o: { y: number; animated: boolean }) => void } | null>(null);
+
+  // Ao entrar no modo imersivo, volta para o alto: as emoções ocupam a primeira tela.
+  useEffect(() => {
+    if (imersivo) rolagem.current?.scrollTo({ y: 0, animated: true });
+  }, [imersivo]);
 
   useEffect(() => {
     respostasSalvas().then((r) => setNome(r.nome));
   }, []);
 
   const topo = top + space[8];
-  // O palco da hero vai do fim do topo até a barra de navegação.
-  const alturaHero = height - topo - ALTURA_TOPO - espacoBarra;
-  const arrastando = useCallback((a: boolean) => setRolagem(!a), []);
+  const alturaTopo = topo + ALTURA_TOPO;
+  // A hero vai do fim do topo até a barra de navegação: topo + hero = altura da tela.
+  const alturaHero = alturaTela - alturaTopo - espacoBarra;
+  const arrastando = useCallback((a: boolean) => setArrastandoBalao(a), []);
   const escolher = useCallback(
     (e: Emocao) => router.push({ pathname: '/emocao', params: { id: e.id } }),
     [],
@@ -53,14 +65,32 @@ export default function Inicio() {
 
   return (
     <ScrollView
-      scrollEnabled={rolagem}
+      ref={(r: unknown) => {
+        rolagem.current = r as typeof rolagem.current;
+      }}
+      scrollEnabled={!imersivo && !arrastandoBalao}
+      onLayout={(e) => setAlturaTela(e.nativeEvent.layout.height)}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.conteudo, { paddingTop: topo, paddingBottom: espacoBarra + ESPACO_SECAO }]}
     >
-      <View>
-        <TopoHome />
+      <View style={styles.primeiraTela}>
+        {/* O topo sai pela parte de cima no modo imersivo e volta descendo */}
+        <Animated.View
+          style={{
+            transform: [{ translateY: saida.interpolate({ inputRange: [0, 1], outputRange: [0, -(alturaTopo + space[16])] }) }],
+          }}
+        >
+          <TopoHome />
+        </Animated.View>
         <View style={styles.hero}>
-          <HeroEmocoes nome={nome} altura={alturaHero} onArrastando={arrastando} onEscolher={escolher} />
+          <HeroEmocoes
+            nome={nome}
+            altura={alturaHero}
+            alturaTopo={alturaTopo}
+            alturaTela={alturaTela}
+            onArrastando={arrastando}
+            onEscolher={escolher}
+          />
         </View>
       </View>
       <Aparecer atraso={300}>
@@ -78,5 +108,7 @@ export default function Inicio() {
 const styles = StyleSheet.create({
   conteudo: { paddingHorizontal: space[24], gap: ESPACO_SECAO },
   // O palco usa a largura toda da tela: as posições dos balões são do frame de 436 px.
+  // por cima das seções seguintes: a vinheta do modo imersivo cobre a tela inteira
+  primeiraTela: { zIndex: 1 },
   hero: { marginHorizontal: -space[24] },
 });
