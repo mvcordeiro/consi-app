@@ -20,6 +20,10 @@ type Props = {
   iconeNode?: ReactNode;
   /** Fundo fora dos tons (ex.: action/primary/pressed na etiqueta de emoção da Home). */
   fundo?: string;
+  /** Uma linha só, com "..." se não couber, e texto menor (Legenda/Pequena). */
+  linhaUnica?: boolean;
+  /** Cor do rótulo (padrão text/primary), para fundos fora dos tons. */
+  corTexto?: string;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -38,12 +42,18 @@ export function fundoDoTom(c: Cores, tom: TomEtiqueta) {
   }
 }
 
-export function Etiqueta({ rotulo, tom = 'neutro', icone: Icone, iconeNode, fundo, style }: Props) {
+export function Etiqueta({ rotulo, tom = 'neutro', icone: Icone, iconeNode, fundo, corTexto, linhaUnica, style }: Props) {
   const { cores } = useTema();
   return (
-    <View style={[styles.base, { backgroundColor: fundo ?? fundoDoTom(cores, tom) }, style]}>
+    <View style={[styles.base, linhaUnica && styles.compacta, { backgroundColor: fundo ?? fundoDoTom(cores, tom) }, style]}>
       {iconeNode ?? (Icone ? <Icone width={16} height={16} corTraco={cores.text.primary} /> : null)}
-      <Texto estilo="Texto/Botões e rótulos" style={styles.rotulo}>
+      <Texto
+        estilo={linhaUnica ? 'Legenda/Pequena' : 'Texto/Botões e rótulos'}
+        cor={corTexto}
+        numberOfLines={linhaUnica ? 1 : undefined}
+        ellipsizeMode="tail"
+        style={styles.rotulo}
+      >
         {rotulo}
       </Texto>
     </View>
@@ -61,5 +71,7 @@ const styles = StyleSheet.create({
     paddingVertical: space[4],
     borderRadius: radius.full,
   },
-  rotulo: { textAlign: 'center' },
+  // em cards estreitos o rótulo encolhe (quebra, ou corta com "..." em linhaUnica)
+  compacta: { maxWidth: '100%', gap: space[4], paddingHorizontal: space[8] },
+  rotulo: { textAlign: 'center', flexShrink: 1 },
 });

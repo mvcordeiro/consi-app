@@ -225,6 +225,9 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
   // Contraste: no Dark, branco sobre action/primary/pressed (como no Figma); no Light, esse fundo
   // é dourado (#AB6A0A) e nem o texto escuro nem o branco chegam a 4,5:1, então usamos bg/sunken.
   const fundoEtiqueta = modo === 'dark' ? cores.action.primary.pressed : cores.bg.sunken;
+  // A emoção mais recente fica em destaque, preenchida em action/primary com texto on-primary
+  // (branco sobre azul no Dark, 5:1; quase preto sobre laranja no Light).
+  const fundoUltima = cores.action.primary.default;
 
   return (
     // no modo imersivo a hero cresce até 100vh (o bloco extra no fim), sem tirar espaço de cima do boneco
@@ -280,7 +283,8 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
               >
               <Etiqueta
                 rotulo={`${e.nome} · ${quandoFoi(r.em, agora)}`}
-                fundo={fundoEtiqueta}
+                fundo={i === 0 ? fundoUltima : fundoEtiqueta}
+                corTexto={i === 0 ? cores.text['on-primary'] : undefined}
                 iconeNode={
                   <BalaoEmocao Svg={e.Svg} Textura={e.Textura} circulo={e.circulo} tamanho={15} flutuar={false} />
                 }

@@ -80,7 +80,7 @@ const CHAVE = 'consi:emocao-do-dia';
 
 export type RegistroEmocao = { id: string; em: number };
 
-const mesmoDia = (a: Date, b: Date) =>
+export const mesmoDia = (a: Date, b: Date) =>
   a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 /** Lê o histórico salvo. Aceita o formato antigo (um registro só). */
@@ -95,15 +95,66 @@ async function lerHistorico(): Promise<RegistroEmocao[]> {
   }
 }
 
-/** Registra a emoção e devolve as de hoje, da mais recente para a mais antiga. */
+/** Quantos dias de check-ins ficam guardados (os de "Sua semana"). */
+export const DIAS_GUARDADOS = 7;
+
+/** Meia-noite de `dias` dias atrás (0 = hoje). */
+export function inicioDoDia(dias = 0, agora = new Date()) {
+  const d = new Date(agora);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - dias);
+  return d;
+}
+
+/**
+ * Registra a emoção (o check-in) e devolve as de hoje, da mais recente para a mais antiga.
+ * O histórico guarda a última semana, que aparece em "Sua semana".
+ */
 export async function salvarEmocao(id: string): Promise<RegistroEmocao[]> {
-  const hoje = [{ id, em: Date.now() }, ...(await emocoesDeHoje())];
+  const limite = inicioDoDia(DIAS_GUARDADOS - 1).getTime();
+  const historico = [{ id, em: Date.now() }, ...(await lerHistorico()).filter((r) => r.em >= limite)].sort(
+    (a, b) => b.em - a.em,
+  );
   try {
-    await AsyncStorage.setItem(CHAVE, JSON.stringify(hoje));
+    await AsyncStorage.setItem(CHAVE, JSON.stringify(historico));
   } catch {
     // sem armazenamento, as emoções valem só enquanto o app estiver aberto
   }
-  return hoje;
+  const hoje = new Date();
+  return historico.filter((r) => mesmoDia(new Date(r.em), hoje));
+}
+
+/** Os check-ins da última semana, do mais recente para o mais antigo. */
+export async function emocoesDaSemana(): Promise<RegistroEmocao[]> {
+  const limite = inicioDoDia(DIAS_GUARDADOS - 1).getTime();
+  return (await lerHistorico()).filter((r) => r.em >= limite).sort((a, b) => b.em - a.em);
+}
+
+/** Troca a lista inteira de check-ins (apagar, desfazer, editar) e devolve a da semana. */
+async function gravarSemana(f: (lista: RegistroEmocao[]) => RegistroEmocao[]) {
+  const lista = f(await emocoesDaSemana()).sort((a, b) => b.em - a.em);
+  try {
+    await AsyncStorage.setItem(CHAVE, JSON.stringify(lista));
+  } catch {
+    // sem armazenamento, a mudança vale só enquanto o app estiver aberto
+  }
+  return lista;
+}
+
+/** Apaga o check-in feito no instante `em`. */
+export const apagarCheckin = (em: number) => gravarSemana((l) => l.filter((r) => r.em !== em));
+
+/** Devolve um check-in apagado (o "Desfazer"). */
+export const restaurarCheckin = (r: RegistroEmocao) => gravarSemana((l) => [...l.filter((x) => x.em !== r.em), r]);
+
+/** Troca a emoção do check-in feito no instante `em` (o horário continua o mesmo). */
+export const editarCheckin = (em: number, id: string) =>
+  gravarSemana((l) => l.map((r) => (r.em === em ? { ...r, id } : r)));
+
+/** "14:05" */
+export function horaMinuto(em: number) {
+  const d = new Date(em);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 /** As emoções registradas hoje, da mais recente para a mais antiga (as de ontem não contam mais). */
@@ -119,6 +170,5 @@ export function quandoFoi(em: number, agora = Date.now()) {
   const minutos = Math.floor((agora - em) / 60000);
   if (minutos < 1) return 'agora';
   if (minutos < 60) return `há ${minutos} min`;
-  const d = new Date(em);
-  return `às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `às ${horaMinuto(em)}`;
 }

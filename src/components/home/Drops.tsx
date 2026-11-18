@@ -1,48 +1,114 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  PanResponder,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-  type LayoutChangeEvent,
-} from 'react-native';
+import { router } from 'expo-router';
+import { useMemo, useRef, useState } from 'react';
+import { Animated, Easing, PanResponder, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
+import type { Atividade } from '@/data/catalogo';
+import { emocaoPorId } from '@/data/emocoes';
+import { useHobbies } from '@/data/hobbiesEstado';
 import { borderWidth, duration, easing, radius, space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
+import { Botao } from '../Botao';
 import { CabecalhoSecao } from '../CabecalhoSecao';
+import { irPara, PilhaSugestoes, type Decisao } from '../hobbies';
 import { Texto } from '../Texto';
-import { AnelPausa, IconeCumplicidade, IconeHobbies, SetaArrastar } from './assets';
+import { BalaoEmocao } from './BalaoEmocao';
+import { IconeHobbies, SetaArrastar } from './assets';
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
-const SEGURAR_MS = 2000;
+
+type Props = {
+  /** Margem lateral da página: a pilha "sangra" até a borda para as abas de feedback. */
+  margem: number;
+  /** Avisa enquanto o drop está sendo arrastado (para travar a rolagem da Home). */
+  onArrastando: (a: boolean) => void;
+  /** Depois de aceitar: o aviso "Adicionada em Suas atividades". */
+  onAceito: (s: Atividade) => void;
+};
 
 /**
- * Drops para você — o card "Puxe para revelar". Arrastar a aba até o fim troca para
- * "Um instante antes de começar", em que é preciso segurar por 2 s para abrir o drop.
+ * Drops para você — o card "Puxe para revelar". Arrastar a aba até o fim revela o drop: uma
+ * sugestão de hobby, com o mesmo card e o mesmo gesto de "Para você" da aba Hobbies
+ * (esquerda ignora, direita aceita e vira atividade). Quando não há mais sugestões nos hobbies
+ * da pessoa, aparece a conclusão (no estilo da de "Isso faz sentido para você?").
  */
-export function Drops({ onAbrirDrop }: { onAbrirDrop: () => void }) {
-  const [etapa, setEtapa] = useState<'escondido' | 'pausa'>('escondido');
+export function Drops({ margem, onArrastando, onAceito }: Props) {
+  const { cores } = useTema();
+  const h = useHobbies();
+  const [etapa, setEtapa] = useState<'escondido' | 'drop'>('escondido');
+  const [drop, setDrop] = useState<Atividade | null>(null);
+  // O que a pessoa fez com os drops desde que abriu a Home (para a conclusão).
+  const [feitos, setFeitos] = useState({ aceitos: 0, ignorados: 0 });
+  // Cada drop sai de um hobby diferente, em rodízio.
+  const vez = useRef(0);
 
-  const abrir = () => {
-    onAbrirDrop();
+  const proximo = () => {
+    const n = h.hobbies.length;
+    for (let i = 0; i < n; i++) {
+      const hobby = h.hobbies[(vez.current + i) % n];
+      const s = h.pilha(hobby)[0];
+      if (s) return { s, i };
+    }
+    return null;
+  };
+  const acabou = h.hobbies.every((hb) => !h.pilha(hb).length);
+
+  const revelar = () => {
+    const p = proximo();
+    if (!p) return;
+    vez.current = (vez.current + p.i + 1) % h.hobbies.length;
+    setDrop(p.s);
+    setEtapa('drop');
+  };
+
+  const decidir = (s: Atividade, d: Decisao) => {
+    if (d === 'aceitar') {
+      h.aceitar(s);
+      onAceito(s);
+    } else {
+      h.ignorar(s);
+    }
+    setFeitos((f) => (d === 'aceitar' ? { ...f, aceitos: f.aceitos + 1 } : { ...f, ignorados: f.ignorados + 1 }));
+    setDrop(null);
     setEtapa('escondido');
+  };
+
+  const reverIgnorados = () => {
+    for (const hb of h.hobbies) if (h.temIgnoradas(hb)) h.reverIgnoradas(hb);
+    setFeitos({ aceitos: 0, ignorados: 0 });
   };
 
   return (
     <View style={styles.secao}>
       <CabecalhoSecao titulo="Drops para você" subtitulo="Convites para fazer espaço para o que importa." espacado />
-      {etapa === 'escondido' ? (
-        <Aparecer key="escondido" deslocamento={0} escalaInicial={0.97} duracao={400}>
-          <CardEscondido onRevelar={() => setEtapa('pausa')} />
+      {etapa === 'drop' && drop ? (
+        <Aparecer key={drop.id} deslocamento={0} escalaInicial={0.97} duracao={400}>
+          <PilhaSugestoes
+            sugestoes={[drop]}
+            margem={margem}
+            totalComentarios={h.totalComentarios}
+            onDecidir={decidir}
+            onConversa={(s) => irPara.conversa(s.id)}
+            onMais={(s) => irPara.detalhe(s.id)}
+            onArrastando={onArrastando}
+            vazio={null}
+          />
+          <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={[styles.centro, styles.dica]}>
+            Arraste para esquerda para ignorar, direita para aceitar.
+          </Texto>
+        </Aparecer>
+      ) : acabou ? (
+        <Aparecer key="conclusao" deslocamento={16} escalaInicial={0.96} duracao={800}>
+          <Conclusao
+            aceitos={feitos.aceitos}
+            podeRever={h.hobbies.some((hb) => h.temIgnoradas(hb))}
+            onRever={reverIgnorados}
+          />
         </Aparecer>
       ) : (
-        <Aparecer key="pausa" deslocamento={0} escalaInicial={0.97} duracao={400}>
-          <CardPausa onConcluir={abrir} />
+        <Aparecer key="escondido" deslocamento={0} escalaInicial={0.97} duracao={400}>
+          <CardEscondido onRevelar={revelar} />
         </Aparecer>
       )}
     </View>
@@ -72,16 +138,19 @@ const ALCA = 38;
 const RECUO_ESQUERDA = 8;
 const RECUO_DIREITA = 14;
 
+/** Percurso da alça no trilho, medido no layout. */
+function usePercurso() {
+  const [percurso, setPercurso] = useState(0);
+  const medir = (e: LayoutChangeEvent) =>
+    setPercurso(Math.max(0, e.nativeEvent.layout.width - RECUO_ESQUERDA * 2 - ALCA));
+  return [percurso, medir] as const;
+}
+
 /** Drag affordance / reveal — a alça só abre o drop se for arrastada até perto do fim. */
 function ArrastarParaRevelar({ onRevelar }: { onRevelar: () => void }) {
   const { cores } = useTema();
   const [x] = useState(() => new Animated.Value(0));
-  const [percurso, setPercurso] = useState(0);
-
-  const medir = (e: LayoutChangeEvent) => {
-    const p = Math.max(0, e.nativeEvent.layout.width - RECUO_ESQUERDA * 2 - ALCA);
-    setPercurso(p);
-  };
+  const [percurso, medir] = usePercurso();
 
   const pan = useMemo(() => {
     const voltar = () =>
@@ -138,80 +207,43 @@ function ArrastarParaRevelar({ onRevelar }: { onRevelar: () => void }) {
   );
 }
 
-/** Card F · "Um instante antes de começar" — segurar por 2 s; soltar cancela. */
-function CardPausa({ onConcluir }: { onConcluir: () => void }) {
+
+/**
+ * Conclusão — sem mais drops nos hobbies da pessoa. Mesmo card da conclusão dos padrões
+ * (borda, balão flutuando, legenda, título, texto e botão principal); a copy e o botão
+ * seguem o que a pessoa fez: aceitou algum → ver as atividades; só ignorou → rever os ignorados.
+ */
+function Conclusao({ aceitos, podeRever, onRever }: { aceitos: number; podeRever: boolean; onRever: () => void }) {
   const { cores } = useTema();
-  const [restante, setRestante] = useState(SEGURAR_MS / 1000);
-  const [segurando, setSegurando] = useState(false);
-  const [respiro] = useState(() => new Animated.Value(0));
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const limpar = () => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-  };
-  useEffect(() => limpar, []);
-
-  const comecar = () => {
-    limpar();
-    setSegurando(true);
-    Animated.timing(respiro, { toValue: 1, duration: SEGURAR_MS, easing: curva, useNativeDriver: nativo }).start();
-    for (let s = 1; s < SEGURAR_MS / 1000; s++) {
-      timers.current.push(setTimeout(() => setRestante(SEGURAR_MS / 1000 - s), s * 1000));
-    }
-    timers.current.push(
-      setTimeout(() => {
-        setRestante(0);
-        onConcluir();
-      }, SEGURAR_MS),
-    );
-  };
-
-  const cancelar = () => {
-    limpar();
-    setSegurando(false);
-    setRestante(SEGURAR_MS / 1000);
-    Animated.timing(respiro, { toValue: 0, duration: duration.slow, easing: curva, useNativeDriver: nativo }).start();
-  };
-
+  const emocao = emocaoPorId(aceitos > 0 ? 'satisfeito' : 'esperanca');
+  const legenda =
+    aceitos > 0 ? `${aceitos} ${aceitos === 1 ? 'DROP ACEITO' : 'DROPS ACEITOS'}` : 'TODOS OS DROPS REVELADOS';
+  const titulo = aceitos > 0 ? 'Bons convites a caminho!' : 'Você viu todos os drops';
+  const texto =
+    aceitos > 0
+      ? 'Os drops que você aceitou estão em Suas atividades, na aba Hobbies. Novos drops chegam amanhã.'
+      : 'Novos drops chegam amanhã. Enquanto isso, dá para rever os que você deixou passar.';
+  const botao =
+    aceitos > 0 || !podeRever
+      ? { rotulo: 'Ver minhas atividades', onPress: () => router.navigate('/hobbies') }
+      : { rotulo: 'Rever os que ignorei', onPress: onRever };
   return (
-    <View style={[styles.cardPausa, { backgroundColor: cores.action.secondary.default }]}>
-      <View style={styles.visualPausa}>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { transform: [{ scale: respiro.interpolate({ inputRange: [0, 1], outputRange: [1, 1.12] }) }] },
-          ]}
-        >
-          <AnelPausa width={88} height={88} corTraco={cores.text.primary} />
-        </Animated.View>
-        <View style={[styles.fundoIconePausa, { backgroundColor: cores.action.secondary.pressed }]}>
-          <IconeCumplicidade width={28.02} height={27.58} corTraco={cores.text.primary} />
-        </View>
-      </View>
-      <Texto estilo="Títulos/Médio" style={styles.centro}>
-        Um instante antes de começar.
-      </Texto>
-      <Texto estilo="Legenda/Pequena" style={styles.centro}>
-        Solte os ombros. Perceba como você chegou até aqui.
-      </Texto>
-      <Pressable
-        onPressIn={comecar}
-        onPressOut={() => segurando && cancelar()}
-        accessibilityRole="button"
-        accessibilityLabel="Segure por 2 segundos para começar"
-        style={[styles.segurar, { backgroundColor: cores.bg['info-subtle'], borderColor: cores.border.subtle }]}
-      >
-        <View style={[styles.cronometro, { backgroundColor: cores.action.secondary.default }]}>
-          <Texto estilo="Legenda/Pequena">{restante}s</Texto>
-        </View>
-        <Texto estilo="Texto/Botões e rótulos" style={styles.flex}>
-          Segure para começar
+    <View style={[styles.conclusao, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}>
+      {emocao ? <BalaoEmocao Svg={emocao.Svg} Textura={emocao.Textura} circulo={emocao.circulo} tamanho={72} /> : null}
+      <View style={styles.textosConclusao}>
+        <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
+          {legenda}
         </Texto>
-      </Pressable>
-      <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={styles.centro}>
-        Solte para cancelar.
-      </Texto>
+        <Texto estilo="Títulos/Médio" style={styles.centro}>
+          {titulo}
+        </Texto>
+        <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.centro}>
+          {texto}
+        </Texto>
+      </View>
+      <View style={styles.largo}>
+        <Botao rotulo={botao.rotulo} corRotulo={cores.text.primary} onPress={botao.onPress} />
+      </View>
     </View>
   );
 }
@@ -219,7 +251,7 @@ function CardPausa({ onConcluir }: { onConcluir: () => void }) {
 const styles = StyleSheet.create({
   secao: { gap: space[24] },
   centro: { textAlign: 'center', alignSelf: 'stretch' },
-  flex: { flex: 1 },
+  dica: { marginTop: space[24] },
   card: {
     alignItems: 'center',
     gap: space[16],
@@ -258,39 +290,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardPausa: {
+  conclusao: {
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: space[24],
-    paddingVertical: 22,
+    gap: space[20],
+    paddingHorizontal: space[24] - borderWidth.thin,
+    paddingTop: space[32] - borderWidth.thin,
+    paddingBottom: space[24] - borderWidth.thin,
     borderRadius: radius.xl,
-    overflow: 'hidden',
-  },
-  visualPausa: { width: 88, height: 88, alignItems: 'center', justifyContent: 'center' },
-  fundoIconePausa: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segurar: {
-    alignSelf: 'stretch',
-    height: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingLeft: 10 - borderWidth.thin,
-    paddingRight: space[12] - borderWidth.thin,
-    borderRadius: 27,
     borderWidth: borderWidth.thin,
-    overflow: 'hidden',
   },
-  cronometro: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  textosConclusao: { alignSelf: 'stretch', gap: space[8] },
+  largo: { alignSelf: 'stretch' },
 });

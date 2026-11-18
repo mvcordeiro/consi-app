@@ -1,24 +1,51 @@
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { grupos, type Grupo } from '@/data/home';
+import { ID_LIVRE, appPorId, limiteDoGrupo, linhasDaGrade, useGrupos, type Grupo as GrupoHome } from '@/data/gruposHome';
 import { borderWidth, primitivas, radius, space, useTema, type Cores } from '@/theme';
 
-import { Etiqueta, fundoDoTom } from '../Etiqueta';
+import { Etiqueta, fundoDoTom, type TomEtiqueta } from '../Etiqueta';
+import { Icone } from '../Icone';
 import { Texto } from '../Texto';
 
-/** V3 - Grade de grupos — grupos de apps por hobby, dois por linha, e o card "Criar grupo". */
-export function Grupos({ onAbrir, onCriar }: { onAbrir: (g: Grupo) => void; onCriar: () => void }) {
+type Props = {
+  onAbrir: (g: GrupoHome) => void;
+  onCriar: () => void;
+  /** Engrenagem: escolher quais hobbies aparecem como grupos. */
+  onAjustes: () => void;
+};
+
+/**
+ * V3 - Grade de grupos — um grupo de apps por hobby da pessoa, mais o "Sem hobbies" fixado.
+ * A grade se adapta à quantidade (ver `linhasDaGrade`): 1 ou 2 grupos ficam numa coluna só,
+ * em cards inteiros (1fr); quantidades pares vão em pares de meios (0.5fr); nas ímpares,
+ * o "Sem hobbies" ocupa a primeira linha inteira. "Criar grupo" fica sempre por último.
+ */
+export function Grupos({ onAbrir, onCriar, onAjustes }: Props) {
   const { cores } = useTema();
-  const itens: (Grupo | 'criar')[] = [...grupos, 'criar'];
-  const linhas: (Grupo | 'criar')[][] = [];
-  for (let i = 0; i < itens.length; i += 2) linhas.push(itens.slice(i, i + 2));
+  const grupos = useGrupos().filter((g) => !g.oculto);
+  const linhas = linhasDaGrade(grupos);
+
 
   return (
     <View style={styles.secao}>
       <View style={styles.cabecalho}>
-        <Texto estilo="Títulos/Médio">Aplicativos e hobbies</Texto>
+        <View style={styles.tituloLinha}>
+          <Texto estilo="Títulos/Médio" style={styles.flex}>
+            Aplicativos e hobbies
+          </Texto>
+          <Pressable
+            onPress={onAjustes}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Escolher quais grupos aparecem"
+            style={({ pressed }) => [styles.engrenagem, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Icone nome="engrenagem" />
+          </Pressable>
+        </View>
         <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-          Crie grupos por hobby e personalize os limites de cada um.
+          Agrupe seus apps e escolha a regra de cada grupo.
         </Texto>
       </View>
       <View style={styles.meta}>
@@ -26,84 +53,157 @@ export function Grupos({ onAbrir, onCriar }: { onAbrir: (g: Grupo) => void; onCr
           SEUS GRUPOS
         </Texto>
         <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={[styles.flex, styles.direita]}>
-          Escolha uma categoria
+          {grupos.length} {grupos.length === 1 ? 'grupo' : 'grupos'}
         </Texto>
       </View>
       <View style={styles.grade}>
-        {linhas.map((linha, i) => (
-          <View key={i} style={styles.linha}>
-            {/* Cada card numa coluna sem padding: assim as duas colunas têm sempre a mesma largura. */}
-            {linha.map((item) => (
-              <View key={item === 'criar' ? 'criar' : item.id} style={styles.coluna}>
-                {item === 'criar' ? (
-                  <CardCriarGrupo onPress={onCriar} />
-                ) : (
-                  <CardGrupo grupo={item} onPress={() => onAbrir(item)} />
-                )}
-              </View>
-            ))}
-            {linha.length === 1 ? <View style={styles.flex} /> : null}
-          </View>
-        ))}
+        {linhas.map((linha) =>
+          linha.tipo === 'inteiro' ? (
+            <CardGrupoInteiro key={linha.grupo.id} grupo={linha.grupo} onPress={() => onAbrir(linha.grupo)} />
+          ) : (
+            // Cada card numa coluna sem padding: assim as duas colunas têm sempre a mesma largura.
+            <View key={linha.grupos[0].id} style={styles.linha}>
+              {linha.grupos.map((g) => (
+                <View key={g.id} style={styles.coluna}>
+                  <CardGrupoMetade grupo={g} onPress={() => onAbrir(g)} />
+                </View>
+              ))}
+            </View>
+          ),
+        )}
+        <CardCriarGrupo onPress={onCriar} />
       </View>
       <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={styles.centro}>
-        Selecione uma categoria para visualizar ou ajustar seus limites.
+        Selecione um grupo para visualizar ou ajustar seus limites.
       </Texto>
     </View>
   );
 }
 
-function corDoHobby(c: Cores, tom: Grupo['tom']) {
+function corDoTom(c: Cores, tom: TomEtiqueta) {
   if (tom === 'sucesso') return c.feedback.success;
   if (tom === 'info') return c.feedback.info;
-  return c.feedback.warning;
+  if (tom === 'aviso') return c.feedback.warning;
+  return c.text.primary;
 }
 
-/** Group tile — ícone do hobby, quantidade de apps, nome, ícones dos apps e limite. */
-function CardGrupo({ grupo, onPress }: { grupo: Grupo; onPress: () => void }) {
+function rotuloApps(n: number) {
+  if (n === 0) return 'Nenhum app';
+  return n === 1 ? '1 app' : `${n} apps`;
+}
+
+function descricao(g: GrupoHome) {
+  return `${g.nome}${g.id === ID_LIVRE ? ', fixado' : ''}, ${rotuloApps(g.apps.length)}, ${limiteDoGrupo(g).rotulo}`;
+}
+
+/** Círculo de 30 px com o ícone do grupo, na cor da regra. */
+function Marcador({ grupo }: { grupo: GrupoHome }) {
   const { cores } = useTema();
-  const Icone = grupo.icone;
+  const { tom } = limiteDoGrupo(grupo);
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${grupo.nome}, ${grupo.apps.length} apps, ${grupo.limite.rotulo}`}
-      style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: cores.bg.raised, borderColor: cores.border.focus, opacity: pressed ? 0.85 : 1 },
-      ]}
-    >
-      <View style={styles.topo}>
-        <View style={[styles.marcador, { backgroundColor: fundoDoTom(cores, grupo.tom) }]}>
-          <Icone width={19} height={19} corTraco={corDoHobby(cores, grupo.tom)} />
+    <View style={[styles.marcador, { backgroundColor: fundoDoTom(cores, tom) }]}>
+      <Icone nome={grupo.icone} tamanho={18} cor={corDoTom(cores, tom)} />
+    </View>
+  );
+}
+
+/** Quantidade de apps, com "Fixado" no grupo fixado. */
+function Contagem({ grupo }: { grupo: GrupoHome }) {
+  const { cores } = useTema();
+  return (
+    <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} numberOfLines={1}>
+      {grupo.id === ID_LIVRE ? `${rotuloApps(grupo.apps.length)} · Fixado` : rotuloApps(grupo.apps.length)}
+    </Texto>
+  );
+}
+
+function Apps({ grupo }: { grupo: GrupoHome }) {
+  const { cores } = useTema();
+  if (!grupo.apps.length) {
+    // Sem apps ainda: um espaço tracejado no lugar dos ícones.
+    return (
+      <View style={styles.apps}>
+        <View style={[styles.app, styles.appVazio, { borderColor: cores.border.subtle }]}>
+          <Icone nome="adicionar" tamanho={14} cor={cores.text.tertiary} />
         </View>
-        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
-          {grupo.apps.length} apps
-        </Texto>
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.apps, { gap: space[4] }]}>
+      {grupo.apps.slice(0, 4).map((id) => (
+        <IconeApp key={id} id={id} />
+      ))}
+    </View>
+  );
+}
+
+/** Ícone de marca do app (provisório), num quadrado claro de 32 px. */
+export function IconeApp({ id, lado = 32 }: { id: string; lado?: number }) {
+  const app = appPorId(id);
+  return (
+    <View style={[styles.app, { width: lado, height: lado, backgroundColor: primitivas.neutral[200] }]}>
+      {app ? <FontAwesome6 name={app.marca as 'instagram'} brand size={lado / 2} color={primitivas.neutral[950]} /> : null}
+    </View>
+  );
+}
+
+function useEstiloCard() {
+  const { cores } = useTema();
+  return ({ pressed }: { pressed: boolean }) => [
+    styles.card,
+    { backgroundColor: cores.bg.raised, borderColor: cores.border.focus, opacity: pressed ? 0.85 : 1 },
+  ];
+}
+
+/** Card 0.5fr (o "Group tile" do Figma): ícone e contagem, nome, apps e limite empilhados. */
+function CardGrupoMetade({ grupo, onPress }: { grupo: GrupoHome; onPress: () => void }) {
+  const estilo = useEstiloCard();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={descricao(grupo)} style={estilo}>
+      <View style={styles.topo}>
+        <Marcador grupo={grupo} />
+        <View style={styles.encolher}>
+          <Contagem grupo={grupo} />
+        </View>
       </View>
       <View style={styles.meio}>
-        <Texto estilo="Títulos/Pequeno">{grupo.nome}</Texto>
-        <View style={[styles.apps, { gap: grupo.espacoApps ?? space[4] }]}>
-          {grupo.apps.map((app, i) => (
-            <View
-              key={i}
-              style={[
-                styles.app,
-                // #D6D6D6 no Figma → o primitivo neutro mais próximo
-                { backgroundColor: app.fundo === 'escuro' ? cores.bg.sunken : primitivas.neutral[200] },
-              ]}
-            >
-              <Image source={app.imagem} style={{ width: app.tamanho, height: app.tamanho }} resizeMode="cover" />
-            </View>
-          ))}
-        </View>
+        <Texto estilo="Títulos/Pequeno" numberOfLines={1}>
+          {grupo.nome}
+        </Texto>
+        <Apps grupo={grupo} />
       </View>
-      <Etiqueta rotulo={grupo.limite.rotulo} tom={grupo.tom} icone={grupo.limite.icone} />
+      <Etiqueta {...limiteDoGrupo(grupo)} linhaUnica />
     </Pressable>
   );
 }
 
-/** Create group tile. */
+/**
+ * Card 1fr (largura toda): a mesma informação em duas linhas — ícone, nome e contagem em cima;
+ * apps à esquerda e limite à direita embaixo.
+ */
+function CardGrupoInteiro({ grupo, onPress }: { grupo: GrupoHome; onPress: () => void }) {
+  const estilo = useEstiloCard();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={descricao(grupo)} style={estilo}>
+      <View style={styles.inteiroTopo}>
+        <Marcador grupo={grupo} />
+        <View style={styles.flex}>
+          <Texto estilo="Títulos/Pequeno" numberOfLines={1}>
+            {grupo.nome}
+          </Texto>
+          <Contagem grupo={grupo} />
+        </View>
+      </View>
+      <View style={styles.inteiroBase}>
+        <Apps grupo={grupo} />
+        <Etiqueta {...limiteDoGrupo(grupo)} linhaUnica style={styles.encolher} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** Criar grupo — linha inteira, tracejada, sempre no fim da grade. */
 function CardCriarGrupo({ onPress }: { onPress: () => void }) {
   const { cores } = useTema();
   return (
@@ -116,13 +216,13 @@ function CardCriarGrupo({ onPress }: { onPress: () => void }) {
         { backgroundColor: cores.bg.sunken, borderColor: cores.border.focus, opacity: pressed ? 0.85 : 1 },
       ]}
     >
-      <Texto estilo="Títulos/Grande">+</Texto>
-      <Texto estilo="Texto/Pequeno" style={styles.centro}>
-        Criar grupo
-      </Texto>
-      <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={styles.centro}>
-        Agrupe novos aplicativos
-      </Texto>
+      <Icone nome="adicionar" tamanho={20} />
+      <View style={styles.flex}>
+        <Texto estilo="Texto/Pequeno">Criar grupo</Texto>
+        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
+          Agrupe novos aplicativos
+        </Texto>
+      </View>
     </Pressable>
   );
 }
@@ -130,8 +230,11 @@ function CardCriarGrupo({ onPress }: { onPress: () => void }) {
 const styles = StyleSheet.create({
   secao: { gap: space[24] },
   cabecalho: { gap: space[4] },
+  tituloLinha: { flexDirection: 'row', alignItems: 'center', gap: space[16] },
+  engrenagem: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   meta: { flexDirection: 'row' },
-  flex: { flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
+  encolher: { flexShrink: 1, minWidth: 0 },
   direita: { textAlign: 'right' },
   centro: { textAlign: 'center', alignSelf: 'stretch' },
   grade: { gap: space[12] },
@@ -146,7 +249,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: borderWidth.thin,
   },
-  topo: { height: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  topo: { height: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[8] },
+  inteiroTopo: { flexDirection: 'row', alignItems: 'center', gap: space[12] },
+  inteiroBase: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[12] },
   marcador: {
     width: 30,
     height: 30,
@@ -164,14 +269,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  appVazio: { borderWidth: borderWidth.thin, borderStyle: 'dashed' },
   criar: {
-    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 0,
-    gap: space[8],
-    padding: space[12] - borderWidth.thin,
+    gap: space[12],
+    paddingHorizontal: space[16] - borderWidth.thin,
+    paddingVertical: space[12] - borderWidth.thin,
     borderRadius: radius.lg,
     borderWidth: borderWidth.thin,
+    borderStyle: 'dashed',
   },
 });

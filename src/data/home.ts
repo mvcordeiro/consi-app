@@ -4,24 +4,13 @@
  */
 import type { ImageSourcePropType } from 'react-native';
 
-import type { TomEtiqueta } from '@/components/Etiqueta';
 import {
-  HobbyCinema,
-  HobbyLeitura,
-  HobbyMusica,
-  IconeCheckin,
-  IconeNotificacao,
-  IconeRelogio,
-  IconeRepetir,
   MarcadorManha08,
   MarcadorManha09,
   MarcadorManha11,
   MarcadorNoite20,
   MarcadorNoite21,
   MarcadorNoite22,
-  RostoCorado,
-  RostoPositivo16,
-  iconesApps,
 } from '@/components/home/assets';
 import type { IconeSvg } from '@/components/onboarding/assets';
 
@@ -106,102 +95,14 @@ export const secoesConteudo: SecaoConteudo[] = [
 ];
 
 // ─── Aplicativos e hobbies ──────────────────────────────────────────────────
-export type AppDoGrupo = {
-  imagem: ImageSourcePropType;
-  /** Tamanho do ícone dentro do quadrado de 32 px. */
-  tamanho: number;
-  /** Fundo atrás do ícone: escuro (bg/sunken) ou claro. */
-  fundo: 'escuro' | 'claro';
-};
-
-export type Grupo = {
-  id: string;
-  nome: string;
-  icone: IconeSvg;
-  tom: Exclude<TomEtiqueta, 'neutro' | 'erro'>;
-  apps: AppDoGrupo[];
-  /** Espaço entre os ícones dos apps (Leitura usa 6 no Figma). */
-  espacoApps?: number;
-  limite: { rotulo: string; icone: IconeSvg };
-};
-
-export const grupos: Grupo[] = [
-  {
-    id: 'musica',
-    nome: 'Música',
-    icone: HobbyMusica,
-    tom: 'sucesso',
-    apps: [
-      { imagem: iconesApps.musica1, tamanho: 32, fundo: 'escuro' },
-      { imagem: iconesApps.musica2, tamanho: 16, fundo: 'escuro' },
-    ],
-    limite: { rotulo: 'Não interromper', icone: RostoPositivo16 },
-  },
-  {
-    id: 'leitura',
-    nome: 'Leitura',
-    icone: HobbyLeitura,
-    tom: 'info',
-    apps: [
-      { imagem: iconesApps.leitura1, tamanho: 32, fundo: 'claro' },
-      { imagem: iconesApps.leitura2, tamanho: 22, fundo: 'claro' },
-    ],
-    espacoApps: 6,
-    limite: { rotulo: 'Apenas pausar', icone: RostoPositivo16 },
-  },
-  {
-    id: 'cinema',
-    nome: 'Cinema',
-    icone: HobbyCinema,
-    tom: 'aviso',
-    apps: [
-      { imagem: iconesApps.cinema1, tamanho: 32, fundo: 'claro' },
-      { imagem: iconesApps.cinema2, tamanho: 32, fundo: 'claro' },
-      { imagem: iconesApps.cinema3, tamanho: 32, fundo: 'claro' },
-    ],
-    limite: { rotulo: 'Cuidar tempo', icone: IconeNotificacao },
-  },
-];
-
-// ─── Sua semana ─────────────────────────────────────────────────────────────
-export type ParteMomento = string | { rotulo: string; tom: TomEtiqueta; icone: IconeSvg };
-export type Momento = { id: string; partes: ParteMomento[] };
-export type DiaDaSemana = { id: string; semana: string; dia: number; momentos: Momento[] };
-
-export const semana: DiaDaSemana[] = [
-  { id: 'ter-5', semana: 'TER', dia: 5, momentos: [] },
-  { id: 'qua-6', semana: 'QUA', dia: 6, momentos: [] },
-  { id: 'qui-7', semana: 'QUI', dia: 7, momentos: [] },
-  { id: 'sex-8', semana: 'SEX', dia: 8, momentos: [] },
-  { id: 'sab-9', semana: 'SAB', dia: 9, momentos: [] },
-  { id: 'dom-10', semana: 'DOM', dia: 10, momentos: [] },
-  {
-    id: 'seg-11',
-    semana: 'SEG',
-    dia: 11,
-    momentos: [
-      {
-        id: 'automatico',
-        partes: [
-          'Você',
-          { rotulo: 'Abriu no automático', tom: 'erro', icone: IconeRepetir },
-          'às',
-          { rotulo: '13:42', tom: 'info', icone: IconeRelogio },
-          'e se sentiu',
-          { rotulo: 'Cansada', tom: 'info', icone: RostoCorado },
-        ],
-      },
-      {
-        id: 'checkin',
-        partes: [
-          'Você',
-          { rotulo: 'Fez check-in', tom: 'sucesso', icone: IconeCheckin },
-          'às',
-          { rotulo: '17:22', tom: 'info', icone: IconeRelogio },
-          'e ficou 62 minutos sem abrir o celular no automático.',
-        ],
-      },
-    ],
-  },
-];
-export const DIA_INICIAL = 'seg-11';
+// Os grupos (um por hobby + "Sem hobbies") são montados em data/gruposHome.ts.
+export type AppDoGrupo =
+  | {
+      imagem: ImageSourcePropType;
+      /** Tamanho do ícone dentro do quadrado de 32 px. */
+      tamanho: number;
+      /** Fundo atrás do ícone: escuro (bg/sunken) ou claro. */
+      fundo: 'escuro' | 'claro';
+    }
+  /** Ícone de marca (Font Awesome), como os apps provisórios do onboarding. */
+  | { marca: string };

@@ -42,9 +42,12 @@ function Pilha() {
         <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
         <Stack.Screen name="pausa" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="em-construcao" />
+        <Stack.Screen name="grupos-home" options={{ presentation: 'modal' }} />
         <Stack.Screen name="emocao" options={{ animation: 'fade', gestureEnabled: false }} />
         {/* Telas secundárias da aba Hobbies */}
         <Stack.Screen name="hobby" />
+        {/* Grupos de apps da Home: criar e abrir/editar */}
+        <Stack.Screen name="grupo" />
       </Stack>
     </>
   );

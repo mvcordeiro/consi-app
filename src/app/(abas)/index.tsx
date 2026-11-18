@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useEspacoBarra, useModoImersivo } from '@/components';
+import { useAviso, useEspacoBarra, useModoImersivo } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import {
   ConfirmacaoPadroes,
@@ -15,6 +15,7 @@ import {
   SuaSemana,
   TopoHome,
 } from '@/components/home';
+import { hobbyInfo } from '@/data/catalogo';
 import type { Emocao } from '@/data/emocoes';
 import { respostasSalvas } from '@/data/onboarding';
 import { space } from '@/theme';
@@ -39,6 +40,8 @@ export default function Inicio() {
   const espacoBarra = useEspacoBarra();
   const [nome, setNome] = useState('');
   const [arrastandoBalao, setArrastandoBalao] = useState(false);
+  const [arrastandoDrop, setArrastandoDrop] = useState(false);
+  const [aviso, mostrarAviso] = useAviso();
   // Altura real da área da Home (no Android edge-to-edge pode diferir da janela).
   const [alturaTela, setAlturaTela] = useState(height);
   const { imersivo, saida } = useModoImersivo();
@@ -64,11 +67,12 @@ export default function Inicio() {
   );
 
   return (
+    <View style={styles.flex}>
     <ScrollView
       ref={(r: unknown) => {
         rolagem.current = r as typeof rolagem.current;
       }}
-      scrollEnabled={!imersivo && !arrastandoBalao}
+      scrollEnabled={!imersivo && !arrastandoBalao && !arrastandoDrop}
       onLayout={(e) => setAlturaTela(e.nativeEvent.layout.height)}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.conteudo, { paddingTop: topo, paddingBottom: espacoBarra + ESPACO_SECAO }]}
@@ -98,14 +102,25 @@ export default function Inicio() {
       </Aparecer>
       <ConfirmacaoPadroes />
       <Conteudos onVerTudo={(secao) => emConstrucao(secao)} onAbrir={(c) => emConstrucao(c.titulo)} />
-      <Drops onAbrirDrop={() => emConstrucao('Drop')} />
-      <Grupos onAbrir={(g) => emConstrucao(g.nome)} onCriar={() => emConstrucao('Criar grupo')} />
-      <SuaSemana />
+      <Drops
+        margem={space[24]}
+        onArrastando={setArrastandoDrop}
+        onAceito={(s) => mostrarAviso(`Adicionada em Suas atividades · ${hobbyInfo(s.hobby).nome}`)}
+      />
+      <Grupos
+        onAbrir={(g) => router.push({ pathname: '/grupo/[id]', params: { id: g.id } })}
+        onCriar={() => router.push('/grupo/criar')}
+        onAjustes={() => router.push('/grupos-home')}
+      />
+      <SuaSemana margem={space[24]} onArrastando={setArrastandoDrop} onAviso={mostrarAviso} />
     </ScrollView>
+    {aviso}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   conteudo: { paddingHorizontal: space[24], gap: ESPACO_SECAO },
   // O palco usa a largura toda da tela: as posições dos balões são do frame de 436 px.
   // por cima das seções seguintes: a vinheta do modo imersivo cobre a tela inteira
