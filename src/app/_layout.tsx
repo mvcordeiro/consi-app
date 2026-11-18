@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { HobbiesProvider } from '@/data/hobbiesEstado';
 import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
 
 // Mantém a splash na tela até as fontes carregarem.
@@ -24,7 +25,9 @@ export default function RootLayout() {
 
   return (
     <ModoDeCor>
-      <Pilha />
+      <HobbiesProvider>
+        <Pilha />
+      </HobbiesProvider>
     </ModoDeCor>
   );
 }
@@ -40,6 +43,8 @@ function Pilha() {
         <Stack.Screen name="pausa" options={{ presentation: 'fullScreenModal' }} />
         <Stack.Screen name="em-construcao" />
         <Stack.Screen name="emocao" options={{ animation: 'fade', gestureEnabled: false }} />
+        {/* Telas secundárias da aba Hobbies */}
+        <Stack.Screen name="hobby" />
       </Stack>
     </>
   );

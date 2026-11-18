@@ -6,7 +6,8 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
  * Ficam em memória durante o fluxo e são gravadas no aparelho ao final (tela de Compromisso).
  */
 export type Objetivo = 'menos-tempo' | 'automatico' | 'hobbies';
-export type Hobby = 'leitura' | 'cinema' | 'musica' | 'escrita' | 'jogos' | 'atividade';
+/** Id de um hobby do catálogo (src/data/catalogo/hobbies.ts). */
+export type Hobby = string;
 export type CaixaDeApp = 'me-perco' | 'automatico' | 'nao-incomoda';
 
 export type RespostasOnboarding = {

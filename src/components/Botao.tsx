@@ -53,6 +53,8 @@ export function Botao({
 }: Props) {
   const { cores } = useTema();
   const desabilitado = disabled || estado === 'desabilitado';
+  // `disabled` também mostra o estado Desabilitado do componente (não só bloqueia o toque).
+  const estadoVisual: EstadoBotao = desabilitado ? 'desabilitado' : estado;
   const [escala] = useState(() => new Animated.Value(1));
   const [cheio] = useState(() => new Animated.Value(selecionado ? 1 : 0));
 
@@ -84,7 +86,7 @@ export function Botao({
         }}
         style={({ pressed }) => [
           styles.base,
-          aparencia(cores, estilo, (pressed || ativo) && !selecionado ? 'ativo' : estado),
+          aparencia(cores, estilo, (pressed || ativo) && !selecionado && !desabilitado ? 'ativo' : estadoVisual),
           selecionado && { borderColor: 'transparent' },
         ]}
         {...rest}
@@ -93,7 +95,7 @@ export function Botao({
           const pressed = (dedo || !!ativo) && !selecionado;
           const cor = selecionado
             ? cores.text.primary
-            : corDoRotulo(cores, estilo, pressed ? 'ativo' : estado, corRotulo);
+            : corDoRotulo(cores, estilo, pressed && !desabilitado ? 'ativo' : estadoVisual, corRotulo);
           return (
             <>
               {/* Fundo do estado "selecionado", entra com fade e um leve zoom */}

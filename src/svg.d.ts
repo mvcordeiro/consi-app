@@ -7,7 +7,7 @@ declare module '*.svg' {
    * (ver .svgrrc e useCoresSvg em src/theme/tema.tsx).
    */
   export type CoresSvg = {
-    /** branco no Figma → icon/primary */
+    /** branco (e #222222 nos ícones Engrenagem e Menu horizontal) no Figma → icon/primary */
     corTraco?: string;
     /** #6A82EA (blue/400) → border/focus */
     corLinha?: string;
@@ -21,6 +21,10 @@ declare module '*.svg' {
     corSuave?: string;
     /** #4362E5 (blue/500) → action/primary (balões de emoção da Home) */
     corBalao?: string;
+    /** #4A1518 (red/900) → bg/error-subtle (rosto da aba "ignorar" dos Hobbies) */
+    corErroSuave?: string;
+    /** #12341F (green/900) → bg/success-subtle (rosto da aba "aceitar" dos Hobbies) */
+    corSucessoSuave?: string;
   };
 
   const content: FC<SvgProps & CoresSvg>;

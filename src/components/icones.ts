@@ -1,0 +1,195 @@
+// Gerado a partir dos SVGs exportados do Design System (Figma "Consi - Design System",
+// página Variáveis e Ícones, frame 148:1179 — Streamline Freehand). Não edite à mão:
+// para incluir um ícone, salve o SVG em assets/icones/ e rode node scripts/gerar-icones.js.
+import type { IconeSvg } from './onboarding/assets';
+
+import Adicionar from '../../assets/icones/adicionar.svg';
+import AnexarImagem from '../../assets/icones/anexar-imagem.svg';
+import Arduino from '../../assets/icones/arduino.svg';
+import AreaTransferencia from '../../assets/icones/area-transferencia.svg';
+import Aspas from '../../assets/icones/aspas.svg';
+import Audiolivro from '../../assets/icones/audiolivro.svg';
+import AviaoPapel from '../../assets/icones/aviao-papel.svg';
+import Bagagem from '../../assets/icones/bagagem.svg';
+import Baixar from '../../assets/icones/baixar.svg';
+import BalaoFesta from '../../assets/icones/balao-festa.svg';
+import Bateria from '../../assets/icones/bateria.svg';
+import BeijoCoracao from '../../assets/icones/beijo-coracao.svg';
+import Binoculos from '../../assets/icones/binoculos.svg';
+import Blocos from '../../assets/icones/blocos.svg';
+import Cadeado from '../../assets/icones/cadeado.svg';
+import Caderno from '../../assets/icones/caderno.svg';
+import Calendario from '../../assets/icones/calendario.svg';
+import Camera from '../../assets/icones/camera.svg';
+import CameraInstantanea from '../../assets/icones/camera-instantanea.svg';
+import CanetaVetor from '../../assets/icones/caneta-vetor.svg';
+import Cartola from '../../assets/icones/cartola.svg';
+import Claquete from '../../assets/icones/claquete.svg';
+import Compartilhar from '../../assets/icones/compartilhar.svg';
+import Contrabaixo from '../../assets/icones/contrabaixo.svg';
+import Conversa from '../../assets/hobbies/conversa.svg';
+import Cronometro from '../../assets/icones/cronometro.svg';
+import Cubo from '../../assets/icones/cubo.svg';
+import DadoPeao from '../../assets/icones/dado-peao.svg';
+import Discoteca from '../../assets/icones/discoteca.svg';
+import Dj from '../../assets/icones/dj.svg';
+import Engrenagem from '../../assets/hobbies/engrenagem.svg';
+import Excluir from '../../assets/icones/excluir.svg';
+import FiltrarMusicas from '../../assets/hobbies/filtrar-musicas.svg';
+import Gato from '../../assets/icones/gato.svg';
+import GestoComemoracao from '../../assets/icones/gesto-comemoracao.svg';
+import HobbyAtividade from '../../assets/onboarding/hobby-atividade.svg';
+import HobbyEscrita from '../../assets/onboarding/hobby-escrita.svg';
+import HobbyJogos from '../../assets/onboarding/hobby-jogos.svg';
+import HobbyLeitura from '../../assets/onboarding/hobby-leitura.svg';
+import InserirImagem from '../../assets/icones/inserir-imagem.svg';
+import Karaoke from '../../assets/icones/karaoke.svg';
+import Lampada from '../../assets/icones/lampada.svg';
+import Lapis from '../../assets/icones/lapis.svg';
+import LinguaSinais from '../../assets/icones/lingua-sinais.svg';
+import ListaMarcadores from '../../assets/icones/lista-marcadores.svg';
+import ListaNumerada from '../../assets/icones/lista-numerada.svg';
+import ListaTarefas from '../../assets/icones/lista-tarefas.svg';
+import Lixeira from '../../assets/hobbies/lixeira.svg';
+import MaoDoacao from '../../assets/icones/mao-doacao.svg';
+import Mapa from '../../assets/icones/mapa.svg';
+import MaquinaEscrever from '../../assets/icones/maquina-escrever.svg';
+import Martelo from '../../assets/icones/martelo.svg';
+import MenuHorizontal from '../../assets/hobbies/menu-horizontal.svg';
+import MesaDigitalizadora from '../../assets/icones/mesa-digitalizadora.svg';
+import MudaPlanta from '../../assets/icones/muda-planta.svg';
+import Naipes from '../../assets/icones/naipes.svg';
+import Olho from '../../assets/icones/olho.svg';
+import Pacman from '../../assets/icones/pacman.svg';
+import Palhaco from '../../assets/icones/palhaco.svg';
+import Pedestre from '../../assets/icones/pedestre.svg';
+import PenaDesenho from '../../assets/icones/pena-desenho.svg';
+import PenaEscrita from '../../assets/icones/pena-escrita.svg';
+import Pincel from '../../assets/icones/pincel.svg';
+import Piscina from '../../assets/icones/piscina.svg';
+import Podcast from '../../assets/icones/podcast.svg';
+import Programacao from '../../assets/icones/programacao.svg';
+import QuebraCabeca from '../../assets/icones/quebra-cabeca.svg';
+import RedeMundial from '../../assets/icones/rede-mundial.svg';
+import Relogio from '../../assets/home/icone-relogio.svg';
+import Reordenar from '../../assets/icones/reordenar.svg';
+import Repetir from '../../assets/icones/repetir.svg';
+import Responder from '../../assets/icones/responder.svg';
+import RoloFilme from '../../assets/hobbies/rolo-filme-16.svg';
+import RostoAbencoado from '../../assets/icones/rosto-abencoado.svg';
+import RostoChorandoArcoIris from '../../assets/icones/rosto-chorando-arco-iris.svg';
+import RostoGargalhando from '../../assets/icones/rosto-gargalhando.svg';
+import RostoMalHumorado from '../../assets/hobbies/rosto-mal-humorado.svg';
+import RostoOlhosBrilhantes from '../../assets/icones/rosto-olhos-brilhantes.svg';
+import RostoPositivo from '../../assets/hobbies/rosto-positivo.svg';
+import Rpg from '../../assets/icones/rpg.svg';
+import Selo from '../../assets/icones/selo.svg';
+import Spray from '../../assets/icones/spray.svg';
+import Subtrair from '../../assets/icones/subtrair.svg';
+import TamanhoFonte from '../../assets/icones/tamanho-fonte.svg';
+import Teatro from '../../assets/icones/teatro.svg';
+import Teclado from '../../assets/icones/teclado.svg';
+import Tesoura from '../../assets/icones/tesoura.svg';
+import TextoQuadrado from '../../assets/icones/texto-quadrado.svg';
+import TocaDiscos from '../../assets/icones/toca-discos.svg';
+import Traducao from '../../assets/icones/traducao.svg';
+import TvRetro from '../../assets/icones/tv-retro.svg';
+import Xadrez from '../../assets/icones/xadrez.svg';
+
+/** Nome do ícone → [componente, largura natural, altura natural]. */
+export const icones = {
+  'adicionar': [Adicionar, 24, 23.6767],
+  'anexar-imagem': [AnexarImagem, 22.5236, 24.0099],
+  'arduino': [Arduino, 24.0045, 20.0503],
+  'area-transferencia': [AreaTransferencia, 22.8961, 24.0207],
+  'aspas': [Aspas, 24.0028, 18.3995],
+  'audiolivro': [Audiolivro, 24.0049, 23.8437],
+  'aviao-papel': [AviaoPapel, 23.9766, 22.3153],
+  'bagagem': [Bagagem, 24.0282, 24.0142],
+  'baixar': [Baixar, 24.0162, 23.5386],
+  'balao-festa': [BalaoFesta, 18.6981, 23.8835],
+  'bateria': [Bateria, 24.0004, 20.8156],
+  'beijo-coracao': [BeijoCoracao, 24.0173, 23.3497],
+  'binoculos': [Binoculos, 24.0034, 20.2295],
+  'blocos': [Blocos, 24.0004, 18.4614],
+  'cadeado': [Cadeado, 15.8502, 24.0417],
+  'caderno': [Caderno, 23.539, 23.9789],
+  'calendario': [Calendario, 24.008, 21.8173],
+  'camera': [Camera, 24.0195, 17.8888],
+  'camera-instantanea': [CameraInstantanea, 23.9811, 23.71],
+  'caneta-vetor': [CanetaVetor, 21.0353, 24.0333],
+  'cartola': [Cartola, 24.0721, 23.4728],
+  'claquete': [Claquete, 22.7428, 24.0094],
+  'compartilhar': [Compartilhar, 22.736, 24.0411],
+  'contrabaixo': [Contrabaixo, 24.0246, 22.3195],
+  'conversa': [Conversa, 24.0434, 23.5753],
+  'cronometro': [Cronometro, 19.6389, 24.0523],
+  'cubo': [Cubo, 23.9757, 22.4728],
+  'dado-peao': [DadoPeao, 24.0089, 23.6557],
+  'discoteca': [Discoteca, 23.4953, 24.0113],
+  'dj': [Dj, 23.0825, 23.98],
+  'engrenagem': [Engrenagem, 24.0068, 23.7341],
+  'excluir': [Excluir, 24.0207, 23.212],
+  'filtrar-musicas': [FiltrarMusicas, 23.4039, 24.0246],
+  'gato': [Gato, 22.8052, 24.0118],
+  'gesto-comemoracao': [GestoComemoracao, 17.5106, 24.0595],
+  'hobby-atividade': [HobbyAtividade, 28.0104, 27.5983],
+  'hobby-escrita': [HobbyEscrita, 28.0328, 27.7689],
+  'hobby-jogos': [HobbyJogos, 27.0985, 27.9776],
+  'hobby-leitura': [HobbyLeitura, 25.3713, 27.965],
+  'inserir-imagem': [InserirImagem, 24.0327, 21.3498],
+  'karaoke': [Karaoke, 23.1492, 24.009],
+  'lampada': [Lampada, 22.8975, 24.0801],
+  'lapis': [Lapis, 23.9942, 22.4802],
+  'lingua-sinais': [LinguaSinais, 24.0135, 22.0037],
+  'lista-marcadores': [ListaMarcadores, 22.9591, 24.0293],
+  'lista-numerada': [ListaNumerada, 22.627, 24.0237],
+  'lista-tarefas': [ListaTarefas, 24.0196, 23.8351],
+  'lixeira': [Lixeira, 20.907, 23.9766],
+  'mao-doacao': [MaoDoacao, 23.4103, 24.0337],
+  'mapa': [Mapa, 20.9752, 24.0123],
+  'maquina-escrever': [MaquinaEscrever, 23.7523, 24.0056],
+  'martelo': [Martelo, 23.6095, 24.0678],
+  'menu-horizontal': [MenuHorizontal, 24.0754, 6.46086],
+  'mesa-digitalizadora': [MesaDigitalizadora, 23.6406, 24.002],
+  'muda-planta': [MudaPlanta, 22.3518, 23.9251],
+  'naipes': [Naipes, 20.5786, 23.9928],
+  'olho': [Olho, 24.0056, 13.9521],
+  'pacman': [Pacman, 22.1625, 23.9991],
+  'palhaco': [Palhaco, 24.047, 22.0267],
+  'pedestre': [Pedestre, 22.7627, 24.0676],
+  'pena-desenho': [PenaDesenho, 23.8037, 23.9612],
+  'pena-escrita': [PenaEscrita, 23.999, 23.6074],
+  'pincel': [Pincel, 20.641, 24.0114],
+  'piscina': [Piscina, 24.0381, 20.8823],
+  'podcast': [Podcast, 23.5956, 23.9638],
+  'programacao': [Programacao, 24.0031, 22.4097],
+  'quebra-cabeca': [QuebraCabeca, 22.2863, 24.035],
+  'rede-mundial': [RedeMundial, 23.994, 23.4182],
+  'relogio': [Relogio, 16.0249, 15.4422],
+  'reordenar': [Reordenar, 21.7417, 24.028],
+  'repetir': [Repetir, 24.0665, 12.1591],
+  'responder': [Responder, 23.4831, 24.0341],
+  'rolo-filme': [RoloFilme, 16.0217, 14.9432],
+  'rosto-abencoado': [RostoAbencoado, 24.02, 23.6339],
+  'rosto-chorando-arco-iris': [RostoChorandoArcoIris, 23.9828, 24.0221],
+  'rosto-gargalhando': [RostoGargalhando, 24.0152, 23.4898],
+  'rosto-mal-humorado': [RostoMalHumorado, 24.0196, 23.6348],
+  'rosto-olhos-brilhantes': [RostoOlhosBrilhantes, 23.8701, 24.035],
+  'rosto-positivo': [RostoPositivo, 23.2485, 23.9997],
+  'rpg': [Rpg, 23.2208, 24.0187],
+  'selo': [Selo, 24.039, 23.302],
+  'spray': [Spray, 24.003, 22.1712],
+  'subtrair': [Subtrair, 24.0002, 6.0125],
+  'tamanho-fonte': [TamanhoFonte, 24.0131, 21.0267],
+  'teatro': [Teatro, 22.891, 23.9654],
+  'teclado': [Teclado, 24.1066, 20.3647],
+  'tesoura': [Tesoura, 23.5733, 23.9906],
+  'texto-quadrado': [TextoQuadrado, 23.8911, 24.0275],
+  'toca-discos': [TocaDiscos, 24.0073, 20.0623],
+  'traducao': [Traducao, 24.0043, 22.971],
+  'tv-retro': [TvRetro, 23.151, 23.9549],
+  'xadrez': [Xadrez, 24.0026, 22.3925],
+} satisfies Record<string, [IconeSvg, number, number]>;
+
+export type NomeIcone = keyof typeof icones;
