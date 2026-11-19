@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +42,17 @@ export default function Hobbies() {
   const [arrastando, setArrastando] = useState(false);
   const [filtro, setFiltro] = useState<HobbyId | null>(null);
   const [aba, setAba] = useState<HobbyId | null>(null);
+
+  // Vindo da pausa ("Quero explorar esse hobby"), abre no hobby escolhido na roda.
+  const { hobby: doParametro } = useLocalSearchParams<{ hobby?: HobbyId }>();
+  const [ultimoParametro, setUltimoParametro] = useState<HobbyId | undefined>(undefined);
+  if (doParametro !== ultimoParametro) {
+    setUltimoParametro(doParametro);
+    if (doParametro) {
+      setFiltro(doParametro);
+      setAba(doParametro);
+    }
+  }
 
   // Os hobbies podem ter mudado no onboarding ou na tela de edição.
   const { sincronizarOnboarding } = h;

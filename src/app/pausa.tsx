@@ -20,9 +20,12 @@ import { BalaoEmocao } from '@/components/home/BalaoEmocao';
 import { BotaoContagem } from '@/components/home/BotaoContagem';
 import { BotaoTimer } from '@/components/pausa/BotaoTimer';
 import { NaoAbri } from '@/components/pausa/NaoAbri';
+import { RodaHobbies } from '@/components/pausa/RodaHobbies';
 import { TempoNoApp } from '@/components/pausa/TempoNoApp';
+import { hobbyInfo, type HobbyId } from '@/data/catalogo';
 import { BalaoVazio, emocoes, salvarEmocao, type Emocao } from '@/data/emocoes';
 import { useGrupos } from '@/data/gruposHome';
+import { useHobbies } from '@/data/hobbiesEstado';
 import { perguntaTempoNoApp, regraDaPausa, registrarResistencia } from '@/data/pausa';
 import { duration, easing, space, useTema } from '@/theme';
 
@@ -49,8 +52,9 @@ const DESCRICAO_EMOCAO = 'Registramos essa emoção para você.\nVocê pode edit
  * - emocao: a emoção registrada (642:8276)
  * - naoAbri: depois de "Dessa vez não abro"
  * - tempo: "Quanto tempo você precisa nesse app?"
+ * - hobbies: a roda de hobbies do botão "Hobbies" (162:255)
  */
-type Etapa = 'pausa' | 'checkin' | 'emocao' | 'naoAbri' | 'tempo';
+type Etapa = 'pausa' | 'checkin' | 'emocao' | 'naoAbri' | 'tempo' | 'hobbies';
 /** De onde o check-in foi aberto: do "?" da pausa ou da tela de "não abri". */
 type Origem = 'pausa' | 'naoAbri';
 
@@ -83,6 +87,12 @@ export default function Pausa() {
   const [aberto, setAberto] = useState(false);
   const [emocao, setEmocao] = useState<Emocao | null>(null);
 
+  // Roda de hobbies: os hobbies da pessoa, começando pelo do meio.
+  const { hobbies } = useHobbies();
+  const inicioRoda = Math.floor((hobbies.length - 1) / 2);
+  const [hobbyEscolhido, setHobbyEscolhido] = useState<HobbyId | null>(null);
+  const hobbyRoda = hobbyEscolhido && hobbies.includes(hobbyEscolhido) ? hobbyEscolhido : hobbies[inicioRoda];
+
   // Transições da pausa para o check-in
   const [titulo] = useState(() => new Animated.Value(1));
   const [pergunta] = useState(() => new Animated.Value(0));
@@ -98,6 +108,11 @@ export default function Pausa() {
   // ─── Saídas ───────────────────────────────────────────────────────────────
   const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : router.back());
   const irPara = (rota: '/hobbies' | '/diario' | '/') => router.dismissTo(rota);
+  const abrirHobbies = () => {
+    setHobbyEscolhido(null);
+    setEtapa('hobbies');
+  };
+  const explorarHobby = () => router.dismissTo({ pathname: '/hobbies', params: { hobby: hobbyRoda } });
   const naoAbro = () => {
     registrarResistencia({ grupo: grupo.id, app: params.app });
     setEtapa('naoAbri');
@@ -197,7 +212,7 @@ export default function Pausa() {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (etapa === 'checkin' && aberto && !soltou) fecharCheckin();
       else if (etapa === 'emocao') voltarDaEmocao();
-      else if (etapa === 'tempo') setEtapa('pausa');
+      else if (etapa === 'tempo' || etapa === 'hobbies') setEtapa('pausa');
       return etapa !== 'pausa' && etapa !== 'naoAbri';
     });
     return () => sub.remove();
@@ -311,7 +326,7 @@ export default function Pausa() {
                     rotulo="Hobbies"
                     corRotulo={cores.icon.primary}
                     icone={(cor) => <Icone nome="dado-peao" cor={cor} />}
-                    onPress={() => irPara('/hobbies')}
+                    onPress={abrirHobbies}
                   />
                 </View>
                 <View style={styles.metade}>
@@ -387,6 +402,20 @@ export default function Pausa() {
           {/* escolher um tempo segue para o app (por enquanto, fecha a pausa); Sair volta para a Home */}
           <TempoNoApp onEscolher={() => router.back()} onSair={sumir} />
         </View>
+      ) : null}
+
+      {etapa === 'hobbies' && hobbyRoda ? (
+        <Aparecer style={styles.cheia} deslocamento={0}>
+          <RodaHobbies hobbies={hobbies} inicial={inicioRoda} escolhido={hobbyRoda} onMudar={setHobbyEscolhido} />
+          <View pointerEvents="box-none" style={[styles.rodapeRoda, { paddingBottom: bottom + space[40] }]}>
+            <Botao
+              rotulo="Quero explorar esse hobby"
+              corRotulo={cores.icon.primary}
+              icone={(cor) => <Icone nome={hobbyInfo(hobbyRoda).icone} cor={cor} />}
+              onPress={explorarHobby}
+            />
+          </View>
+        </Aparecer>
       ) : null}
     </View>
   );
@@ -490,4 +519,6 @@ const styles = StyleSheet.create({
   centroEmocao: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[64], paddingHorizontal: space[24] },
   textosEmocao: { alignItems: 'center', gap: 17, maxWidth: 283 },
   rodapeEmocao: { paddingHorizontal: space[12] + space[16] },
+  // Figma 162:255: o botão fica 28 px das laterais, sobre a roda
+  rodapeRoda: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space[12] + space[16] },
 });

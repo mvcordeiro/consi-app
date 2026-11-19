@@ -39,3 +39,13 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Figma: registrar as telas a cada commit
+
+Toda mudança de tela ou interação que vai para um commit também é registrada no Figma, no mesmo passo: arquivo "Consi - Design de Interação" (`d4nCQ9t3sjjRlYQnrLw4gU`), página "📱 APP // Telas do app" (`715:1442`).
+
+- Cada tela fica na seção do fluxo dela (01 Onboarding, 02 Home, 03 Hobbies, 04 Pausa…), em uma linha horizontal, com o nome `Tela · estado · /rota (etapa)`.
+- Ao aumentar uma seção, empurre as seções seguintes para a direita para não sobrepor.
+- Sem legendas ao lado das telas e sem "—" ou "--" nos nomes (use " · ").
+- Se a tela substitui um placeholder de uma seção "A CRIAR", tire o placeholder.
+- Cite no commit os frames do Figma que foram criados ou atualizados.
