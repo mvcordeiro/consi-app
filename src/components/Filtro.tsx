@@ -8,8 +8,7 @@ import { Texto } from './Texto';
 /**
  * Filtro / Etiqueta — componente do Design System (Átomos, nó 173:198), na versão tocável.
  * Como nas instâncias dos Hobbies: inativo tem fundo bg/base e borda border/focus;
- * ativo tem fundo action/primary/pressed (no Light, bg/sunken — mesmo combinado das etiquetas
- * da Home, para o contraste passar) e rótulo text/primary.
+ * ativo tem fundo bg/selected e rótulo text/primary.
  */
 type Props = {
   rotulo: string;
@@ -22,8 +21,7 @@ type Props = {
 };
 
 export function Filtro({ rotulo, ativo = false, icone, iconeDireita, onPress }: Props) {
-  const { cores, modo } = useTema();
-  const fundoAtivo = modo === 'light' ? cores.bg.sunken : cores.action.primary.pressed;
+  const { cores } = useTema();
   return (
     <Pressable
       onPress={onPress}
@@ -33,7 +31,7 @@ export function Filtro({ rotulo, ativo = false, icone, iconeDireita, onPress }: 
       style={({ pressed }) => [
         styles.base,
         {
-          backgroundColor: ativo ? fundoAtivo : cores.bg.base,
+          backgroundColor: ativo ? cores.bg.selected : cores.bg.base,
           borderColor: ativo ? 'transparent' : cores.border.focus,
           opacity: pressed ? 0.8 : 1,
         },

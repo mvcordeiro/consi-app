@@ -51,7 +51,7 @@ function GraficoNoiteManha({ noite, manha }: { noite: LinhaGrafico[]; manha: Lin
           ))}
         </View>
       </View>
-      <View style={[styles.conector, { backgroundColor: cores.accent.app }]} />
+      <View style={[styles.conector, { backgroundColor: cores.decor.accent }]} />
       <View style={[styles.coluna, styles.colunaManha]}>
         <Texto estilo="Legenda/Pequena">MANHÃ SEGUINTE</Texto>
         <View style={styles.linhas}>
@@ -73,7 +73,7 @@ function Linha({ linha }: { linha: LinhaGrafico }) {
         {linha.hora}
       </Texto>
       <View style={styles.trilha}>
-        <View style={[styles.risco, { backgroundColor: cores.accent.app }]} />
+        <View style={[styles.risco, { backgroundColor: cores.decor.accent }]} />
         <View style={[styles.marcador, { left: `${centro * 100}%` }]}>
           <Icone
             width={16}

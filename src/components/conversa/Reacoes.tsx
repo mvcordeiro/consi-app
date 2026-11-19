@@ -97,7 +97,7 @@ export function PainelReacoes({
                 accessibilityState={{ selected: escolhida }}
                 style={({ pressed }) => [
                   styles.reacao,
-                  escolhida && { backgroundColor: modo === 'light' ? cores.bg.sunken : cores.action.primary.pressed },
+                  escolhida && { backgroundColor: cores.bg.selected },
                   pressed && styles.apertada,
                 ]}
               >
@@ -121,7 +121,7 @@ export function ChipsReacoes({
   minha?: ReacaoId;
   onAlternar: (r: ReacaoId) => void;
 }) {
-  const { cores, modo } = useTema();
+  const { cores } = useTema();
   const itens = (Object.keys(contagem) as ReacaoId[]).filter((r) => (contagem[r] ?? 0) > 0);
   if (!itens.length) return null;
   return (
@@ -138,7 +138,7 @@ export function ChipsReacoes({
             style={[
               styles.chip,
               {
-                backgroundColor: minhaEsta ? (modo === 'light' ? cores.bg.sunken : cores.action.primary.pressed) : cores.bg.base,
+                backgroundColor: minhaEsta ? cores.bg.selected : cores.bg.base,
                 borderColor: minhaEsta ? 'transparent' : cores.border.subtle,
               },
             ]}

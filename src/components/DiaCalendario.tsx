@@ -17,11 +17,8 @@ type Props = {
  * action/primary/pressed com borda border/focus.
  */
 export function DiaCalendario({ semana, dia, selecionado, onPress }: Props) {
-  const { cores, modo } = useTema();
-  // No Figma o texto do dia selecionado é text/on-primary no Dark e text/on-secondary no Light
-  // (os dois brancos); o text/on-primary do Light é escuro.
-  const corSelecionado = modo === 'dark' ? cores.text['on-primary'] : cores.text['on-secondary'];
-  const cor = selecionado ? corSelecionado : cores.text.accent;
+  const { cores } = useTema();
+  const cor = selecionado ? cores.text['on-pressed'] : cores.text.accent;
 
   return (
     <Pressable

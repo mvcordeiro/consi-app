@@ -51,7 +51,7 @@ export function CampoTexto({ ref, rotulo, acessibilidade, titulo, erro, alturaMi
           borda,
           {
             paddingHorizontal: recuo,
-            backgroundColor: desabilitado ? cores.bg.disabled : cores.bg['app-raised'],
+            backgroundColor: desabilitado ? cores.bg.disabled : cores.bg['brand-raised'],
             minHeight: alturaMinima ?? 40,
           },
         ]}

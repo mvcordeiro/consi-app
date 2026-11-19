@@ -77,7 +77,7 @@ type Props = {
  * uma até a cabeça do boneco para registrá-la. O boneco fica colado na barra de navegação.
  */
 export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onArrastando, onEscolher }: Props) {
-  const { cores, modo } = useTema();
+  const { cores } = useTema();
   const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();
   const { setImersivo } = useModoImersivo();
@@ -217,9 +217,7 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
   const visiveis = comEmocao.slice(0, verTodas ? ETIQUETAS_EXPANDIDAS : ETIQUETAS_VISIVEIS);
   // quantas o "•••" revela (no máximo até completar 5)
   const escondidas = Math.min(comEmocao.length, ETIQUETAS_EXPANDIDAS) - ETIQUETAS_VISIVEIS;
-  // Contraste: no Dark, branco sobre action/primary/pressed (como no Figma); no Light, esse fundo
-  // é dourado (#AB6A0A) e nem o texto escuro nem o branco chegam a 4,5:1, então usamos bg/sunken.
-  const fundoEtiqueta = modo === 'dark' ? cores.action.primary.pressed : cores.bg.sunken;
+  const fundoEtiqueta = cores.bg.selected;
   // A emoção mais recente fica em destaque, preenchida em action/primary com texto on-primary
   // (branco sobre azul no Dark, 5:1; quase preto sobre laranja no Light).
   const fundoUltima = cores.action.primary.default;

@@ -9,6 +9,7 @@
  *   04 Typography      → ver tipografia.ts
  *   05 Motion          → `duration`, `easing`
  *
+ * Regra do produto: laranja no modo Light, azul no Dark.
  * Os nomes seguem os caminhos do Figma: `action/primary/default` → `cores.action.primary.default`.
  * Nas telas, pegue as cores com `useTema()` (ver tema.tsx), nunca direto daqui.
  */
@@ -83,10 +84,8 @@ const dark = {
     sunken: blue[950],
     brand: blue[900],
     'brand-raised': blue[800],
-    // bg/app e bg/app-raised aparecem nos componentes (ex.: Campo / Entrada de texto),
-    // mas não estão na tabela de documentação. Valores Dark lidos no Figma.
-    app: blue[900],
-    'app-raised': blue[800],
+    /** Fundo de item selecionado (Filtro ativo, etiquetas de emoção, reação escolhida). */
+    selected: blue[700],
     inverse: neutral[0],
     scrim: overlay['black-60'],
     disabled: neutral[700],
@@ -107,6 +106,8 @@ const dark = {
     'on-accent': neutral[0],
     'on-neutral': neutral[950],
     'on-inverse': neutral[950],
+    /** Texto sobre action/primary/pressed (dia selecionado do calendário). */
+    'on-pressed': neutral[0],
   },
   icon: {
     primary: neutral[0],
@@ -134,10 +135,6 @@ const dark = {
     sage: sage[300],
     accent: blue[500],
   },
-  accent: {
-    // accent/app: visto nos componentes, fora da tabela de documentação.
-    app: blue[500],
-  },
 };
 
 type Amplo<T> = { [K in keyof T]: T[K] extends string ? string : Amplo<T[K]> };
@@ -150,9 +147,8 @@ const light: Cores = {
     sunken: orange[200],
     brand: orange[50],
     'brand-raised': orange[100],
-    // PONTO EM ABERTO: valores Light de bg/app e bg/app-raised não documentados.
-    app: orange[50],
-    'app-raised': orange[100],
+    // laranja suave para o text/primary ter contraste (action/primary/pressed não passa 4,5:1)
+    selected: orange[200],
     inverse: neutral[900],
     scrim: overlay['black-40'],
     disabled: neutral[100],
@@ -174,6 +170,7 @@ const light: Cores = {
     'on-accent': neutral[950],
     'on-neutral': neutral[0],
     'on-inverse': neutral[0],
+    'on-pressed': neutral[0],
   },
   icon: {
     primary: neutral[900],
@@ -200,10 +197,6 @@ const light: Cores = {
   decor: {
     sage: sage[700],
     accent: orange[500],
-  },
-  accent: {
-    // PONTO EM ABERTO: valor Light de accent/app não documentado.
-    app: orange[500],
   },
 };
 
