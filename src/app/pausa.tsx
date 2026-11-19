@@ -414,6 +414,8 @@ export default function Pausa() {
               icone={(cor) => <Icone nome={hobbyInfo(hobbyRoda).icone} cor={cor} />}
               onPress={explorarHobby}
             />
+            {/* saída discreta de volta para a pausa (o Figma não tem; no iPhone não há voltar do sistema) */}
+            <Botao rotulo="Voltar" estilo="secundario" apagado onPress={() => setEtapa('pausa')} />
           </View>
         </Aparecer>
       ) : null}
@@ -520,5 +522,12 @@ const styles = StyleSheet.create({
   textosEmocao: { alignItems: 'center', gap: 17, maxWidth: 283 },
   rodapeEmocao: { paddingHorizontal: space[12] + space[16] },
   // Figma 162:255: o botão fica 28 px das laterais, sobre a roda
-  rodapeRoda: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: space[12] + space[16] },
+  rodapeRoda: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: space[12] + space[16],
+    gap: space[12],
+  },
 });
