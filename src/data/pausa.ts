@@ -2,8 +2,8 @@
  * Tela de pausa (Figma: seção "01.1 · PAUSA", nó 700:7576). A mensagem e o tempo de espera
  * vêm da regra do grupo do app que a pessoa tentou abrir (ver gruposHome.ts).
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { inserirResistencia } from './banco';
 import { appPorId, ID_LIVRE, type Grupo } from './gruposHome';
 
 /**
@@ -28,16 +28,12 @@ export function regraDaPausa(grupos: Grupo[], params: { grupo?: string; app?: st
 export const perguntaTempoNoApp = (g: Grupo) => true;
 
 // ─── "Dessa vez não abro" ───────────────────────────────────────────────────
-const CHAVE_RESISTENCIAS = 'consi:pausa:nao-abri';
-
 export type Resistencia = { em: number; grupo: string; app?: string };
 
 /** Registra que a pessoa desistiu de abrir o app na pausa. */
 export async function registrarResistencia(r: Omit<Resistencia, 'em'>) {
   try {
-    const bruto = await AsyncStorage.getItem(CHAVE_RESISTENCIAS);
-    const lista: Resistencia[] = bruto ? JSON.parse(bruto) : [];
-    await AsyncStorage.setItem(CHAVE_RESISTENCIAS, JSON.stringify([{ ...r, em: Date.now() }, ...lista].slice(0, 500)));
+    await inserirResistencia({ ...r, em: Date.now() });
   } catch {
     // sem armazenamento, o registro vale só para esta sessão
   }

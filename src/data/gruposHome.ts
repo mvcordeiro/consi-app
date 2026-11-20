@@ -10,13 +10,14 @@
  * Os apps são os provisórios do onboarding, até termos acesso aos apps instalados.
  * Tudo fica no aparelho; telas de pausa e notificações reais vêm depois.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
 import type { TomEtiqueta } from '@/components/Etiqueta';
 import { IconeNotificacao, IconeRelogio, RostoPositivo16 } from '@/components/home/assets';
 import type { NomeIcone } from '@/components/Icone';
 import type { IconeSvg } from '@/components/onboarding/assets';
+
+import { gravarEstado, lerEstado } from './banco';
 
 // ─── Catálogo ───────────────────────────────────────────────────────────────
 export type AppInfo = { id: string; nome: string; marca: string };
@@ -142,7 +143,7 @@ function avisar() {
 function carregar() {
   if (carregado) return;
   carregado = true;
-  AsyncStorage.getItem(CHAVE)
+  lerEstado(CHAVE)
     .then((bruto) => {
       if (!bruto) return;
       const lido = (JSON.parse(bruto) as Grupo[]).filter((g) => !IDS_EXEMPLO.has(g.id));
@@ -156,7 +157,7 @@ function carregar() {
 function gravar(novo: Grupo[]) {
   estado = novo;
   avisar();
-  AsyncStorage.setItem(CHAVE, JSON.stringify(novo)).catch(() => {});
+  gravarEstado(CHAVE, JSON.stringify(novo)).catch(() => {});
 }
 
 function assinar(f: () => void) {

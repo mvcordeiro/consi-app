@@ -4,10 +4,11 @@
  * Um momento é um check-in de emoção com o que a pessoa quiser juntar: texto, trechos
  * destacados, marcadores, áudio e fotos. Os check-ins da Home e da Pausa também são
  * momentos (sem texto): tudo fica numa lista só, guardada no aparelho.
- * A chave de armazenamento é a mesma do antigo histórico de emoções, que continua compatível.
+ * Ficam nas tabelas `momentos` e `anexos` do banco local criptografado (ver banco.ts).
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
+
+import { gravarEstado, lerEstado, lerMomentos, sincronizarMomentos } from './banco';
 
 export type Anexo =
   | { tipo: 'audio'; uri: string; /** segundos */ duracao: number }
@@ -37,7 +38,6 @@ export const MARCADOR_PAUSA = 'Depois de uma pausa';
 /** Marcadores sugeridos na folha "+ marcador" (além dos que a pessoa já usou). */
 export const MARCADORES_SUGERIDOS = ['Trabalho', 'Casa', 'Família', 'Amigos', 'Estudo', 'Ônibus', 'Antes de dormir', MARCADOR_PAUSA];
 
-const CHAVE = 'consi:emocao-do-dia';
 const CHAVE_SEMENTE = 'consi:diario:exemplos';
 
 // ─── Armazenamento com aviso a quem estiver ouvindo ─────────────────────────
@@ -52,12 +52,13 @@ function avisar() {
   ouvintes.forEach((f) => f());
 }
 
-async function gravar() {
-  try {
-    await AsyncStorage.setItem(CHAVE, JSON.stringify(lista));
-  } catch {
-    // sem armazenamento, os momentos valem só enquanto o app estiver aberto
-  }
+/** Grava em fila, na ordem das mudanças. */
+let fila: Promise<unknown> = Promise.resolve();
+function gravar(antes: Momento[], depois: Momento[]) {
+  fila = fila.then(() => sincronizarMomentos(antes, depois)).catch(() => {
+    // sem banco, os momentos valem só enquanto o app estiver aberto
+  });
+  return fila;
 }
 
 /** Lê os momentos salvos (uma vez). */
@@ -67,32 +68,29 @@ export function carregarMomentos(): Promise<Momento[]> {
     carregando = (async () => {
       let salvos: Momento[] = [];
       try {
-        const bruto = await AsyncStorage.getItem(CHAVE);
-        if (bruto) {
-          const dado = JSON.parse(bruto) as Momento | Momento[];
-          salvos = Array.isArray(dado) ? dado : [dado];
-        }
+        salvos = await lerMomentos();
       } catch {
         salvos = [];
       }
       // Versões antigas gravavam momentos de exemplo na primeira abertura: tira-os uma vez.
       let limpar = false;
       try {
-        limpar = (await AsyncStorage.getItem(CHAVE_SEMENTE)) === '1';
+        limpar = (await lerEstado(CHAVE_SEMENTE)) === '1';
       } catch {
         limpar = false;
       }
+      const lidos = salvos;
       if (limpar) {
         salvos = salvos.filter((m) => !ehExemplo(m));
         try {
-          await AsyncStorage.setItem(CHAVE_SEMENTE, 'removidos');
+          await gravarEstado(CHAVE_SEMENTE, 'removidos');
         } catch {
           // tenta de novo na próxima abertura
         }
       }
       lista = ordenar(salvos);
       carregou = true;
-      if (limpar) await gravar();
+      if (limpar) await gravar(lidos, lista);
       avisar();
       return lista;
     })();
@@ -102,9 +100,10 @@ export function carregarMomentos(): Promise<Momento[]> {
 
 async function mudar(f: (l: Momento[]) => Momento[]) {
   await carregarMomentos();
+  const antes = lista;
   lista = ordenar(f(lista));
   avisar();
-  await gravar();
+  await gravar(antes, lista);
   return lista;
 }
 

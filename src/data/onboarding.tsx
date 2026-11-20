@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apagarEstado, gravarEstado, lerEstado } from './banco';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
 /**
@@ -37,10 +37,8 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setRespostas((atual) => ({ ...atual, ...parcial }));
 
   const concluir = async () => {
-    await AsyncStorage.multiSet([
-      [CHAVE_RESPOSTAS, JSON.stringify(respostas)],
-      [CHAVE_CONCLUIDO, 'sim'],
-    ]);
+    await gravarEstado(CHAVE_RESPOSTAS, JSON.stringify(respostas));
+    await gravarEstado(CHAVE_CONCLUIDO, 'sim');
   };
 
   return (
@@ -58,7 +56,7 @@ export function useOnboarding() {
 
 export async function onboardingConcluido() {
   try {
-    return (await AsyncStorage.getItem(CHAVE_CONCLUIDO)) === 'sim';
+    return (await lerEstado(CHAVE_CONCLUIDO)) === 'sim';
   } catch {
     return false;
   }
@@ -67,7 +65,7 @@ export async function onboardingConcluido() {
 /** Respostas gravadas ao fim do onboarding (ou as vazias, se não houver). */
 export async function respostasSalvas(): Promise<RespostasOnboarding> {
   try {
-    const bruto = await AsyncStorage.getItem(CHAVE_RESPOSTAS);
+    const bruto = await lerEstado(CHAVE_RESPOSTAS);
     return bruto ? { ...vazio, ...JSON.parse(bruto) } : vazio;
   } catch {
     return vazio;
@@ -76,5 +74,5 @@ export async function respostasSalvas(): Promise<RespostasOnboarding> {
 
 /** Apaga o onboarding salvo (útil para testar o fluxo de novo). */
 export async function refazerOnboarding() {
-  await AsyncStorage.multiRemove([CHAVE_CONCLUIDO, CHAVE_RESPOSTAS]);
+  await apagarEstado(CHAVE_CONCLUIDO, CHAVE_RESPOSTAS);
 }

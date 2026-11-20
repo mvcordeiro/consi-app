@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import {
@@ -17,6 +16,7 @@ import {
   type Sentimento,
   type Visibilidade,
 } from './catalogo';
+import { gravarEstado, lerEstado } from './banco';
 import { respostasSalvas } from './onboarding';
 
 /**
@@ -120,7 +120,7 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
     (async () => {
       const [respostas, bruto] = await Promise.all([
         respostasSalvas(),
-        AsyncStorage.getItem(CHAVE).catch(() => null),
+        lerEstado(CHAVE).catch(() => null),
       ]);
       setDoOnboarding(respostas.hobbies);
       if (bruto) {
@@ -139,7 +139,7 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!pronto.current) return;
-    AsyncStorage.setItem(CHAVE, JSON.stringify(estado)).catch(() => {});
+    gravarEstado(CHAVE, JSON.stringify(estado)).catch(() => {});
   }, [estado]);
 
   const hobbies = useMemo<HobbyId[]>(() => {

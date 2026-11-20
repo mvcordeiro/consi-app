@@ -2,9 +2,9 @@
  * Preferências da aba Diário, guardadas no aparelho: como ver (lista do Índice ou linha
  * do tempo da Constelação), se os check-ins sem texto aparecem e a pergunta do dia.
  */
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 
+import { gravarEstado, lerEstado } from './banco';
 import { chaveDia, PERGUNTAS_DO_DIA } from './momentos';
 
 export type VisaoDiario = 'lista' | 'linha';
@@ -27,7 +27,7 @@ export function usePreferenciasDiario(): [PreferenciasDiario, (m: Partial<Prefer
 
   useEffect(() => {
     if (atual) return;
-    AsyncStorage.getItem(CHAVE)
+    lerEstado(CHAVE)
       .then((bruto) => {
         atual = { ...padrao(), ...(bruto ? (JSON.parse(bruto) as Partial<PreferenciasDiario>) : {}) };
         setPrefs(atual);
@@ -39,7 +39,7 @@ export function usePreferenciasDiario(): [PreferenciasDiario, (m: Partial<Prefer
     setPrefs((p) => {
       const novo = { ...p, ...m };
       atual = novo;
-      AsyncStorage.setItem(CHAVE, JSON.stringify(novo)).catch(() => {});
+      gravarEstado(CHAVE, JSON.stringify(novo)).catch(() => {});
       return novo;
     });
   };

@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apagarEstado, gravarEstado, lerEstado } from '@/data/banco';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -100,7 +100,7 @@ export default function NovoMomento() {
   // Rascunho: um novo momento sem guardar volta quando a pessoa abrir outro.
   useEffect(() => {
     if (!rascunhavel || params.emocao) return;
-    AsyncStorage.getItem(CHAVE_RASCUNHO)
+    lerEstado(CHAVE_RASCUNHO)
       .then((bruto) => {
         if (!bruto) return;
         const r = JSON.parse(bruto) as Rascunho;
@@ -120,7 +120,7 @@ export default function NovoMomento() {
   useEffect(() => {
     if (!rascunhavel) return;
     const t = setTimeout(() => {
-      AsyncStorage.setItem(CHAVE_RASCUNHO, versao)
+      gravarEstado(CHAVE_RASCUNHO, versao)
         .then(() => setVersaoSalva(versao))
         .catch(() => {});
     }, 600);
@@ -200,7 +200,7 @@ export default function NovoMomento() {
   });
 
   const descartar = () => {
-    AsyncStorage.removeItem(CHAVE_RASCUNHO).catch(() => {});
+    apagarEstado(CHAVE_RASCUNHO).catch(() => {});
     setSair(false);
     fechar();
   };
@@ -231,7 +231,7 @@ export default function NovoMomento() {
     } else {
       const m = await adicionarMomento({ ...(dados as Omit<Momento, 'em'>), em: quando, origem: 'diario' });
       em = m.em;
-      AsyncStorage.removeItem(CHAVE_RASCUNHO).catch(() => {});
+      apagarEstado(CHAVE_RASCUNHO).catch(() => {});
     }
     // Novo, Home ou Pausa: fecha tudo por cima das abas e volta para a tela principal do
     // Diário (na visão escolhida, lista ou linha do tempo), com o aviso "Momento guardado".
