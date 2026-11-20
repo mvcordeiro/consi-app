@@ -9,8 +9,19 @@ config.transformer = {
 };
 config.resolver = {
   ...config.resolver,
-  assetExts: config.resolver.assetExts.filter((ext) => ext !== 'svg'),
+  // wasm: expo-sqlite na web
+  assetExts: [...config.resolver.assetExts.filter((ext) => ext !== 'svg'), 'wasm'],
   sourceExts: [...config.resolver.sourceExts, 'svg'],
+};
+
+// expo-sqlite na web usa SharedArrayBuffer, que exige estes cabeçalhos no servidor de dev.
+config.server = {
+  ...config.server,
+  enhanceMiddleware: (middleware) => (req, res, next) => {
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    return middleware(req, res, next);
+  },
 };
 
 module.exports = config;
