@@ -40,7 +40,10 @@ function rotuloQuando(em: number) {
   return `${dia}, ${hora(em)}`;
 }
 
-/** Etiqueta do Figma (125:34) tocável: fundo bg/base, ou action/primary/pressed quando ativa. */
+/**
+ * Etiqueta do Figma (125:34) tocável: fundo bg/base, ou bg/selected quando ativa
+ * (action/primary/pressed do Figma não tem contraste com text/primary no modo Light).
+ */
 function Chip({ rotulo, ativo, onPress }: { rotulo: string; ativo?: boolean; onPress: () => void }) {
   const { cores } = useTema();
   return (
@@ -49,10 +52,10 @@ function Chip({ rotulo, ativo, onPress }: { rotulo: string; ativo?: boolean; onP
       accessibilityRole="button"
       style={({ pressed }) => [
         styles.chip,
-        { backgroundColor: ativo ? cores.action.primary.pressed : cores.bg.base, opacity: pressed ? 0.8 : 1 },
+        { backgroundColor: ativo ? cores.bg.selected : cores.bg.base, opacity: pressed ? 0.8 : 1 },
       ]}
     >
-      <Texto estilo="Texto/Botões e rótulos">{rotulo}</Texto>
+      <Texto estilo="Texto/Botões e rótulos" textBreakStrategy="simple">{rotulo}</Texto>
     </Pressable>
   );
 }
@@ -111,7 +114,7 @@ function ConteudoEditar({
   // a fileira de emoções já abre mostrando a escolhida
   useEffect(() => {
     const i = emocoes.findIndex((e) => e.id === momento.id);
-    setTimeout(() => emocoesRef.current?.scrollTo({ x: Math.max(0, i * 56 - width / 3), animated: false }), 50);
+    setTimeout(() => emocoesRef.current?.scrollTo({ x: Math.max(0, i * 74 - width / 3), animated: false }), 50);
   }, [momento, width]);
 
   const mudarHora = (min: number) => {
@@ -181,13 +184,20 @@ function ConteudoEditar({
                     accessibilityRole="button"
                     accessibilityLabel={e.nome}
                     accessibilityState={{ selected: sel }}
-                    style={[
-                      styles.opcaoEmocao,
-                      sel && { borderColor: cores.action.secondary.default, borderWidth: borderWidth.thin, borderStyle: 'dashed' },
-                      !sel && { opacity: 0.5 },
-                    ]}
+                    style={[styles.opcaoEmocao, !sel && { opacity: 0.5 }]}
                   >
-                    <Premo id={e.id} tamanho={sel ? 48 : 42} />
+                    <View
+                      style={[
+                        styles.anelEmocao,
+                        sel && { borderColor: cores.action.secondary.default, borderWidth: borderWidth.thin, borderStyle: 'dashed' },
+                      ]}
+                    >
+                      <Premo id={e.id} tamanho={sel ? 48 : 42} />
+                    </View>
+                    {/* o nome embaixo de cada balão, para saber qual emoção é qual */}
+                    <Texto estilo="Legenda/Pequena" cor={sel ? cores.text.primary : cores.text.secondary} numberOfLines={1}>
+                      {e.nome}
+                    </Texto>
                   </Pressable>
                 );
               })}
@@ -228,7 +238,7 @@ function ConteudoEditar({
                       accessibilityRole="button"
                       style={[styles.chip, { backgroundColor: cores.bg.raised }]}
                     >
-                      <Texto estilo="Texto/Botões e rótulos">{m}</Texto>
+                      <Texto estilo="Texto/Botões e rótulos" textBreakStrategy="simple">{m}</Texto>
                     </Pressable>
                   ))}
                 </View>
@@ -316,8 +326,9 @@ const styles = StyleSheet.create({
   cabecalho: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   conteudo: { gap: 18 },
   foraDaMargem: { marginHorizontal: -space[24] },
-  emocoes: { gap: space[12], paddingHorizontal: space[24], alignItems: 'center' },
-  opcaoEmocao: { width: 62, height: 60, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', marginHorizontal: -9 },
+  emocoes: { gap: space[4], paddingHorizontal: space[24], alignItems: 'flex-start' },
+  opcaoEmocao: { width: 70, alignItems: 'center', gap: space[4] },
+  anelEmocao: { width: 62, height: 60, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
   chip: { paddingHorizontal: space[12], paddingVertical: space[4], borderRadius: radius.full },
   painel: { gap: space[12], padding: space[16], borderRadius: radius.lg },

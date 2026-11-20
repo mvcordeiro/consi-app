@@ -42,8 +42,8 @@ export function BuscaDiario({ onPress, onControles }: { onPress: () => void; onC
 }
 
 /**
- * Filtro / Etiqueta do Índice (Figma 752:6448): ativa em action/primary/pressed com
- * text/on-secondary, inativa em bg/raised com text/primary.
+ * Filtro / Etiqueta do Índice (Figma 752:6448): ativa em bg/selected (o action/primary/pressed
+ * do Figma não tinha contraste com o texto), inativa em bg/raised; texto sempre text/primary.
  */
 export function FiltroDiario({ rotulo, ativo, onPress }: { rotulo: string; ativo: boolean; onPress: () => void }) {
   const { cores } = useTema();
@@ -54,10 +54,11 @@ export function FiltroDiario({ rotulo, ativo, onPress }: { rotulo: string; ativo
       accessibilityState={{ selected: ativo }}
       style={({ pressed }) => [
         styles.filtro,
-        { backgroundColor: ativo ? cores.action.primary.pressed : cores.bg.raised, opacity: pressed ? 0.8 : 1 },
+        { backgroundColor: ativo ? cores.bg.selected : cores.bg.raised, opacity: pressed ? 0.8 : 1 },
       ]}
     >
-      <Texto estilo="Texto/Botões e rótulos" cor={ativo ? cores.text['on-secondary'] : cores.text.primary}>
+      {/* "simple": no Android a quebra padrão media a fonte menor e cortava a última palavra ("Antes de dormir") */}
+      <Texto estilo="Texto/Botões e rótulos" textBreakStrategy="simple">
         {rotulo}
       </Texto>
     </Pressable>
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   controles: { height: 48, paddingHorizontal: space[16], borderRadius: radius.full, justifyContent: 'center' },
   filtrosFora: { marginHorizontal: -space[24] },
   filtros: { gap: space[8], paddingHorizontal: space[24] },
-  filtro: { paddingHorizontal: space[12], paddingVertical: space[4], borderRadius: radius.full, borderWidth: borderWidth.thin, borderColor: 'transparent' },
+  filtro: { flexShrink: 0, paddingHorizontal: space[12], paddingVertical: space[4], borderRadius: radius.full, borderWidth: borderWidth.thin, borderColor: 'transparent' },
   item: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: space[12] },
   itemTextos: { flex: 1, gap: 2 },
   itemTopo: { flexDirection: 'row', alignItems: 'center', gap: space[8] },

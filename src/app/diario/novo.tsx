@@ -23,7 +23,7 @@ import { CampoMomento } from '@/components/diario/CampoMomento';
 import { ALTURA_CARROSSEL, CarrosselEmocoes } from '@/components/diario/CarrosselEmocoes';
 import { escolherFoto, FotoAnexada, VisualizarFoto } from '@/components/diario/Fotos';
 import { Premo } from '@/components/diario/Premo';
-import { emocaoPorId } from '@/data/emocoes';
+import { emocaoPorId, emocoes } from '@/data/emocoes';
 import {
   adicionarMomento,
   atualizarMomento,
@@ -64,7 +64,7 @@ export default function NovoMomento() {
   const { width, height } = useWindowDimensions();
   // Figma: o carrossel começa a ~16% da altura (233 px numa tela de 917)
   const respiro = Math.max(24, Math.round(height * 0.16));
-  const params = useLocalSearchParams<{ em?: string; emocao?: string; data?: string; pergunta?: string; acao?: string }>();
+  const params = useLocalSearchParams<{ em?: string; emocao?: string; data?: string; pergunta?: string; acao?: string; voltar?: string }>();
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const gravador = useGravador();
   const campo = useRef<TextInputInstance | null>(null);
@@ -90,7 +90,7 @@ export default function NovoMomento() {
   const [folhaFoto, setFolhaFoto] = useState(false);
   const [sair, setSair] = useState(false);
   const [foto, setFoto] = useState<string | null>(null);
-  const [acaoPendente, setAcaoPendente] = useState(params.acao ?? null);
+  const [pedirEmocao, setPedirEmocao] = useState(false);
   const [recolher] = useState(() => new Animated.Value(0));
 
   const nomeEmocao = emocaoPorId(emocao)?.nome;
@@ -168,14 +168,15 @@ export default function NovoMomento() {
   };
   const remover = (a: Anexo) => setAnexos((l) => l.filter((x) => x !== a));
 
-  // Da Página de hoje: o microfone/câmera abrem assim que a pessoa escolhe a emoção.
-  const escolherEmocao = (id: string | null) => {
-    setEmocao(id);
-    if (!id || !acaoPendente) return;
-    setAcaoPendente(null);
-    if (acaoPendente === 'audio') gravarAudio();
-    else if (acaoPendente === 'foto') setFolhaFoto(true);
-  };
+  // Da Página de hoje: o microfone/câmera já abrem quando a tela termina de entrar.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (params.acao === 'audio') gravarAudio();
+      else if (params.acao === 'foto') setFolhaFoto(true);
+    }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só ao abrir
+  }, []);
 
   // ─── Sair e guardar ───────────────────────────────────────────────────────
   const fechar = () => {
@@ -204,11 +205,17 @@ export default function NovoMomento() {
     fechar();
   };
 
-  const guardar = async () => {
-    if (!emocao) return;
+  // Dá para escrever antes de escolher a emoção; ela só é pedida na hora de guardar.
+  const guardar = async (escolhida = emocao) => {
+    if (!escolhida) {
+      Keyboard.dismiss();
+      setPedirEmocao(true);
+      return;
+    }
+    setPedirEmocao(false);
     if (gravador.gravando) await pararAudio();
     const dados: Partial<Momento> = {
-      id: emocao,
+      id: escolhida,
       texto: texto.trim() ? texto : undefined,
       destaques: destaques.length ? destaques : undefined,
       anexos: anexos.length ? anexos : undefined,
@@ -226,16 +233,22 @@ export default function NovoMomento() {
       em = m.em;
       AsyncStorage.removeItem(CHAVE_RASCUNHO).catch(() => {});
     }
-    router.dismissTo({ pathname: '/diario', params: { guardado: String(em) } });
+    // Aberto pelo Índice: volta para a lista. Senão (novo, Home, Pausa): fecha tudo por cima
+    // das abas e mostra o momento na linha do tempo da aba Diário.
+    if (params.voltar) {
+      router.back();
+      return;
+    }
+    if (router.canDismiss()) router.dismissAll();
+    router.navigate({ pathname: '/diario', params: { guardado: String(em) } });
   };
 
   // ─── Tela ─────────────────────────────────────────────────────────────────
   const n = diasAtras(quando);
   const d = new Date(quando);
   const horario = n === 0 ? hora(quando) : `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)} · ${hora(quando)}`;
-  const placeholder = emocao
-    ? (params.pergunta ?? PERGUNTA_DA_EMOCAO[emocao] ?? 'Como foi esse momento?')
-    : 'Escolha uma emoção para escrever';
+  const placeholder =
+    params.pergunta ?? (emocao ? (PERGUNTA_DA_EMOCAO[emocao] ?? 'Como foi esse momento?') : 'Escreva o que quiser. A emoção pode vir depois.');
   const alturaTopo = respiro + ALTURA_CARROSSEL + 100;
 
   const resumo = resumoAnexos(anexos);
@@ -268,7 +281,7 @@ export default function NovoMomento() {
           }}
         >
           <View style={{ marginTop: respiro }}>
-            <CarrosselEmocoes largura={width} valor={emocao} onMudar={escolherEmocao} />
+            <CarrosselEmocoes largura={width} valor={emocao} onMudar={setEmocao} />
           </View>
           <View style={styles.textos}>
             <Texto estilo="Títulos/Destaque" style={styles.centro}>
@@ -285,7 +298,6 @@ export default function NovoMomento() {
         {/* Campo · texto */}
         <View style={[styles.areaCampo, escrevendo && styles.areaCampoEscrevendo]}>
           <Pressable
-            disabled={!emocao}
             onPress={() => campo.current?.focus()}
             style={[
               styles.campo,
@@ -293,7 +305,6 @@ export default function NovoMomento() {
               {
                 backgroundColor: cores.bg.base,
                 borderColor: escrevendo ? cores.border.focus : 'transparent',
-                opacity: emocao ? 1 : 0.5,
               },
             ]}
           >
@@ -307,7 +318,7 @@ export default function NovoMomento() {
                   setDestaques(ds);
                 }}
                 placeholder={placeholder}
-                editavel={!!emocao}
+
                 onFocus={() => setEscrevendo(true)}
                 onBlur={() => setEscrevendo(false)}
                 minimo={60}
@@ -338,10 +349,10 @@ export default function NovoMomento() {
                   </View>
                 ) : null}
                 <View style={styles.ferramentas}>
-                  <Pressable disabled={!emocao} onPress={gravarAudio} hitSlop={8} accessibilityRole="button" accessibilityLabel="Gravar áudio">
+                  <Pressable onPress={gravarAudio} hitSlop={8} accessibilityRole="button" accessibilityLabel="Gravar áudio">
                     <Icone nome="microfone" cor={cores.text.tertiary} />
                   </Pressable>
-                  <Pressable disabled={!emocao} onPress={() => setFolhaFoto(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Adicionar foto">
+                  <Pressable onPress={() => setFolhaFoto(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Adicionar foto">
                     <Icone nome="camera" cor={cores.text.tertiary} />
                   </Pressable>
                   <View style={styles.flex} />
@@ -375,7 +386,7 @@ export default function NovoMomento() {
           </View>
         ) : (
           <View style={styles.rodape}>
-            <Botao rotulo="Guardar momento" disabled={!emocao} onPress={guardar} />
+            <Botao rotulo="Guardar momento" disabled={!emocao && !temConteudo} onPress={() => guardar()} />
           </View>
         )}
       </KeyboardAvoidingView>
@@ -407,6 +418,34 @@ export default function NovoMomento() {
               fechar();
             }}
           />
+        </View>
+      </Folha>
+
+      {/* Escreveu sem escolher a emoção: ela é pedida só na hora de guardar */}
+      <Folha
+        visivel={pedirEmocao}
+        onFechar={() => setPedirEmocao(false)}
+        titulo="Como você estava?"
+        descricao="Escolha a emoção que mais combina para guardar o momento."
+      >
+        <View style={styles.grade}>
+          {emocoes.map((e) => (
+            <Pressable
+              key={e.id}
+              onPress={() => {
+                setEmocao(e.id);
+                guardar(e.id);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={e.nome}
+              style={({ pressed }) => [styles.opcao, { backgroundColor: cores.bg.sunken, opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Premo id={e.id} tamanho={36} />
+              <Texto estilo="Legenda/Pequena" numberOfLines={1}>
+                {e.nome}
+              </Texto>
+            </Pressable>
+          ))}
         </View>
       </Folha>
 
@@ -459,4 +498,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.none,
   },
   botoesSair: { gap: space[12] },
+  grade: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  opcao: { width: '31%', flexGrow: 1, alignItems: 'center', gap: space[4], paddingVertical: space[12], borderRadius: radius.md },
 });

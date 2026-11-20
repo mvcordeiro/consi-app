@@ -143,6 +143,8 @@ function DiaNaTrilha({
   const satelites = dia.momentos.filter((m) => m !== principal).slice(0, LUGARES_SATELITE.length);
   const ladoSatelite = hoje ? 46 : 40;
   const destacado = (m?: Momento) => !!m && m.em === destaque;
+  // coordenadas dentro da faixa do dia (cada dia só recebe os toques da própria faixa)
+  const cy = dia.altura / 2;
 
   const rotulo = (
     <View style={styles.rotulo}>
@@ -166,7 +168,7 @@ function DiaNaTrilha({
     dia.posicao === 'esquerda' ? dia.cx + dia.lado / 2 + space[24] : dia.posicao === 'direita' ? space[24] : dia.cx - LADO_SEM_REGISTRO / 2 - space[12] - larguraRotulo;
 
   return (
-    <Aparecer atraso={indice * 90} deslocamento={8} duracao={700} style={StyleSheet.absoluteFill}>
+    <Aparecer atraso={indice * 90} deslocamento={8} duracao={700} style={[styles.faixa, { top: dia.cy - dia.altura / 2, height: dia.altura }]}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
@@ -179,7 +181,7 @@ function DiaNaTrilha({
             {
               left: rotuloX,
               width: larguraRotulo,
-              top: dia.cy - (hoje ? 40 : 22) - (dia.posicao === 'centro' ? -24 : 0),
+              top: cy - (hoje ? 40 : 22) - (dia.posicao === 'centro' ? -24 : 0),
               alignItems: dia.posicao === 'centro' ? 'flex-end' : 'flex-start',
             },
           ]}
@@ -190,19 +192,19 @@ function DiaNaTrilha({
         {cheio ? (
           <View style={{ opacity: opacidade }} pointerEvents="none">
             {hoje ? (
-              <AnelTracejado lado={ANEL_HOJE} cor={cores.action.secondary.default} fundo={cores.bg.raised} x={dia.cx} y={dia.cy} />
+              <AnelTracejado lado={ANEL_HOJE} cor={cores.action.secondary.default} fundo={cores.bg.raised} x={dia.cx} y={cy} />
             ) : null}
             {destacado(principal) && !hoje ? (
-              <AnelTracejado lado={dia.lado + 24} cor={cores.action.secondary.default} x={dia.cx} y={dia.cy} />
+              <AnelTracejado lado={dia.lado + 24} cor={cores.action.secondary.default} x={dia.cx} y={cy} />
             ) : null}
-            <View style={[styles.balao, { left: dia.cx - dia.lado / 2, top: dia.cy - dia.lado / 2 }]}>
+            <View style={[styles.balao, { left: dia.cx - dia.lado / 2, top: cy - dia.lado / 2 }]}>
               <Premo id={dia.principal} tamanho={dia.lado} flutuar={hoje} />
             </View>
             {satelites.map((m, i) => {
               const p = LUGARES_SATELITE[i];
               // nos balões da esquerda, os satélites espelham para não cobrir o rótulo
               const x = dia.cx + (dia.posicao === 'esquerda' ? -p.x : p.x) * dia.lado;
-              const y = dia.cy + p.y * dia.lado;
+              const y = cy + p.y * dia.lado;
               return (
                 <View key={m.em}>
                   {destacado(m) ? (
@@ -222,7 +224,7 @@ function DiaNaTrilha({
               styles.semRegistro,
               {
                 left: dia.cx - LADO_SEM_REGISTRO / 2,
-                top: dia.cy - LADO_SEM_REGISTRO / 2,
+                top: cy - LADO_SEM_REGISTRO / 2,
                 borderColor: cores.text.tertiary,
               },
             ]}
@@ -244,6 +246,7 @@ function AnelTracejado({ lado, cor, fundo, x, y }: { lado: number; cor: string; 
 }
 
 const styles = StyleSheet.create({
+  faixa: { position: 'absolute', left: 0, right: 0 },
   balao: { position: 'absolute' },
   rotuloPos: { position: 'absolute' },
   rotulo: { gap: 2 },

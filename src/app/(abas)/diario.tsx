@@ -16,7 +16,6 @@ import { perguntaDeHoje, proximaPergunta, usePreferenciasDiario } from '@/data/d
 import { emocaoPorId } from '@/data/emocoes';
 import {
   apagarMomento,
-  chaveDia,
   DIAS_SEMANA,
   diasAtras,
   MESES,
@@ -56,7 +55,9 @@ export default function Diario() {
   const [diasLinha, setDiasLinha] = useState(7);
 
   // Chegou de "Guardar momento": mostra o aviso uma vez, com o desfazer.
-  const destaque = guardado ? Number(guardado) : null;
+  // "Voltar" fecha a linha do tempo do momento guardado e volta para a visão escolhida.
+  const [fechado, setFechado] = useState<string | null>(null);
+  const destaque = guardado && guardado !== fechado ? Number(guardado) : null;
   useEffect(() => {
     if (!destaque) return;
     const m = momentoPorEm(destaque);
@@ -79,7 +80,7 @@ export default function Diario() {
             {destaque ? (
               <View style={styles.cabecalho}>
                 <Pressable
-                  onPress={() => router.setParams({ guardado: undefined })}
+                  onPress={() => setFechado(guardado ?? null)}
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel="Voltar"
@@ -119,7 +120,7 @@ export default function Diario() {
           pergunta={perguntaDeHoje(prefs)}
           onTrocarPergunta={() => mudarPrefs({ pergunta: proximaPergunta(prefs) })}
           onOpcoes={() => setOpcoes(true)}
-          onAbrirDia={abrirDia}
+          onAbrirMomento={(em) => abrirNovo({ em: String(em), voltar: '1' })}
           onNovo={abrirNovo}
         />
       )}
@@ -191,7 +192,7 @@ function Indice({
   pergunta,
   onTrocarPergunta,
   onOpcoes,
-  onAbrirDia,
+  onAbrirMomento,
   onNovo,
 }: {
   momentos: Momento[];
@@ -203,7 +204,8 @@ function Indice({
   pergunta: string;
   onTrocarPergunta: () => void;
   onOpcoes: () => void;
-  onAbrirDia: (chave: string) => void;
+  /** No Índice, tocar abre o próprio momento (o dia aberto é da linha do tempo). */
+  onAbrirMomento: (em: number) => void;
   onNovo: (params?: Record<string, string>) => void;
 }) {
   const { cores } = useTema();
@@ -325,7 +327,7 @@ function Indice({
             <View key={g.rotulo} style={styles.lista}>
               <GrupoIndice rotulo={g.rotulo} />
               {g.itens.map((m) => (
-                <ItemIndice key={m.em} momento={m} recente={m.em === recente && diasAtras(m.em) === 0} onPress={() => onAbrirDia(chaveDia(m.em))} />
+                <ItemIndice key={m.em} momento={m} recente={m.em === recente && diasAtras(m.em) === 0} onPress={() => onAbrirMomento(m.em)} />
               ))}
             </View>
           ))
