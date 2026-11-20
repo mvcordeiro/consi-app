@@ -127,6 +127,50 @@ Hoje a pausa é uma tela que nós abrimos. Para funcionar com os apps reais é p
 - **iPhone:** o equivalente é a Screen Time API (FamilyControls, DeviceActivity), que exige pedir o
   entitlement à Apple. É um projeto à parte e pode vir depois do Android.
 
+### Como está feito (fase 3, Android)
+
+**Escolha:** Acesso de uso + sobrepor + serviço em primeiro plano, **sem** Accessibility Service. No
+Android 13+, apps instalados fora da loja não conseguem ligar a Acessibilidade sem o passo escondido
+"Permitir configurações restritas", e a Play Store é rígida com ela. Sobrepor não tem essa trava.
+
+- **Módulo nativo local** `modules/consi-pausa` (Expo Modules API, Kotlin, autolinking; nada em `android/`
+  à mão). O manifesto do módulo entra sozinho no app: `PACKAGE_USAGE_STATS`, `SYSTEM_ALERT_WINDOW`,
+  `FOREGROUND_SERVICE(_SPECIAL_USE)`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED` e um `<queries>`
+  só para o menu de apps (sem `QUERY_ALL_PACKAGES`).
+- **Vigia** (`VigiaService.kt`): serviço em primeiro plano (tipo `specialUse`, notificação fixa discreta)
+  que a cada ~0,7 s vê o último app que veio para a frente (`UsageStatsManager.queryEvents`). Com a
+  tela apagada, olha a cada 3 s e não faz nada. Volta sozinho depois de reiniciar o celular.
+  - **Apenas pausar:** abre `consi://pausa?app=<pacote>&grupo=<id>&origem=vigia` por cima do app. Depois
+    do "Quanto tempo você precisa?", o app fica liberado por aqueles minutos e o Consi abre o app. Se o
+    tempo acaba com o app aberto, a pausa volta. Sair da pausa sem escolher e voltar ao app = pausa de novo.
+  - **Cuidar tempo:** a cada X minutos seguidos no app, uma notificação ("Você está há X min no …"); tocar
+    nela abre a pausa. Se o grupo diz que ignorar leva à pausa, ela abre 1 minuto depois do lembrete.
+  - Telas iniciais (launchers), a barra do sistema e o próprio Consi nunca são pausados.
+  - Sem a permissão de sobrepor, o Android bloqueia abrir a tela por cima: a pausa vira uma notificação.
+- **Regras:** `src/data/vigia.ts` manda os grupos para o Android (SharedPreferences) sempre que mudam, e
+  liga o vigia quando há Acesso de uso (a não ser que a pessoa tenha desligado em Ajustes).
+- **Apps de verdade** (`src/data/apps.ts`): a lista do menu de apps com nome e ícone reais. O onboarding
+  mostra até 9: primeiro os conhecidos que estão instalados (Instagram, TikTok, YouTube…), depois os das
+  categorias social, vídeo, jogo, áudio, notícias e imagem. Os apps postos em "Me perco no tempo" e "Abro
+  no automático" viram **acompanhados** e entram no Livre (que pausa); os de "Não me incomoda" e o resto
+  do celular ficam de fora. Pôr um app num grupo também o torna acompanhado. Grupos antigos com os ids de
+  exemplo ("instagram") passam para o pacote instalado sozinhos.
+- **Permissões:** o Continuar da tela F1 do onboarding abre o Acesso de uso do Android e segue sozinho
+  quando a pessoa volta com ele ligado (um segundo toque segue sem). Ajustes ganhou "Pausa nos apps",
+  com as três permissões (Acesso de uso, Sobrepor, Notificações), o que deixa de funcionar sem cada uma
+  e o liga/desliga. Explicações no tom do Consi e a tela dedicada a Sobrepor são da fase 4.
+- **Tempo de uso:** `ConsiPausa.usoPorApp(inicio, fim)` já devolve os minutos por app (eventos de uso),
+  pronto para "Sua semana". Mostrar na Home ainda pede design.
+- Navegador e iPhone seguem como antes: apps de exemplo e a pausa aberta só por dentro do Consi.
+
+**Para testar no celular** (precisa de APK novo: é mudança nativa): subir `android.versionCode`, gerar o
+`preview` (passo 5 da fase 1), instalar, fazer o onboarding (ou "Refazer onboarding"), ligar o Acesso de
+uso no F1 e, em Ajustes → Pausa nos apps, ligar Sobrepor e Notificações. Abrir um app que está no Livre.
+
+**Pendente:** o código Kotlin ainda não foi compilado (não há Android SDK neste computador); o primeiro
+build do EAS é a verificação. Alguns fabricantes (Xiaomi, Samsung com economia de bateria) matam serviços
+em segundo plano: testar e, se precisar, pedir para tirar o Consi da otimização de bateria.
+
 ## 4. Permissões e acessibilidade (antes de qualquer APK público)
 
 **Permissões:** pedir cada uma só quando for usada, com uma tela explicando o porquê no tom do Consi
