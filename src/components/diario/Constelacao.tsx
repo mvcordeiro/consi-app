@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { chaveDia, diaCurto, maisSentida, plural, type Momento } from '@/data/momentos';
+import { chaveDia, diaCurto, emocoesDoDia, plural, type Momento } from '@/data/momentos';
 import { borderWidth, space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
@@ -17,18 +17,23 @@ const ALTURA_VAZIO = 90;
 const LADO_HOJE = 108;
 const ANEL_HOJE = 150;
 const LADO_SEM_REGISTRO = 40;
-/** Satélites (os outros momentos do dia) em volta do balão principal, como no Figma. */
+/**
+ * Satélites: as outras emoções do dia em volta da central (Figma 760:5986), no máximo 4,
+ * para o dia ter até 5 balões (EMOCOES_POR_DIA). Ordem: das mais repetidas para as menos.
+ */
 const LUGARES_SATELITE = [
   { x: 0.65, y: -0.56 },
   { x: -0.77, y: -0.42 },
   { x: 0.62, y: 0.6 },
+  { x: -0.66, y: 0.58 },
 ];
 
 type Dia = {
   chave: string;
   data: Date;
   momentos: Momento[];
-  principal: string | null;
+  /** Até 5 emoções, sem repetir; a primeira é a central. */
+  emocoes: string[];
   cx: number;
   cy: number;
   lado: number;
@@ -41,13 +46,13 @@ type Dia = {
  * Constelação · Semana (Figma 760:5986): a linha do tempo do Diário. Cada dia é um balão
  * da emoção mais sentida, maior quanto mais momentos; os outros momentos orbitam em volta.
  * Uma trilha pontilhada liga os dias, de hoje (no topo) para trás. Dias sem registro
- * são um círculo tracejado vazio. `destaque` marca um momento recém-guardado com o anel tracejado.
+ * são um círculo tracejado vazio. Cada dia mostra até 5 emoções (emocoesDoDia): a central é a
+ * mais repetida (ou a mais recente, se nenhuma se repete). Só a central de hoje tem o anel tracejado.
  */
 export function Constelacao({
   momentos,
   largura,
   dias,
-  destaque,
   onAbrirDia,
   onMaisDias,
 }: {
@@ -55,7 +60,6 @@ export function Constelacao({
   largura: number;
   /** Quantos dias mostrar, contando hoje. */
   dias: number;
-  destaque?: number | null;
   onAbrirDia: (chave: string) => void;
   onMaisDias?: () => void;
 }) {
@@ -82,7 +86,7 @@ export function Constelacao({
       const posicao: Dia['posicao'] = !cheio ? 'centro' : alterna++ % 2 === 0 ? 'direita' : 'esquerda';
       const cx = posicao === 'direita' ? largura * 0.72 : posicao === 'esquerda' ? largura * 0.26 : largura * 0.5;
       const lado = !cheio ? LADO_SEM_REGISTRO : i === 0 ? LADO_HOJE : doDia.length >= 3 ? 84 : doDia.length === 2 ? 76 : 64;
-      out.push({ chave, data, momentos: doDia, principal: maisSentida(doDia), cx, cy: y + altura / 2, lado, altura, posicao });
+      out.push({ chave, data, momentos: doDia, emocoes: emocoesDoDia(doDia), cx, cy: y + altura / 2, lado, altura, posicao });
       y += altura;
     }
     return { lista: out, alturaTotal: y };
@@ -108,7 +112,7 @@ export function Constelacao({
           <Path d={trilha} stroke={cores.text.accent} strokeWidth={2.5} strokeLinecap="round" strokeDasharray="0.1 9" fill="none" />
         </Svg>
         {lista.map((dia, i) => (
-          <DiaNaTrilha key={dia.chave} dia={dia} hoje={i === 0} indice={i} largura={largura} destaque={destaque} onPress={() => onAbrirDia(dia.chave)} />
+          <DiaNaTrilha key={dia.chave} dia={dia} hoje={i === 0} indice={i} largura={largura} onPress={() => onAbrirDia(dia.chave)} />
         ))}
       </View>
       {onMaisDias ? (
@@ -125,24 +129,20 @@ function DiaNaTrilha({
   hoje,
   indice,
   largura,
-  destaque,
   onPress,
 }: {
   dia: Dia;
   hoje: boolean;
   indice: number;
   largura: number;
-  destaque?: number | null;
   onPress: () => void;
 }) {
   const { cores } = useTema();
   const cheio = dia.momentos.length > 0;
   // os dias mais antigos vão apagando (Figma: 100% hoje, 85%, 72%… até 50%)
   const opacidade = hoje ? 1 : Math.max(0.5, 1 - indice * 0.12);
-  const principal = dia.momentos.find((m) => m.id === dia.principal);
-  const satelites = dia.momentos.filter((m) => m !== principal).slice(0, LUGARES_SATELITE.length);
+  const [central, ...satelites] = dia.emocoes;
   const ladoSatelite = hoje ? 46 : 40;
-  const destacado = (m?: Momento) => !!m && m.em === destaque;
   // coordenadas dentro da faixa do dia (cada dia só recebe os toques da própria faixa)
   const cy = dia.altura / 2;
 
@@ -191,28 +191,21 @@ function DiaNaTrilha({
 
         {cheio ? (
           <View style={{ opacity: opacidade }} pointerEvents="none">
+            {/* o anel tracejado é só da emoção central de hoje */}
             {hoje ? (
               <AnelTracejado lado={ANEL_HOJE} cor={cores.action.secondary.default} fundo={cores.bg.raised} x={dia.cx} y={cy} />
             ) : null}
-            {destacado(principal) && !hoje ? (
-              <AnelTracejado lado={dia.lado + 24} cor={cores.action.secondary.default} x={dia.cx} y={cy} />
-            ) : null}
             <View style={[styles.balao, { left: dia.cx - dia.lado / 2, top: cy - dia.lado / 2 }]}>
-              <Premo id={dia.principal} tamanho={dia.lado} flutuar={hoje} />
+              <Premo id={central} tamanho={dia.lado} flutuar={hoje} />
             </View>
-            {satelites.map((m, i) => {
+            {satelites.map((id, i) => {
               const p = LUGARES_SATELITE[i];
               // nos balões da esquerda, os satélites espelham para não cobrir o rótulo
               const x = dia.cx + (dia.posicao === 'esquerda' ? -p.x : p.x) * dia.lado;
               const y = cy + p.y * dia.lado;
               return (
-                <View key={m.em}>
-                  {destacado(m) ? (
-                    <AnelTracejado lado={ladoSatelite + 12} cor={cores.action.secondary.default} x={x} y={y} />
-                  ) : null}
-                  <View style={[styles.balao, { left: x - ladoSatelite / 2, top: y - ladoSatelite / 2 }]}>
-                    <Premo id={m.id} tamanho={ladoSatelite} flutuar={hoje} fase={400 * (i + 1)} />
-                  </View>
+                <View key={id} style={[styles.balao, { left: x - ladoSatelite / 2, top: y - ladoSatelite / 2 }]}>
+                  <Premo id={id} tamanho={ladoSatelite} flutuar={hoje} fase={400 * (i + 1)} />
                 </View>
               );
             })}
@@ -235,7 +228,7 @@ function DiaNaTrilha({
   );
 }
 
-/** Anel tracejado (o "Hoje · destaque" do Figma e o do momento recém-guardado). */
+/** Anel tracejado em volta da emoção central de hoje (o "Hoje · destaque" do Figma). */
 function AnelTracejado({ lado, cor, fundo, x, y }: { lado: number; cor: string; fundo?: string; x: number; y: number }) {
   const r = lado / 2 - 1;
   return (

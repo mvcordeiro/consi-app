@@ -32,7 +32,7 @@ import {
   dataDaChave,
   diaLongo,
   hora,
-  maisSentida,
+  emocoesDoDia,
   plural,
   restaurarMomento,
   useMomentos,
@@ -72,8 +72,8 @@ export default function DiaAberto() {
   const [foto, setFoto] = useState<string | null>(null);
 
   const momentos = useMemo(() => todos.filter((m) => chaveDia(m.em) === chaveDia(dia)), [todos, dia]);
-  const principal = maisSentida(momentos);
-  const outras = [...new Set(momentos.map((m) => m.id))].filter((id) => id !== principal).slice(0, AO_REDOR.length);
+  // mesmo padrão da linha do tempo: até 5 emoções, a central é a mais repetida (ou a mais recente)
+  const [principal = null, ...outras] = emocoesDoDia(momentos);
   const visiveis = busca?.trim()
     ? momentos.filter(
         (m) =>

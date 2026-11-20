@@ -91,7 +91,6 @@ export default function Diario() {
               momentos={momentos}
               largura={width}
               dias={diasLinha}
-              destaque={destaque}
               onAbrirDia={abrirDia}
               onMaisDias={diasLinha < 60 ? () => setDiasLinha((d) => d + 7) : undefined}
             />

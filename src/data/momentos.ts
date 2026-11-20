@@ -225,13 +225,30 @@ export function editado(em?: number) {
   return `editado em ${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`;
 }
 
+/** Quantas emoções um dia mostra na linha do tempo e no dia aberto (a central + 4 em volta). */
+export const EMOCOES_POR_DIA = 5;
+
+/**
+ * As emoções de um dia, sem repetir, na ordem em que aparecem nos aglomerados:
+ * 1ª (a central) = a mais repetida; se nenhuma se repete (ou há empate), a mais recente.
+ * Depois as outras, das mais repetidas para as menos, e no empate as mais recentes.
+ * `momentos` vem do mais recente para o mais antigo (como useMomentos).
+ */
+export function emocoesDoDia(momentos: Momento[], limite = EMOCOES_POR_DIA) {
+  const conta = new Map<string, number>();
+  const recencia = new Map<string, number>();
+  momentos.forEach((m, i) => {
+    conta.set(m.id, (conta.get(m.id) ?? 0) + 1);
+    if (!recencia.has(m.id)) recencia.set(m.id, i);
+  });
+  return [...conta.keys()]
+    .sort((a, b) => conta.get(b)! - conta.get(a)! || recencia.get(a)! - recencia.get(b)!)
+    .slice(0, limite);
+}
+
 /** A emoção que mais aparece no dia (empate: a mais recente). */
 export function maisSentida(momentos: Momento[]) {
-  const conta = new Map<string, number>();
-  for (const m of momentos) conta.set(m.id, (conta.get(m.id) ?? 0) + 1);
-  let melhor: string | null = null;
-  for (const m of momentos) if (!melhor || (conta.get(m.id) ?? 0) > (conta.get(melhor) ?? 0)) melhor = m.id;
-  return melhor;
+  return emocoesDoDia(momentos, 1)[0] ?? null;
 }
 
 export const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
