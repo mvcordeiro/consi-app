@@ -6,13 +6,15 @@ import { useState } from 'react';
 import { DevSettings, StyleSheet, View } from 'react-native';
 
 import { Botao, Folha, Tela, Texto } from '@/components';
+import { AjustesPausa } from '@/components/AjustesPausa';
 import { apagarTudo, exportarTudo } from '@/data/banco';
 import { chaveDia } from '@/data/momentos';
 import { refazerOnboarding } from '@/data/onboarding';
 import { radius, space, useTema } from '@/theme';
 
 /**
- * Ajustes (provisório). "Seus dados" (exportar e apagar tudo, LGPD) e os atalhos de teste.
+ * Ajustes (provisório). "Pausa nos apps" (permissões do vigia, só no APK Android), "Seus dados"
+ * (exportar e apagar tudo, LGPD) e os atalhos de teste.
  * PROVISÓRIO: ainda sem tela no Figma; layout e textos aguardam o design.
  */
 export default function Ajustes() {
@@ -61,6 +63,8 @@ export default function Ajustes() {
   return (
     <Tela>
       <Texto estilo="Títulos/Grande">Ajustes</Texto>
+
+      <AjustesPausa />
 
       <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
         <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>

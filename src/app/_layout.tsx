@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 
 import { AvisoNovaVersao } from '@/components/AvisoNovaVersao';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
+import { useVigia } from '@/data/vigia';
 import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
 
 // Mantém a splash na tela até as fontes carregarem.
@@ -35,6 +36,8 @@ export default function RootLayout() {
 
 function Pilha() {
   const { cores, modo } = useTema();
+  // APK Android: regras dos grupos para o vigia nativo, que abre a pausa antes dos apps.
+  useVigia();
   return (
     <>
       <StatusBar style={modo === 'dark' ? 'light' : 'dark'} />

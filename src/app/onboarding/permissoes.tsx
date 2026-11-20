@@ -1,17 +1,20 @@
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Texto } from '@/components';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { IconeDownload, PontoNotificacao, SetaVoltar, SwitchLigado } from '@/components/onboarding/assets';
+import { pedirAcessoUso, temPausaDeVerdade, usePermissoes } from '@/data/vigia';
 import { borderWidth, gap, radius, space, useCoresSvg, useTema } from '@/theme';
 
 /**
  * F1 · Permissões — passo a passo ilustrado (caminho do Android).
- * Combinado: por enquanto é só ilustrativo; a versão do iPhone e a permissão real
- * (módulo nativo) vêm depois. O conteúdo rola e o botão fica fixo embaixo.
+ * No APK Android, o Continuar abre o Acesso de uso do Android (os passos ilustrados); ao voltar
+ * com a permissão ligada, segue sozinho. Sem ligar, um segundo toque segue assim mesmo (recusar
+ * não pode travar o onboarding). No navegador e no iPhone, só ilustra. O conteúdo rola e o botão
+ * fica fixo embaixo.
  * Títulos centralizados; os cartões imitam a tela do sistema, então ficam à esquerda.
  */
 const TITULO = 'Precisamos de algumas permissões para seguir';
@@ -23,6 +26,20 @@ export default function F1Permissoes() {
   const { cores } = useTema();
   const transicao = useTransicao();
   const coresSvg = useCoresSvg();
+  const { permissoes } = usePermissoes();
+  const pediu = useRef(false);
+
+  const seguir = () => transicao.sair(() => router.push('/onboarding/compromisso'));
+  const continuar = () => {
+    if (!temPausaDeVerdade || permissoes.acessoUso || pediu.current) return seguir();
+    pediu.current = true;
+    pedirAcessoUso();
+  };
+  // De volta dos Ajustes do Android com a permissão ligada: segue.
+  useEffect(() => {
+    if (pediu.current && permissoes.acessoUso) seguir();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissoes.acessoUso]);
 
   return (
     <TelaOnboarding
@@ -30,7 +47,7 @@ export default function F1Permissoes() {
       comTextura={false}
       rolavel
       atrasoRodape={T_PASSOS + 500}
-      rodape={<BotaoContinuar onPress={() => transicao.sair(() => router.push('/onboarding/compromisso'))} />}
+      rodape={<BotaoContinuar onPress={continuar} />}
     >
       <View style={styles.cabecalho}>
         <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />

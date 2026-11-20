@@ -27,6 +27,7 @@ import { BalaoVazio, emocoes, salvarEmocao, type Emocao } from '@/data/emocoes';
 import { useGrupos } from '@/data/gruposHome';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { perguntaTempoNoApp, regraDaPausa, registrarResistencia } from '@/data/pausa';
+import { seguirParaOApp } from '@/data/vigia';
 import { duration, easing, space, useTema } from '@/theme';
 
 import IconeEscrever from '../../assets/home/icone-escrever.svg';
@@ -62,11 +63,14 @@ type Origem = 'pausa' | 'naoAbri';
  * Tela de pausa (Figma: seção "01.1 · PAUSA", 700:7576). Abre antes de um app de um grupo
  * com pausa; a mensagem e o tempo de espera vêm da regra do grupo. O timer de continuar
  * começa quando a tela abre e segue correndo durante o check-in.
- * Parâmetros: `grupo` (id) e/ou `app` (id); sem eles, vale o grupo "Livre".
+ * Parâmetros: `grupo` (id) e/ou `app` (id); sem eles, vale o grupo "Livre". `origem=vigia`:
+ * aberta pelo vigia do Android por cima do app (consi://pausa?app=<pacote>…); aí continuar
+ * libera o app pelo tempo escolhido e abre o app.
  */
 export default function Pausa() {
   const { cores } = useTema();
-  const params = useLocalSearchParams<{ grupo?: string; app?: string }>();
+  const params = useLocalSearchParams<{ grupo?: string; app?: string; origem?: string }>();
+  const doVigia = params.origem === 'vigia' && !!params.app;
   const grupos = useGrupos();
   const { grupo } = regraDaPausa(grupos, params);
   const timer = useTimer(grupo.pausaSegundos * 1000);
@@ -108,7 +112,12 @@ export default function Pausa() {
   const comRodape = origem === 'pausa';
 
   // ─── Saídas ───────────────────────────────────────────────────────────────
-  const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : router.back());
+  // Pausa do vigia: libera o app e volta para ele, deixando o Consi na Home por trás.
+  const irParaOApp = (minutos: number) => {
+    if (doVigia && seguirParaOApp(params.app, minutos)) router.dismissTo('/');
+    else router.back();
+  };
+  const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : irParaOApp(0));
   const irPara = (rota: '/hobbies' | '/diario' | '/') => router.dismissTo(rota);
   // Abre o momento do check-in no Diário para escrever (no lugar da pausa).
   const explorarEmocao = () =>
@@ -407,8 +416,8 @@ export default function Pausa() {
 
       {etapa === 'tempo' ? (
         <View style={[styles.cheia, { paddingTop: top, paddingBottom: bottom }]}>
-          {/* escolher um tempo segue para o app (por enquanto, fecha a pausa); Sair volta para a Home */}
-          <TempoNoApp onEscolher={() => router.back()} onSair={sumir} />
+          {/* escolher um tempo segue para o app (aberta por dentro do Consi, só fecha a pausa); Sair volta para a Home */}
+          <TempoNoApp onEscolher={irParaOApp} onSair={sumir} />
         </View>
       ) : null}
 
