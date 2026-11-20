@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
+import { guardarArquivo } from '@/data/arquivos';
 import { novoIdBloco, type Bloco, type TipoBloco } from '@/data/catalogo';
 import { borderWidth, primitivas, radius, size, space, tipografia, useTema } from '@/theme';
 
@@ -86,7 +87,7 @@ export function useEditorBlocos(inicial: Bloco[]) {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (r.canceled || !r.assets[0]) return;
     const { uri, width, height } = r.assets[0];
-    inserirDepois(depoisDe, { id: novoIdBloco(), tipo: 'imagem', imagem: uri, proporcao: width && height ? width / height : 4 / 3 });
+    inserirDepois(depoisDe, { id: novoIdBloco(), tipo: 'imagem', imagem: await guardarArquivo(uri), proporcao: width && height ? width / height : 4 / 3 });
   };
 
   /** Barra: transforma o bloco em foco (ou insere imagem/divisor depois dele). */

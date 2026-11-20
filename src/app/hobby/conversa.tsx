@@ -9,6 +9,7 @@ import { Aparecer } from '@/components/animacao';
 import { montarArvore, PainelReacoes, Thread, type Ancora } from '@/components/conversa';
 import { IconeHobby } from '@/components/hobbies';
 import { vibrar } from '@/components/hobbies/Arraste';
+import { guardarArquivo } from '@/data/arquivos';
 import type { Comentario } from '@/data/catalogo';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { borderWidth, inset, primitivas, radius, size, space, useTema } from '@/theme';
@@ -73,7 +74,7 @@ export default function ConversaTela() {
     } else {
       r = await ImagePicker.launchImageLibraryAsync(opcoes);
     }
-    if (!r.canceled && r.assets[0]) setImagem(r.assets[0].uri);
+    if (!r.canceled && r.assets[0]) setImagem(await guardarArquivo(r.assets[0].uri));
   };
 
   return (

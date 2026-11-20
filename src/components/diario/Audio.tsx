@@ -8,6 +8,7 @@ import {
   useAudioRecorderState,
 } from 'expo-audio';
 import { useEffect, useState } from 'react';
+import { guardarArquivo } from '@/data/arquivos';
 import { Animated, Easing, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { radius, space, useTema } from '@/theme';
@@ -168,7 +169,7 @@ export function useGravador() {
     } catch {
       return null;
     }
-    return gravador.uri ? { uri: gravador.uri, duracao: Math.max(1, duracao) } : null;
+    return gravador.uri ? { uri: await guardarArquivo(gravador.uri), duracao: Math.max(1, duracao) } : null;
   };
 
   return { gravando: estado.isRecording, segundos: (estado.durationMillis ?? 0) / 1000, iniciar, parar };

@@ -9,6 +9,7 @@ import { Aparecer } from '@/components/animacao';
 import { BarraBlocos, EditorBlocos, useEditorBlocos } from '@/components/blocos';
 import { CardSugestao, IconeHobby } from '@/components/hobbies';
 import { catalogoHobbies, hobbyInfo, type AtividadeMinha, type HobbyId, type Permissoes, type Visibilidade } from '@/data/catalogo';
+import { guardarArquivo } from '@/data/arquivos';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { borderWidth, inset, primitivas, radius, space, tipografia, useTema } from '@/theme';
 
@@ -96,7 +97,7 @@ function Formulario({
 
   const escolherCapa = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [16, 9] });
-    if (!r.canceled && r.assets[0]) setCapa(r.assets[0].uri);
+    if (!r.canceled && r.assets[0]) setCapa(await guardarArquivo(r.assets[0].uri));
   };
 
   const salvar = () => {

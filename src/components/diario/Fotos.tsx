@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { guardarArquivo } from '@/data/arquivos';
 import { radius, space, useTema } from '@/theme';
 
 import { Botao } from '../Botao';
@@ -18,7 +19,7 @@ export async function escolherFoto(deOnde: 'camera' | 'galeria'): Promise<string
   } else {
     r = await ImagePicker.launchImageLibraryAsync(opcoes);
   }
-  return !r.canceled && r.assets[0] ? r.assets[0].uri : null;
+  return !r.canceled && r.assets[0] ? guardarArquivo(r.assets[0].uri) : null;
 }
 
 /** Foto anexada (Figma 760:6249): quadrado de 52 px, bg/raised, cantos de 12 px. */
