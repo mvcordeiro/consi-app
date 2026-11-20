@@ -86,6 +86,8 @@ export default function Pausa() {
   // Só depois das emoções aparecerem: o toque que abriu o check-in não pode fechá-lo.
   const [aberto, setAberto] = useState(false);
   const [emocao, setEmocao] = useState<Emocao | null>(null);
+  // O check-in vira um momento do Diário: "Quero explorar essa emoção" abre esse momento para escrever.
+  const [momentoEm, setMomentoEm] = useState<number | null>(null);
 
   // Roda de hobbies: os hobbies da pessoa, começando pelo do meio.
   const { hobbies } = useHobbies();
@@ -108,6 +110,12 @@ export default function Pausa() {
   // ─── Saídas ───────────────────────────────────────────────────────────────
   const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : router.back());
   const irPara = (rota: '/hobbies' | '/diario' | '/') => router.dismissTo(rota);
+  // Abre o momento do check-in no Diário para escrever (no lugar da pausa).
+  const explorarEmocao = () =>
+    router.replace({
+      pathname: '/diario/novo',
+      params: momentoEm ? { em: String(momentoEm) } : { emocao: emocao?.id ?? '' },
+    });
   const abrirHobbies = () => {
     setHobbyEscolhido(null);
     setEtapa('hobbies');
@@ -189,7 +197,7 @@ export default function Pausa() {
   const soltar = (e: Emocao) => {
     setSoltou(true);
     setArrastando(false);
-    salvarEmocao(e.id);
+    salvarEmocao(e.id, 'pausa').then((hoje) => setMomentoEm(hoje[0]?.em ?? null));
     setTimeout(() => {
       setEmocao(e);
       setEtapa('emocao');
@@ -376,14 +384,14 @@ export default function Pausa() {
                   rotulo="Quero explorar essa emoção"
                   corRotulo={cores.icon.primary}
                   icone={(cor) => <IconeEscrever width={23.91} height={23.22} corTraco={cor} />}
-                  onPress={() => irPara('/diario')}
+                  onPress={explorarEmocao}
                 />
                 {botaoTimer}
               </View>
             ) : (
               <View style={styles.pilha}>
                 {/* a contagem só começa quando a tela já apareceu inteira */}
-                <BotaoContagem inicio={apareceu} onPress={() => irPara('/diario')} onFim={sumir} />
+                <BotaoContagem inicio={apareceu} onPress={explorarEmocao} onFim={sumir} />
                 <Botao rotulo="Sair" estilo="secundario" apagado onPress={sumir} />
               </View>
             )

@@ -27,6 +27,7 @@ import Cartola from '../../assets/icones/cartola.svg';
 import Claquete from '../../assets/icones/claquete.svg';
 import Compartilhar from '../../assets/icones/compartilhar.svg';
 import Contrabaixo from '../../assets/icones/contrabaixo.svg';
+import ControlesVerticais from '../../assets/icones/controles-verticais.svg';
 import Conversa from '../../assets/hobbies/conversa.svg';
 import Cronometro from '../../assets/icones/cronometro.svg';
 import Cubo from '../../assets/icones/cubo.svg';
@@ -58,6 +59,7 @@ import MaquinaEscrever from '../../assets/icones/maquina-escrever.svg';
 import Martelo from '../../assets/icones/martelo.svg';
 import MenuHorizontal from '../../assets/hobbies/menu-horizontal.svg';
 import MesaDigitalizadora from '../../assets/icones/mesa-digitalizadora.svg';
+import Microfone from '../../assets/icones/microfone.svg';
 import MudaPlanta from '../../assets/icones/muda-planta.svg';
 import Naipes from '../../assets/icones/naipes.svg';
 import Olho from '../../assets/icones/olho.svg';
@@ -85,6 +87,7 @@ import RostoOlhosBrilhantes from '../../assets/icones/rosto-olhos-brilhantes.svg
 import RostoPositivo from '../../assets/hobbies/rosto-positivo.svg';
 import Rpg from '../../assets/icones/rpg.svg';
 import Selo from '../../assets/icones/selo.svg';
+import SincronizarSetas from '../../assets/icones/sincronizar-setas.svg';
 import Spray from '../../assets/icones/spray.svg';
 import Subtrair from '../../assets/icones/subtrair.svg';
 import TamanhoFonte from '../../assets/icones/tamanho-fonte.svg';
@@ -123,6 +126,7 @@ export const icones = {
   'claquete': [Claquete, 22.7428, 24.0094],
   'compartilhar': [Compartilhar, 22.736, 24.0411],
   'contrabaixo': [Contrabaixo, 24.0246, 22.3195],
+  'controles-verticais': [ControlesVerticais, 24.4052, 24.167],
   'conversa': [Conversa, 24.0434, 23.5753],
   'cronometro': [Cronometro, 19.6389, 24.0523],
   'cubo': [Cubo, 23.9757, 22.4728],
@@ -154,6 +158,7 @@ export const icones = {
   'martelo': [Martelo, 23.6095, 24.0678],
   'menu-horizontal': [MenuHorizontal, 24.0754, 6.46086],
   'mesa-digitalizadora': [MesaDigitalizadora, 23.6406, 24.002],
+  'microfone': [Microfone, 14.3401, 24.0622],
   'muda-planta': [MudaPlanta, 22.3518, 23.9251],
   'naipes': [Naipes, 20.5786, 23.9928],
   'olho': [Olho, 24.0056, 13.9521],
@@ -181,6 +186,7 @@ export const icones = {
   'rosto-positivo': [RostoPositivo, 23.2485, 23.9997],
   'rpg': [Rpg, 23.2208, 24.0187],
   'selo': [Selo, 24.039, 23.302],
+  'sincronizar-setas': [SincronizarSetas, 23.9932, 22.9683],
   'spray': [Spray, 24.003, 22.1712],
   'subtrair': [Subtrair, 24.0002, 6.0125],
   'tamanho-fonte': [TamanhoFonte, 24.0131, 21.0267],

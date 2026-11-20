@@ -48,6 +48,8 @@ function Pilha() {
         <Stack.Screen name="hobby" />
         {/* Grupos de apps da Home: criar e abrir/editar */}
         <Stack.Screen name="grupo" />
+        {/* Diário: novo momento, dia aberto e busca */}
+        <Stack.Screen name="diario" />
       </Stack>
     </>
   );

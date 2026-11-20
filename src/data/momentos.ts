@@ -1,0 +1,305 @@
+/**
+ * Momentos do Diário (Figma: seção "4 - Diário final", 760:7273).
+ *
+ * Um momento é um check-in de emoção com o que a pessoa quiser juntar: texto, trechos
+ * destacados, marcadores, áudio e fotos. Os check-ins da Home e da Pausa também são
+ * momentos (sem texto): tudo fica numa lista só, guardada no aparelho.
+ * A chave de armazenamento é a mesma do antigo histórico de emoções, que continua compatível.
+ */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSyncExternalStore } from 'react';
+
+export type Anexo =
+  | { tipo: 'audio'; uri: string; /** segundos */ duracao: number }
+  | { tipo: 'foto'; uri: string };
+
+/** Trecho destacado do texto (índices de caractere, fim exclusivo). */
+export type Destaque = { inicio: number; fim: number };
+
+export type OrigemMomento = 'home' | 'pausa' | 'diario';
+
+export type Momento = {
+  /** Id da emoção (ver data/emocoes.ts). */
+  id: string;
+  /** Instante do momento, em ms. Também é o identificador do momento. */
+  em: number;
+  texto?: string;
+  destaques?: Destaque[];
+  marcadores?: string[];
+  anexos?: Anexo[];
+  origem?: OrigemMomento;
+  /** Última edição do texto. */
+  editadoEm?: number;
+};
+
+export const MARCADOR_PAUSA = 'Depois de uma pausa';
+
+/** Marcadores sugeridos na folha "+ marcador" (além dos que a pessoa já usou). */
+export const MARCADORES_SUGERIDOS = ['Trabalho', 'Casa', 'Família', 'Amigos', 'Estudo', 'Ônibus', 'Antes de dormir', MARCADOR_PAUSA];
+
+const CHAVE = 'consi:emocao-do-dia';
+const CHAVE_SEMENTE = 'consi:diario:exemplos';
+
+// ─── Armazenamento com aviso a quem estiver ouvindo ─────────────────────────
+let lista: Momento[] = [];
+let carregou = false;
+let carregando: Promise<Momento[]> | null = null;
+const ouvintes = new Set<() => void>();
+
+const ordenar = (l: Momento[]) => [...l].sort((a, b) => b.em - a.em);
+
+function avisar() {
+  ouvintes.forEach((f) => f());
+}
+
+async function gravar() {
+  try {
+    await AsyncStorage.setItem(CHAVE, JSON.stringify(lista));
+  } catch {
+    // sem armazenamento, os momentos valem só enquanto o app estiver aberto
+  }
+}
+
+/** Lê os momentos salvos (uma vez) e, na primeira abertura do Diário, junta os exemplos. */
+export function carregarMomentos(): Promise<Momento[]> {
+  if (carregou) return Promise.resolve(lista);
+  if (!carregando) {
+    carregando = (async () => {
+      let salvos: Momento[] = [];
+      try {
+        const bruto = await AsyncStorage.getItem(CHAVE);
+        if (bruto) {
+          const dado = JSON.parse(bruto) as Momento | Momento[];
+          salvos = Array.isArray(dado) ? dado : [dado];
+        }
+      } catch {
+        salvos = [];
+      }
+      let semeado = true;
+      try {
+        semeado = (await AsyncStorage.getItem(CHAVE_SEMENTE)) === '1';
+      } catch {
+        semeado = true;
+      }
+      if (!semeado) {
+        salvos = [...salvos, ...momentosDeExemplo()];
+        try {
+          await AsyncStorage.setItem(CHAVE_SEMENTE, '1');
+        } catch {
+          // segue sem marcar
+        }
+      }
+      lista = ordenar(salvos);
+      carregou = true;
+      if (!semeado) await gravar();
+      avisar();
+      return lista;
+    })();
+  }
+  return carregando;
+}
+
+async function mudar(f: (l: Momento[]) => Momento[]) {
+  await carregarMomentos();
+  lista = ordenar(f(lista));
+  avisar();
+  await gravar();
+  return lista;
+}
+
+/** Todos os momentos, do mais recente para o mais antigo. Atualiza sozinho. */
+export function useMomentos(): Momento[] {
+  return useSyncExternalStore(
+    (f) => {
+      ouvintes.add(f);
+      if (!carregou) carregarMomentos();
+      return () => ouvintes.delete(f);
+    },
+    () => lista,
+    () => lista,
+  );
+}
+
+export const momentoPorEm = (em?: number | string | null) => {
+  const n = Number(em);
+  return lista.find((m) => m.em === n);
+};
+
+export async function adicionarMomento(m: Omit<Momento, 'em'> & { em?: number }): Promise<Momento> {
+  await carregarMomentos();
+  // o instante é o identificador: dois momentos no mesmo milissegundo ganham +1
+  let em = m.em ?? Date.now();
+  while (lista.some((x) => x.em === em)) em += 1;
+  const novo: Momento = { ...m, em };
+  await mudar((l) => [novo, ...l]);
+  return novo;
+}
+
+/** Junta `mudancas` no momento `em`. Trocar `em` (outro horário) também é permitido. */
+export const atualizarMomento = (em: number, mudancas: Partial<Momento>) =>
+  mudar((l) => l.map((m) => (m.em === em ? { ...m, ...mudancas } : m)));
+
+export const apagarMomento = (em: number) => mudar((l) => l.filter((m) => m.em !== em));
+
+/** Devolve um momento apagado (o "Desfazer"). */
+export const restaurarMomento = (m: Momento) => mudar((l) => [...l.filter((x) => x.em !== m.em), m]);
+
+// ─── Datas ──────────────────────────────────────────────────────────────────
+export const DIAS_SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+export const DIAS_CURTOS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+export const MESES = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+];
+
+const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** "2026-11-18" — identifica um dia no fuso do aparelho. */
+export function chaveDia(d: Date | number) {
+  const x = new Date(d);
+  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+}
+
+export function dataDaChave(chave: string) {
+  const [a, m, d] = chave.split('-').map(Number);
+  return new Date(a, m - 1, d);
+}
+
+export const mesmoDiaQue = (a: Date | number, b: Date | number) => chaveDia(a) === chaveDia(b);
+
+/** "Quarta, 18" */
+export const diaCurto = (d: Date) => `${maiuscula(DIAS_SEMANA[d.getDay()])}, ${d.getDate()}`;
+/** "Quarta, 18 de novembro" */
+export const diaLongo = (d: Date) => `${diaCurto(d)} de ${MESES[d.getMonth()]}`;
+export const nomeMes = (mes: number) => maiuscula(MESES[mes]);
+
+export function hora(em: number) {
+  const d = new Date(em);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+/** Diferença em dias de calendário entre `d` e hoje (0 = hoje, 1 = ontem…). */
+export function diasAtras(d: Date | number, agora = new Date()) {
+  const a = new Date(agora);
+  a.setHours(0, 0, 0, 0);
+  const b = new Date(d);
+  b.setHours(0, 0, 0, 0);
+  return Math.round((a.getTime() - b.getTime()) / 86400000);
+}
+
+/** "hoje, 16:40" · "ontem, 09:10" · "12 nov, 21:00" */
+export function quando(em: number) {
+  const n = diasAtras(em);
+  const d = new Date(em);
+  const dia = n === 0 ? 'hoje' : n === 1 ? 'ontem' : `${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`;
+  return `${dia}, ${hora(em)}`;
+}
+
+/** "editado agora" · "editado há 5 min" · "editado às 14:02" · "editado em 12 nov" */
+export function editado(em?: number) {
+  if (!em) return 'sem edições';
+  const min = Math.floor((Date.now() - em) / 60000);
+  if (min < 1) return 'editado agora';
+  if (min < 60) return `editado há ${min} min`;
+  if (diasAtras(em) === 0) return `editado às ${hora(em)}`;
+  const d = new Date(em);
+  return `editado em ${d.getDate()} ${MESES[d.getMonth()].slice(0, 3)}`;
+}
+
+/** A emoção que mais aparece no dia (empate: a mais recente). */
+export function maisSentida(momentos: Momento[]) {
+  const conta = new Map<string, number>();
+  for (const m of momentos) conta.set(m.id, (conta.get(m.id) ?? 0) + 1);
+  let melhor: string | null = null;
+  for (const m of momentos) if (!melhor || (conta.get(m.id) ?? 0) > (conta.get(melhor) ?? 0)) melhor = m.id;
+  return melhor;
+}
+
+export const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
+
+export const temAudio = (m: Momento) => !!m.anexos?.some((a) => a.tipo === 'audio');
+export const temFoto = (m: Momento) => !!m.anexos?.some((a) => a.tipo === 'foto');
+
+/** "1 áudio · 2 fotos" (vazio sem anexos). */
+export function resumoAnexos(anexos: Anexo[] = []) {
+  const a = anexos.filter((x) => x.tipo === 'audio').length;
+  const f = anexos.filter((x) => x.tipo === 'foto').length;
+  return [a ? plural(a, 'áudio', 'áudios') : '', f ? plural(f, 'foto', 'fotos') : ''].filter(Boolean).join(' · ');
+}
+
+// ─── Busca ──────────────────────────────────────────────────────────────────
+/** Sem acento e em minúsculas, para a busca achar "onibus" em "ônibus". */
+export const normalizar = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/** Onde o termo aparece no texto (índices no texto original). */
+export function acharTermo(texto: string, termo: string) {
+  const i = normalizar(texto).indexOf(normalizar(termo));
+  return i < 0 ? null : { inicio: i, fim: i + termo.length };
+}
+
+// ─── Perguntas ──────────────────────────────────────────────────────────────
+/** Perguntas da "Página de hoje" (a do Figma primeiro). O botão de setas troca a pergunta. */
+export const PERGUNTAS_DO_DIA = [
+  'O que você queria fazer quando pegou o celular pela primeira vez hoje?',
+  'Qual foi o momento mais calmo do seu dia até agora?',
+  'Teve alguma hora em que você abriu um app sem perceber? O que estava sentindo?',
+  'O que você fez hoje que não envolveu uma tela?',
+  'Quem você gostaria de ter encontrado hoje, mesmo que por pouco tempo?',
+  'O que te deixou inquieto hoje? E o que te acalmou?',
+  'Se hoje tivesse um título, qual seria?',
+];
+
+/** O texto de apoio do campo, por emoção ("O que trouxe essa alegria?"). */
+export const PERGUNTA_DA_EMOCAO: Record<string, string> = {
+  satisfeito: 'O que te deixou satisfeito?',
+  alegria: 'O que trouxe essa alegria?',
+  tristeza: 'O que está pesando agora?',
+  vergonha: 'O que aconteceu? Pode escrever sem pressa.',
+  orgulho: 'Do que você se orgulhou?',
+  admiracao: 'O que ou quem você admirou?',
+  medo: 'Do que você está com medo?',
+  repulsa: 'O que te causou repulsa?',
+  tedio: 'Onde você estava quando bateu o tédio?',
+  fascinacao: 'O que te fascinou?',
+  raiva: 'O que te deixou com raiva?',
+  desprezo: 'O que despertou esse desprezo?',
+  esperanca: 'O que te dá esperança agora?',
+  desejo: 'O que você está desejando?',
+};
+
+// ─── Exemplos ───────────────────────────────────────────────────────────────
+/**
+ * Exemplos para o Diário não abrir vazio (gravados uma vez, na primeira abertura):
+ * algumas semanas de momentos com textos curtos, marcadores e check-ins sem texto.
+ * Os de hoje só entram se o horário já passou.
+ */
+function momentosDeExemplo(agora = new Date()): Momento[] {
+  type E = [dias: number, h: number, min: number, id: string, texto?: string, marcadores?: string[], origem?: OrigemMomento];
+  const exemplos: E[] = [
+    [0, 8, 20, 'esperanca', 'Acordei e não olhei o celular primeiro. Fiz café com calma.'],
+    [0, 13, 5, 'tedio', 'Fila do restaurante. Abri o celular três vezes sem motivo nenhum.', [MARCADOR_PAUSA], 'pausa'],
+    [1, 9, 40, 'tristeza', 'Manhã pesada. Foi bom conseguir colocar em palavras o que estava me incomodando.'],
+    [1, 22, 10, 'satisfeito', 'Li vinte páginas antes de dormir, sem conferir mensagens.', ['Antes de dormir']],
+    [3, 12, 30, 'satisfeito', 'Almoço sem celular. O que fez a tarde render tanto? Acho que foi a pausa no meio do dia.', ['Trabalho']],
+    [3, 18, 15, 'esperanca', undefined, [MARCADOR_PAUSA], 'pausa'],
+    [5, 7, 50, 'medo', 'Reunião importante amanhã. To tentando dar um nome pra isso que estou sentindo.', ['Trabalho']],
+    [6, 16, 40, 'alegria', 'Queria só ver a hora. Acabei lendo notícias e o ônibus já tinha passado do meu ponto. Pelo menos ri da situação.', ['Ônibus']],
+    [6, 20, 0, 'tedio'],
+    [7, 11, 20, 'orgulho', 'Terminei o relatório que vinha adiando há duas semanas.', ['Trabalho']],
+    [9, 19, 45, 'admiracao', 'Minha irmã tocou violão no jantar. Fazia tempo que eu não prestava atenção nela assim.', ['Família']],
+    [13, 8, 5, 'tristeza', 'Perdi o ônibus de novo olhando o celular na parada.', ['Ônibus']],
+    [16, 21, 30, 'raiva', 'Discussão boba no grupo da família. Saí do app antes de responder no impulso.', ['Família', MARCADOR_PAUSA], 'pausa'],
+    [20, 7, 55, 'fascinacao', 'No ônibus deixei o celular no bolso e reparei na cidade. Tinha um ipê florido que eu nunca tinha visto.', ['Ônibus']],
+    [22, 15, 10, 'satisfeito', 'Tarde de estudo sem notificações. Rendeu.', ['Estudo']],
+    [26, 23, 0, 'vergonha', 'Fiquei rolando a tela até tarde de novo.', ['Antes de dormir']],
+  ];
+  const out: Momento[] = [];
+  for (const [dias, h, min, id, texto, marcadores, origem] of exemplos) {
+    const d = new Date(agora);
+    d.setDate(d.getDate() - dias);
+    d.setHours(h, min, 0, 0);
+    if (d.getTime() > agora.getTime()) continue;
+    out.push({ id, em: d.getTime(), texto, marcadores, origem: origem ?? (texto ? 'diario' : 'home') });
+  }
+  return out;
+}

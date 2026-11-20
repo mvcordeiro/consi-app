@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Aparecer, TextoAnimado, fimDoTexto } from '@/components/animacao';
 import { BalaoEmocao } from '@/components/home/BalaoEmocao';
 import { BotaoContagem } from '@/components/home/BotaoContagem';
-import { emocaoPorId } from '@/data/emocoes';
+import { emocaoPorId, emocoesDeHoje } from '@/data/emocoes';
 import { space, useTema } from '@/theme';
 
 const nativo = Platform.OS !== 'web';
@@ -15,7 +15,7 @@ const DESCRICAO = 'Registramos essa emoção para você.\nVocê pode editá-la d
 /**
  * Emoção registrada (Figma 665:8886 → 665:9114). Abre com o clarão feedback/info,
  * mostra a emoção e o botão "Quero explorar essa emoção", que esvazia em 2,5 s.
- * Tocar explora (ainda sem tela); se o tempo acabar, volta para a Home.
+ * Tocar abre o momento no Diário para escrever; se o tempo acabar, volta para a Home.
  */
 export default function EmocaoRegistrada() {
   const { cores } = useTema();
@@ -50,7 +50,13 @@ export default function EmocaoRegistrada() {
       <Aparecer atraso={fimTexto} style={styles.rodape}>
         <BotaoContagem
           inicio={fimTexto}
-          onPress={() => router.replace({ pathname: '/em-construcao', params: { titulo: `Explorar ${emocao.nome}` } })}
+          onPress={() =>
+            // o check-in acabou de virar um momento do Diário: abre ele para escrever
+            emocoesDeHoje().then((hoje) => {
+              const m = hoje.find((r) => r.id === emocao.id);
+              router.replace({ pathname: '/diario/novo', params: m ? { em: String(m.em) } : { emocao: emocao.id } });
+            })
+          }
           onFim={() => router.back()}
         />
       </Aparecer>
