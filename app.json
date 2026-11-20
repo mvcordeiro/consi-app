@@ -6,10 +6,20 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/PREENCHER-COM-O-PROJECT-ID-DO-EAS",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.consi.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#111D4F",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -24,18 +34,36 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFF7E8",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#111D4F"
+          }
+        }
+      ],
       "expo-sharing",
       [
         "expo-audio",
         {
           "microphonePermission": "O Consi usa o microfone para gravar áudios no seu diário."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "scheme": "consi",
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "versaoNativa": {
+        "url": "https://PREENCHER-ENDERECO-DO-ARQUIVO/consi-versao.json"
+      }
     }
   }
 }

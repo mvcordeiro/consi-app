@@ -35,6 +35,54 @@ domínio para landing page, lista de espera e demo do Diário/Hobbies. O produto
 5. Ícone, nome do pacote (`com.consi.app` ou similar), splash e versão (`version` / `versionCode`) no
    `app.json`. Assinatura gerenciada pelo EAS.
 
+### Como está configurado (fase 1 feita)
+
+- `eas.json`: perfis `development` (dev client, APK interno), `preview` (APK, `distribution: internal`,
+  canal `preview`) e `production` (AAB, canal `production`). `appVersionSource: local`: a versão vale o
+  que está no `app.json`.
+- `app.json`: `android.package = com.consi.app`, `version 1.0.0`, `android.versionCode 1`,
+  `runtimeVersion` pela política `fingerprint`, `updates.url` (ainda com o project ID a preencher) e a
+  splash com fundo `orange/50` (claro) e `blue/900` (escuro).
+- **OTA (JS e telas):** o `expo-updates` confere o canal ao abrir o app, baixa em segundo plano e aplica na
+  abertura seguinte. Com `fingerprint`, uma atualização só chega aos APKs com o mesmo código nativo.
+- **"Nova versão disponível"** (`src/components/AvisoNovaVersao.tsx` + `src/data/versaoNativa.ts`): no APK
+  Android, ao abrir, lê o JSON em `expo.extra.versaoNativa.url` e, se o `versionCode` de lá for maior que
+  o instalado, mostra uma Folha com o botão "Baixar nova versão". Formato do arquivo em
+  `docs/consi-versao.exemplo.json`. Fora do Android, no modo dev ou sem URL configurada, não faz nada.
+- **Pendente de design:** `assets/icon.png`, `assets/android-icon-*.png` e `assets/splash-icon.png` ainda
+  são os do template do Expo. Trocar pelos do Consi antes do primeiro APK do piloto.
+
+### Passo a passo (com a sua conta Expo)
+
+1. Criar a conta em expo.dev (se ainda não tiver) e entrar: `npx eas-cli@latest login`.
+2. Ligar o projeto à conta: `npx eas-cli@latest init`. Grava o `extra.eas.projectId` no `app.json`.
+3. Configurar o EAS Update: `npx eas-cli@latest update:configure`. Troca o `updates.url` pelo endereço
+   com o seu project ID (`https://u.expo.dev/<project-id>`). Conferir que o `eas.json` continua com os
+   canais `preview` e `production`.
+4. Trocar os ícones e a splash do template pelos do Consi.
+5. Gerar o APK do piloto (o EAS cria e guarda a chave de assinatura na primeira vez; aceite):
+
+   ```
+   npx eas-cli@latest build --profile preview -p android
+   ```
+
+   No fim sai um link de download do APK. É esse link que vai para as pessoas do piloto.
+6. Publicar uma mudança de JS/telas para quem já tem o APK:
+
+   ```
+   npx eas-cli@latest update --channel preview --environment preview --message "o que mudou"
+   ```
+
+   (`--environment` é obrigatório a partir do SDK 55.) Chega na segunda abertura do app.
+7. Para o aviso "Nova versão disponível": hospedar um JSON público no formato de
+   `docs/consi-versao.exemplo.json` (ex.: um gist ou arquivo "raw" do GitHub) e pôr o endereço em
+   `expo.extra.versaoNativa.url` no `app.json` (pode ir por EAS Update).
+8. **A cada mudança nativa** (pacote com código nativo, permissão nova, módulo da fase 3): subir
+   `android.versionCode` (e `version`, se quiser) no `app.json`, rodar o build do passo 5 e depois
+   atualizar o JSON do passo 7 com o novo `versionCode` e o link do APK novo.
+9. Dev build para desenvolver no celular (precisa por causa do expo-audio):
+   `npx eas-cli@latest build --profile development -p android`, instalar o APK e rodar `npx expo start`.
+
 ## 2. Back-end e dados
 
 Duas opções, que podem conviver (começar local e oferecer conta depois):

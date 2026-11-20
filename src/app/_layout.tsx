@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { AvisoNovaVersao } from '@/components/AvisoNovaVersao';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
 import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
 
@@ -51,6 +52,8 @@ function Pilha() {
         {/* Diário: novo momento, dia aberto e busca */}
         <Stack.Screen name="diario" />
       </Stack>
+      {/* APK fora da loja: avisa quando há um build nativo mais novo (o JS chega pelo expo-updates). */}
+      <AvisoNovaVersao />
     </>
   );
 }
