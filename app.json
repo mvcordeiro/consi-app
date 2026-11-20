@@ -60,7 +60,14 @@
           "microphonePermission": "O Consi usa o microfone para gravar áudios no seu diário."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      "expo-secure-store"
     ],
     "scheme": "consi",
     "experiments": {
