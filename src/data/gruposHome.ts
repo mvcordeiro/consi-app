@@ -124,13 +124,10 @@ export const grupoNovo = (): Grupo => ({
 
 const livre: Grupo = { ...grupoNovo(), id: ID_LIVRE, nome: 'Livre', icone: 'repetir', modo: 'apenas-pausar' };
 
-/** Os grupos do Figma, como exemplo da primeira vez. */
-const iniciais: Grupo[] = [
-  livre,
-  { ...grupoNovo(), id: 'musica', nome: 'Música', icone: 'filtrar-musicas', apps: ['spotify'] },
-  { ...grupoNovo(), id: 'leitura', nome: 'Leitura', icone: 'hobby-leitura', modo: 'apenas-pausar', apps: ['reddit'] },
-  { ...grupoNovo(), id: 'cinema', nome: 'Cinema', icone: 'rolo-filme', modo: 'cuidar-tempo', apps: ['youtube'] },
-];
+/** Começa só com o "Livre": os outros grupos são criados pela pessoa. */
+const iniciais: Grupo[] = [livre];
+/** Ids dos grupos de exemplo que as versões antigas gravavam (grupos novos usam `g…`). */
+const IDS_EXEMPLO = new Set(['musica', 'leitura', 'cinema']);
 
 // ─── Armazenamento (um store simples, compartilhado entre a Home e as telas de grupo) ──
 const CHAVE = 'consi:home:grupos:v2';
@@ -148,7 +145,7 @@ function carregar() {
   AsyncStorage.getItem(CHAVE)
     .then((bruto) => {
       if (!bruto) return;
-      const lido = JSON.parse(bruto) as Grupo[];
+      const lido = (JSON.parse(bruto) as Grupo[]).filter((g) => !IDS_EXEMPLO.has(g.id));
       // O "Livre" sempre existe e vem primeiro.
       estado = [{ ...livre, ...lido.find((g) => g.id === ID_LIVRE) }, ...lido.filter((g) => g.id !== ID_LIVRE)];
       avisar();

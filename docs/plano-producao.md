@@ -49,8 +49,9 @@ domínio para landing page, lista de espera e demo do Diário/Hobbies. O produto
   Android, ao abrir, lê o JSON em `expo.extra.versaoNativa.url` e, se o `versionCode` de lá for maior que
   o instalado, mostra uma Folha com o botão "Baixar nova versão". Formato do arquivo em
   `docs/consi-versao.exemplo.json`. Fora do Android, no modo dev ou sem URL configurada, não faz nada.
-- **Pendente de design:** `assets/icon.png`, `assets/android-icon-*.png` e `assets/splash-icon.png` ainda
-  são os do template do Expo. Trocar pelos do Consi antes do primeiro APK do piloto.
+- **Ícones e splash:** gerados do frame do favicon no Figma (Consi - Design de Interação, 767:6595):
+  `icon.png`, `favicon.png`, `android-icon-*.png` e `splash-icon(-dark).png`. O símbolo é branco sobre
+  `blue/900`; na splash clara, o símbolo vai em `blue/900`.
 
 ### Passo a passo (com a sua conta Expo)
 

@@ -60,7 +60,7 @@ async function gravar() {
   }
 }
 
-/** Lê os momentos salvos (uma vez) e, na primeira abertura do Diário, junta os exemplos. */
+/** Lê os momentos salvos (uma vez). */
 export function carregarMomentos(): Promise<Momento[]> {
   if (carregou) return Promise.resolve(lista);
   if (!carregando) {
@@ -75,23 +75,24 @@ export function carregarMomentos(): Promise<Momento[]> {
       } catch {
         salvos = [];
       }
-      let semeado = true;
+      // Versões antigas gravavam momentos de exemplo na primeira abertura: tira-os uma vez.
+      let limpar = false;
       try {
-        semeado = (await AsyncStorage.getItem(CHAVE_SEMENTE)) === '1';
+        limpar = (await AsyncStorage.getItem(CHAVE_SEMENTE)) === '1';
       } catch {
-        semeado = true;
+        limpar = false;
       }
-      if (!semeado) {
-        salvos = [...salvos, ...momentosDeExemplo()];
+      if (limpar) {
+        salvos = salvos.filter((m) => !ehExemplo(m));
         try {
-          await AsyncStorage.setItem(CHAVE_SEMENTE, '1');
+          await AsyncStorage.setItem(CHAVE_SEMENTE, 'removidos');
         } catch {
-          // segue sem marcar
+          // tenta de novo na próxima abertura
         }
       }
       lista = ordenar(salvos);
       carregou = true;
-      if (!semeado) await gravar();
+      if (limpar) await gravar();
       avisar();
       return lista;
     })();
@@ -303,39 +304,34 @@ export const PERGUNTA_DA_EMOCAO: Record<string, string> = {
   desejo: 'O que você está desejando?',
 };
 
-// ─── Exemplos ───────────────────────────────────────────────────────────────
+// ─── Exemplos antigos (só para removê-los) ──────────────────────────────────
 /**
- * Exemplos para o Diário não abrir vazio (gravados uma vez, na primeira abertura):
- * algumas semanas de momentos com textos curtos, marcadores e check-ins sem texto.
- * Os de hoje só entram se o horário já passou.
+ * Os momentos de exemplo que as versões do protótipo gravavam: [emoção, hora, minuto, texto].
+ * Um momento salvo com a mesma emoção, horário exato e texto, nunca editado, é um desses exemplos.
  */
-function momentosDeExemplo(agora = new Date()): Momento[] {
-  type E = [dias: number, h: number, min: number, id: string, texto?: string, marcadores?: string[], origem?: OrigemMomento];
-  const exemplos: E[] = [
-    [0, 8, 20, 'esperanca', 'Acordei e não olhei o celular primeiro. Fiz café com calma.'],
-    [0, 13, 5, 'tedio', 'Fila do restaurante. Abri o celular três vezes sem motivo nenhum.', [MARCADOR_PAUSA], 'pausa'],
-    [1, 9, 40, 'tristeza', 'Manhã pesada. Foi bom conseguir colocar em palavras o que estava me incomodando.'],
-    [1, 22, 10, 'satisfeito', 'Li vinte páginas antes de dormir, sem conferir mensagens.', ['Antes de dormir']],
-    [3, 12, 30, 'satisfeito', 'Almoço sem celular. O que fez a tarde render tanto? Acho que foi a pausa no meio do dia.', ['Trabalho']],
-    [3, 18, 15, 'esperanca', undefined, [MARCADOR_PAUSA], 'pausa'],
-    [5, 7, 50, 'medo', 'Reunião importante amanhã. To tentando dar um nome pra isso que estou sentindo.', ['Trabalho']],
-    [6, 16, 40, 'alegria', 'Queria só ver a hora. Acabei lendo notícias e o ônibus já tinha passado do meu ponto. Pelo menos ri da situação.', ['Ônibus']],
-    [6, 20, 0, 'tedio'],
-    [7, 11, 20, 'orgulho', 'Terminei o relatório que vinha adiando há duas semanas.', ['Trabalho']],
-    [9, 19, 45, 'admiracao', 'Minha irmã tocou violão no jantar. Fazia tempo que eu não prestava atenção nela assim.', ['Família']],
-    [13, 8, 5, 'tristeza', 'Perdi o ônibus de novo olhando o celular na parada.', ['Ônibus']],
-    [16, 21, 30, 'raiva', 'Discussão boba no grupo da família. Saí do app antes de responder no impulso.', ['Família', MARCADOR_PAUSA], 'pausa'],
-    [20, 7, 55, 'fascinacao', 'No ônibus deixei o celular no bolso e reparei na cidade. Tinha um ipê florido que eu nunca tinha visto.', ['Ônibus']],
-    [22, 15, 10, 'satisfeito', 'Tarde de estudo sem notificações. Rendeu.', ['Estudo']],
-    [26, 23, 0, 'vergonha', 'Fiquei rolando a tela até tarde de novo.', ['Antes de dormir']],
-  ];
-  const out: Momento[] = [];
-  for (const [dias, h, min, id, texto, marcadores, origem] of exemplos) {
-    const d = new Date(agora);
-    d.setDate(d.getDate() - dias);
-    d.setHours(h, min, 0, 0);
-    if (d.getTime() > agora.getTime()) continue;
-    out.push({ id, em: d.getTime(), texto, marcadores, origem: origem ?? (texto ? 'diario' : 'home') });
-  }
-  return out;
+const EXEMPLOS_ANTIGOS: [string, number, number, string?][] = [
+  ['esperanca', 8, 20, 'Acordei e não olhei o celular primeiro. Fiz café com calma.'],
+  ['tedio', 13, 5, 'Fila do restaurante. Abri o celular três vezes sem motivo nenhum.'],
+  ['tristeza', 9, 40, 'Manhã pesada. Foi bom conseguir colocar em palavras o que estava me incomodando.'],
+  ['satisfeito', 22, 10, 'Li vinte páginas antes de dormir, sem conferir mensagens.'],
+  ['satisfeito', 12, 30, 'Almoço sem celular. O que fez a tarde render tanto? Acho que foi a pausa no meio do dia.'],
+  ['esperanca', 18, 15],
+  ['medo', 7, 50, 'Reunião importante amanhã. To tentando dar um nome pra isso que estou sentindo.'],
+  ['alegria', 16, 40, 'Queria só ver a hora. Acabei lendo notícias e o ônibus já tinha passado do meu ponto. Pelo menos ri da situação.'],
+  ['tedio', 20, 0],
+  ['orgulho', 11, 20, 'Terminei o relatório que vinha adiando há duas semanas.'],
+  ['admiracao', 19, 45, 'Minha irmã tocou violão no jantar. Fazia tempo que eu não prestava atenção nela assim.'],
+  ['tristeza', 8, 5, 'Perdi o ônibus de novo olhando o celular na parada.'],
+  ['raiva', 21, 30, 'Discussão boba no grupo da família. Saí do app antes de responder no impulso.'],
+  ['fascinacao', 7, 55, 'No ônibus deixei o celular no bolso e reparei na cidade. Tinha um ipê florido que eu nunca tinha visto.'],
+  ['satisfeito', 15, 10, 'Tarde de estudo sem notificações. Rendeu.'],
+  ['vergonha', 23, 0, 'Fiquei rolando a tela até tarde de novo.'],
+];
+const chaveExemplo = (id: string, h: number, min: number, texto?: string) => `${id}|${h}:${min}|${texto ?? ''}`;
+const assinaturas = new Set(EXEMPLOS_ANTIGOS.map(([id, h, min, t]) => chaveExemplo(id, h, min, t)));
+
+function ehExemplo(m: Momento) {
+  const d = new Date(m.em);
+  if (d.getSeconds() !== 0 || d.getMilliseconds() !== 0 || m.editadoEm || m.anexos?.length) return false;
+  return assinaturas.has(chaveExemplo(m.id, d.getHours(), d.getMinutes(), m.texto));
 }

@@ -4,14 +4,11 @@ import { Animated, ScrollView, StyleSheet, View, useWindowDimensions } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAviso, useEspacoBarra, useModoImersivo } from '@/components';
-import { Aparecer } from '@/components/animacao';
 import {
-  ConfirmacaoPadroes,
   Conteudos,
   Drops,
   Grupos,
   HeroEmocoes,
-  Reflexoes,
   SuaSemana,
   TopoHome,
 } from '@/components/home';
@@ -97,10 +94,7 @@ export default function Inicio() {
           />
         </View>
       </View>
-      <Aparecer atraso={300}>
-        <Reflexoes onExplorar={() => emConstrucao('Explorar essa relação')} />
-      </Aparecer>
-      <ConfirmacaoPadroes />
+      {/* Reflexões e "Padrões encontrados" voltam quando houver uso registrado suficiente para gerá-los. */}
       <Conteudos onVerTudo={(secao) => emConstrucao(secao)} onAbrir={(c) => emConstrucao(c.titulo)} />
       <Drops
         margem={space[24]}

@@ -42,11 +42,15 @@ const CHAVE = 'consi:hobbies:v2';
 const inicial: Gravado = {
   hobbies: null,
   decididas: {},
-  atividades: atividadesIniciais,
+  // Começa sem atividades: elas entram quando a pessoa aceita uma sugestão ou cria a sua.
+  atividades: [],
   publicadas: [],
   meusComentarios: [],
   minhasReacoes: {},
 };
+
+const exemplos = new Map(atividadesIniciais.map((a) => [a.id, a.criadaEm]));
+const ehExemplo = (a: AtividadeMinha) => exemplos.has(a.id) && exemplos.get(a.id) === a.criadaEm;
 
 const eu = { usuario: 'Você', iniciais: 'EU' };
 const HOBBIES_PADRAO: HobbyId[] = ['musica', 'cinema', 'leitura', 'escrita'];
@@ -121,7 +125,9 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
       setDoOnboarding(respostas.hobbies);
       if (bruto) {
         try {
-          setEstado({ ...inicial, ...JSON.parse(bruto) });
+          const lido = { ...inicial, ...JSON.parse(bruto) } as Gravado;
+          // Tira as atividades de exemplo gravadas pelas versões antigas (mesmo id e data de criação).
+          setEstado({ ...lido, atividades: lido.atividades.filter((a) => !ehExemplo(a)) });
         } catch {
           // gravação corrompida: começa do zero
         }

@@ -11,7 +11,7 @@ import { gap, space, useTema } from '@/theme';
  * Combinado: 3 segundos (o Figma dizia 5); os textos acompanham.
  */
 const SEGURAR_MS = 3000;
-const TITULO = 'Assuma um compromisso consigo mesma.';
+const TITULO = 'Assuma um compromisso com você.';
 const SUB = 'Aperta aqui por 3 segundos para confirmar que quer viver com mais intenção a partir de hoje.';
 const T_SUB = fimDoTexto(TITULO, 250);
 const T_BOTAO = fimDoTexto(SUB, T_SUB);

@@ -20,6 +20,8 @@ const TAMANHO = 103;
 const FOLGA_ANEL_1 = 28;
 const FOLGA_ANEL_2 = 82;
 const SUB = 'É aqui que a gente vai abrir espaço.';
+/** Até quantos caracteres a lista de hobbies cabe no título (ex.: "Leitura, música e escrita"). */
+const LIMITE_LISTA = 32;
 
 // deslocamento do centro de cada bolha em relação ao centro dos anéis (Figma)
 const POSICOES: Record<number, { dx: number; dy: number }[]> = {
@@ -51,10 +53,13 @@ export default function D5HobbiesResumo() {
   const nomes = escolhidos.map((h, i) => (i === 0 ? hobbies[h].nome : hobbies[h].nome.toLowerCase()));
   const lista =
     nomes.length > 1 ? `${nomes.slice(0, -1).join(', ')} e ${nomes[nomes.length - 1]}` : (nomes[0] ?? '');
+  // Nomes longos viram um parágrafo: aí o título só conta, e os nomes ficam nas bolhas.
   const titulo =
-    nomes.length > 1
-      ? `${lista}. Boas ideias para o tempo que sobrar.`
-      : `${lista}. Uma boa ideia para o tempo que sobrar.`;
+    nomes.length === 1
+      ? `${lista}. Uma boa ideia para o tempo que sobrar.`
+      : lista.length <= LIMITE_LISTA
+        ? `${lista}. Boas ideias para o tempo que sobrar.`
+        : `${nomes.length === 2 ? 'Duas' : 'Três'} boas ideias para o tempo que sobrar.`;
   const tSub = fimDoTexto(titulo, 100);
   const tCirculos = fimDoTexto(SUB, tSub);
 

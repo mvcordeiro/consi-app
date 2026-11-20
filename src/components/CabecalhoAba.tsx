@@ -1,9 +1,8 @@
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { borderWidth, space, useTema } from '@/theme';
 
 import { Aparecer } from './animacao';
-import { fotoPerfil } from './home/assets';
 import { LogoConsi } from './hobbies/assets';
 
 /** Altura do frame "Header" do Figma (82 px, com 20 px em cima e embaixo). */
@@ -11,7 +10,7 @@ export const ALTURA_CABECALHO_ABA = 82;
 
 /**
  * Header das abas (Figma 671:5295, Hobbies): logo "consi" (68 × 25) à esquerda e
- * foto de perfil de 42 px à direita. A foto é a provisória do Figma, como na Home.
+ * círculo de perfil de 42 px à direita, vazio enquanto não existe foto de perfil.
  */
 export function CabecalhoAba() {
   const { cores } = useTema();
@@ -21,9 +20,7 @@ export function CabecalhoAba() {
       <View
         style={[styles.perfil, { backgroundColor: cores.bg.raised, borderColor: cores.border.subtle }]}
         accessibilityLabel="Seu perfil"
-      >
-        <Image source={fotoPerfil} style={styles.foto} resizeMode="cover" />
-      </View>
+      />
     </Aparecer>
   );
 }
@@ -36,6 +33,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: space[20],
   },
-  perfil: { width: 42, height: 42, borderRadius: 21, borderWidth: borderWidth.thin, overflow: 'hidden' },
-  foto: { position: 'absolute', left: -1, top: -4, width: 41, height: 54 },
+  perfil: { width: 42, height: 42, borderRadius: 21, borderWidth: borderWidth.thin },
 });
