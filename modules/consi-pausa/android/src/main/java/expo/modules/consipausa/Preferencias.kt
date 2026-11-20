@@ -1,0 +1,66 @@
+package expo.modules.consipausa
+
+import android.content.Context
+import org.json.JSONObject
+
+/** A regra de um app, vinda do grupo dele na Home (ver src/data/vigia.ts). */
+internal data class Regra(
+  val modo: String,
+  val grupo: String,
+  val nome: String,
+  val intervaloMin: Int,
+  val aoIgnorar: String,
+)
+
+/**
+ * O que o vigia precisa saber mesmo com o app fechado: se está ligado, as regras de cada app
+ * e até quando cada app está liberado depois de uma pausa.
+ */
+internal class Preferencias(context: Context) {
+  private val prefs = context.applicationContext.getSharedPreferences("consi_pausa", Context.MODE_PRIVATE)
+
+  var ativa: Boolean
+    get() = prefs.getBoolean("ativa", false)
+    set(valor) = prefs.edit().putBoolean("ativa", valor).apply()
+
+  var regrasJson: String
+    get() = prefs.getString("regras", "{}") ?: "{}"
+    set(valor) = prefs.edit().putString("regras", valor).apply()
+
+  /** App liberado até sair da frente (pausa sem "Quanto tempo você precisa?"). */
+  var liberadoNaSessao: String?
+    get() = prefs.getString("liberado-sessao", null)
+    set(valor) = prefs.edit().putString("liberado-sessao", valor).apply()
+
+  fun liberadoAte(pacote: String) = prefs.getLong("liberado:$pacote", 0L)
+
+  fun liberarAte(pacote: String, ate: Long) = prefs.edit().putLong("liberado:$pacote", ate).apply()
+
+  fun regras(): Map<String, Regra> {
+    val json = regrasJson
+    cache?.let { (de, valor) -> if (de == json) return valor }
+    val lidas = mutableMapOf<String, Regra>()
+    try {
+      val apps = JSONObject(json).optJSONObject("apps") ?: JSONObject()
+      for (pacote in apps.keys()) {
+        val r = apps.getJSONObject(pacote)
+        lidas[pacote] = Regra(
+          modo = r.optString("modo", "nao-interromper"),
+          grupo = r.optString("grupo", ""),
+          nome = r.optString("nome", pacote),
+          intervaloMin = r.optInt("intervaloMin", 15).coerceAtLeast(1),
+          aoIgnorar = r.optString("aoIgnorar", "resetar"),
+        )
+      }
+    } catch (_: Exception) {
+      // regras inválidas: nenhum app é pausado
+    }
+    cache = json to lidas
+    return lidas
+  }
+
+  companion object {
+    @Volatile
+    private var cache: Pair<String, Map<String, Regra>>? = null
+  }
+}
