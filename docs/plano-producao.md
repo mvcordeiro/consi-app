@@ -5,6 +5,7 @@ aparelho (AsyncStorage), sem login. Roda no navegador para testes. O coração d
 abrir um app) ainda é simulado: hoje nada intercepta os apps de verdade.
 
 Ordem sugerida: **1 → 2 → 3 → 4 → 5**. Cada fase termina em algo que dá para testar no celular.
+Decisões já tomadas estão no fim do documento (local-first, APK solto em piloto, sem domínio, Android primeiro).
 
 ---
 
@@ -120,9 +121,15 @@ Recusar qualquer uma não pode quebrar o app: mostrar o que deixa de funcionar e
 
 ---
 
-## Decisões que ficam com você
+## Decisões (20/11/2026)
 
-1. Local-first agora e conta depois, ou conta com Google desde o primeiro APK?
-2. APK solto para um grupo pequeno, ou já o teste interno da Play Store?
-3. O domínio fica só como landing/demo, ou quer o Diário usável na web também?
-4. O iPhone entra na primeira versão real, ou depois do Android?
+1. **Dados só no aparelho** por enquanto: sem login nem back-end na nuvem. A fase 2 fica em SQLite
+   criptografado + exportar/apagar; Supabase e login com Google ficam para depois do piloto.
+2. **APK solto para um piloto com poucas pessoas** (perfil `preview` do EAS, link de download) com
+   atualizações por EAS Update e o aviso "Nova versão disponível" para builds nativos novos. A Play Store
+   fica para depois do piloto.
+3. **Sem domínio:** nada de versão web publicada.
+4. **Android primeiro:** o iPhone (Screen Time API) fica para depois.
+
+Consequência para o piloto: como os dados não saem do celular, desinstalar o app apaga tudo. Avisar as
+pessoas do piloto e ter o "Exportar meus dados" pronto antes de distribuir.
