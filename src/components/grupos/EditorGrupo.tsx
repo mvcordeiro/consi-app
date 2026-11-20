@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { appPorId, comAppsDoAparelho, useApps } from '@/data/apps';
 import {
-  APPS,
+  appsAcompanhados,
   apagarGrupo,
   grupoDoApp,
   ICONES_GRUPO,
@@ -202,7 +203,7 @@ export function EditorGrupo({ inicial, novo }: Props) {
             <View style={styles.lista}>
               {g.apps.length ? (
                 g.apps.map((id) => {
-                  const app = APPS.find((a) => a.id === id);
+                  const app = appPorId(id);
                   return (
                     <View key={id} style={[styles.linhaAcao, { backgroundColor: cores.bg.raised }]}>
                       <IconeApp id={id} />
@@ -527,20 +528,45 @@ function FolhaApps({
   onConfirmar: (apps: string[]) => void;
 }) {
   const { cores } = useTema();
+  const todos = useApps();
   const [escolhidos, setEscolhidos] = useState(grupo.apps);
+  const [busca, setBusca] = useState('');
   // Reabre com os apps atuais do grupo.
   const [aberta, setAberta] = useState(visivel);
   if (visivel !== aberta) {
     setAberta(visivel);
-    if (visivel) setEscolhidos(grupo.apps);
+    if (visivel) {
+      setEscolhidos(grupo.apps);
+      setBusca('');
+    }
   }
+  // No aparelho há dezenas de apps: os do grupo e os já acompanhados vêm primeiro (a ordem
+  // é fixada ao abrir, para a lista não pular enquanto a pessoa marca).
+  const ordem = useMemo(() => {
+    const acompanhados = new Set(appsAcompanhados());
+    const peso = (id: string) => (grupo.apps.includes(id) ? 0 : acompanhados.has(id) ? 1 : 2);
+    return [...todos].sort((a, b) => peso(a.id) - peso(b.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todos, aberta]);
+  const termo = busca.trim().toLocaleLowerCase('pt-BR');
+  const lista = termo ? ordem.filter((a) => a.nome.toLocaleLowerCase('pt-BR').includes(termo)) : ordem;
+  const acompanhados = new Set(appsAcompanhados());
   return (
     <Folha visivel={visivel} onFechar={onFechar} titulo="Aplicativos" descricao="Cada app fica em um grupo só.">
-      <ScrollView style={styles.listaApps}>
+      {comAppsDoAparelho ? (
+        <CampoTexto value={busca} onChangeText={setBusca} placeholder="Buscar app" acessibilidade="Buscar app" />
+      ) : null}
+      <ScrollView style={styles.listaApps} keyboardShouldPersistTaps="handled">
         <View style={styles.lista}>
-          {APPS.map((a) => {
+          {!todos.length ? (
+            <Texto estilo="Texto/Pequeno" cor={cores.text.tertiary}>
+              Carregando os apps do celular…
+            </Texto>
+          ) : null}
+          {lista.map((a) => {
             const marcado = escolhidos.includes(a.id);
             const outro = grupoDoApp(a.id, grupo.id);
+            const ondeFica = acompanhados.has(a.id) ? 'No Livre' : 'Sem pausa';
             return (
               <Pressable
                 key={a.id}
@@ -560,7 +586,7 @@ function FolhaApps({
                 <View style={styles.flex}>
                   <Texto estilo="Texto/Médio">{a.nome}</Texto>
                   <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-                    {outro ? (marcado ? `Sai de ${outro.nome}` : `Em ${outro.nome}`) : marcado ? 'Neste grupo' : 'No Livre'}
+                    {outro ? (marcado ? `Sai de ${outro.nome}` : `Em ${outro.nome}`) : marcado ? 'Neste grupo' : ondeFica}
                   </Texto>
                 </View>
                 <View

@@ -1,4 +1,3 @@
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -16,6 +15,9 @@ import {
   CaixaSorrisoIcone,
   type IconeSvg,
 } from '@/components/onboarding/assets';
+import { IconeApp } from '@/components/IconeApp';
+import { appsParaOnboarding, comAppsDoAparelho, useApps, type AppInfo } from '@/data/apps';
+import { appsQueIncomodam, definirAcompanhados } from '@/data/gruposHome';
 import { useOnboarding, type CaixaDeApp } from '@/data/onboarding';
 import { easing, gap, primitivas, radius, space, useCoresSvg, useTema } from '@/theme';
 
@@ -41,19 +43,21 @@ const T_APPS = fimDoTexto(SUB, T_SUB) + 200;
 /**
  * Posição de cada app como fração da área livre (0 = topo/esquerda, 1 = base/direita),
  * numa grade 3 × 3 "bagunçada" e com um leve giro, para parecerem soltos.
+ * Os apps vêm do aparelho no APK Android (os que costumam prender, ver appsParaOnboarding)
+ * e são os de exemplo no navegador.
  */
-type App = { id: string; nome: string; icone: string; fx: number; fy: number; giro: number };
-const APPS: App[] = [
-  { id: 'instagram', nome: 'Instagram', icone: 'instagram', fx: 0.04, fy: 0.06, giro: -6 },
-  { id: 'tiktok', nome: 'TikTok', icone: 'tiktok', fx: 0.5, fy: 0.0, giro: 4 },
-  { id: 'spotify', nome: 'Spotify', icone: 'spotify', fx: 0.96, fy: 0.1, giro: -3 },
-  { id: 'youtube', nome: 'YouTube', icone: 'youtube', fx: 0.2, fy: 0.5, giro: 5 },
-  { id: 'reddit', nome: 'Reddit', icone: 'reddit', fx: 0.58, fy: 0.44, giro: -5 },
-  { id: 'whatsapp', nome: 'WhatsApp', icone: 'whatsapp', fx: 0.92, fy: 0.58, giro: 3 },
-  { id: 'x', nome: 'X', icone: 'x-twitter', fx: 0.02, fy: 0.96, giro: 4 },
-  { id: 'facebook', nome: 'Facebook', icone: 'facebook', fx: 0.4, fy: 1.0, giro: -4 },
-  { id: 'pinterest', nome: 'Pinterest', icone: 'pinterest', fx: 0.78, fy: 0.94, giro: 6 },
+const POSICOES = [
+  { fx: 0.04, fy: 0.06, giro: -6 },
+  { fx: 0.5, fy: 0.0, giro: 4 },
+  { fx: 0.96, fy: 0.1, giro: -3 },
+  { fx: 0.2, fy: 0.5, giro: 5 },
+  { fx: 0.58, fy: 0.44, giro: -5 },
+  { fx: 0.92, fy: 0.58, giro: 3 },
+  { fx: 0.02, fy: 0.96, giro: 4 },
+  { fx: 0.4, fy: 1.0, giro: -4 },
+  { fx: 0.78, fy: 0.94, giro: 6 },
 ];
+type App = AppInfo & (typeof POSICOES)[number];
 const LADO_APP = 62;
 
 type Caixa = {
@@ -121,7 +125,13 @@ export default function E1Aplicativos() {
   const s = Math.min(width / 412, 1.15);
   const { atualizar } = useOnboarding();
 
-  const [restantes, setRestantes] = useState(APPS.map((a) => a.id));
+  const todos = useApps();
+  const APPS = useMemo<App[]>(
+    () => appsParaOnboarding(todos, POSICOES.length).map((a, i) => ({ ...a, ...POSICOES[i] })),
+    [todos],
+  );
+  const carregou = !comAppsDoAparelho || todos.length > 0;
+  const [soltos, setSoltos] = useState<string[]>([]);
   const [sobre, setSobre] = useState<CaixaDeApp | null>(null);
   const [areaApps, setAreaApps] = useState({ w: 0, h: 0 });
   const classificacao = useRef<Record<string, CaixaDeApp>>({});
@@ -149,11 +159,12 @@ export default function E1Aplicativos() {
 
   const soltarNaCaixa = (appId: string, caixa: CaixaDeApp) => {
     classificacao.current[appId] = caixa;
-    setRestantes((atual) => atual.filter((id) => id !== appId));
+    setSoltos((atual) => [...atual, appId]);
   };
 
   // Continuar aparece com ≥ 3 apps; as caixas sobem para dar lugar a ele
-  const liberado = APPS.length - restantes.length >= MINIMO_APPS;
+  // (com menos de 3 apps no aparelho, vale o que houver)
+  const liberado = carregou && soltos.length >= Math.min(MINIMO_APPS, APPS.length);
   const botao = useRef(new Animated.Value(0)).current;
   const fundo = Math.max(insets.bottom, space[16]);
   // quanto as caixas ficam abaixo da posição final enquanto não há botão
@@ -170,6 +181,8 @@ export default function E1Aplicativos() {
 
   const seguir = () => {
     atualizar({ apps: { ...classificacao.current } });
+    // Os apps que incomodam passam a ser acompanhados (entram no Livre, que pausa).
+    definirAcompanhados(appsQueIncomodam(classificacao.current));
     transicao.sair(() => router.push('/onboarding/permissoes'));
   };
 
@@ -187,7 +200,7 @@ export default function E1Aplicativos() {
         onLayout={(e) => setAreaApps({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
         {areaApps.h > 0
-          ? APPS.filter((a) => restantes.includes(a.id)).map((a) => (
+          ? APPS.filter((a) => !soltos.includes(a.id)).map((a) => (
               <AppArrastavel
                 key={a.id}
                 app={a}
@@ -331,7 +344,7 @@ function AppArrastavel({
         },
       ]}
     >
-      <FontAwesome6 name={app.icone as 'instagram'} brand size={lado * 0.48} color={primitivas.neutral[950]} />
+      <IconeApp app={app} lado={lado} proporcaoMarca={0.48} style={styles.iconeApp} />
     </Animated.View>
   );
 }
@@ -413,6 +426,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  iconeApp: { backgroundColor: primitivas.neutral[100], borderRadius: radius.md },
   areaCaixas: { alignSelf: 'center' },
   icone: {
     position: 'absolute',

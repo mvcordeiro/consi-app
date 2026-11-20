@@ -7,8 +7,9 @@
  * - Cuidar tempo: abre sem pausa, mas notifica a cada X minutos; ignorar a notificação ou só
  *   reinicia o timer, ou leva para a mesma pausa do "Apenas pausar".
  * O grupo "Livre" é fixo (pode ser editado, não apagado) e reúne os apps sem grupo.
- * Os apps são os provisórios do onboarding, até termos acesso aos apps instalados.
- * Tudo fica no aparelho; telas de pausa e notificações reais vêm depois.
+ * Os apps "acompanhados" são os que a pessoa escolheu (no onboarding ou ao montar um grupo);
+ * os outros apps do aparelho ficam de fora e nunca são pausados. No APK Android, o vigia
+ * nativo aplica as regras (ver vigia.ts).
  */
 import { useSyncExternalStore } from 'react';
 
@@ -17,24 +18,13 @@ import { IconeNotificacao, IconeRelogio, RostoPositivo16 } from '@/components/ho
 import type { NomeIcone } from '@/components/Icone';
 import type { IconeSvg } from '@/components/onboarding/assets';
 
+import { APPS_EXEMPLO, appsAgora, carregarApps, comAppsDoAparelho, pacoteDoExemplo } from './apps';
 import { gravarEstado, lerEstado } from './banco';
+import { respostasSalvas, type CaixaDeApp } from './onboarding';
 
 // ─── Catálogo ───────────────────────────────────────────────────────────────
-export type AppInfo = { id: string; nome: string; marca: string };
-
-/** Os mesmos apps provisórios do onboarding (ícones de marca do Font Awesome). */
-export const APPS: AppInfo[] = [
-  { id: 'instagram', nome: 'Instagram', marca: 'instagram' },
-  { id: 'tiktok', nome: 'TikTok', marca: 'tiktok' },
-  { id: 'spotify', nome: 'Spotify', marca: 'spotify' },
-  { id: 'youtube', nome: 'YouTube', marca: 'youtube' },
-  { id: 'reddit', nome: 'Reddit', marca: 'reddit' },
-  { id: 'whatsapp', nome: 'WhatsApp', marca: 'whatsapp' },
-  { id: 'x', nome: 'X', marca: 'x-twitter' },
-  { id: 'facebook', nome: 'Facebook', marca: 'facebook' },
-  { id: 'pinterest', nome: 'Pinterest', marca: 'pinterest' },
-];
-export const appPorId = (id: string) => APPS.find((a) => a.id === id);
+// Os apps vêm de ./apps (do aparelho no APK Android; de exemplo no navegador).
+export { appPorId, type AppInfo } from './apps';
 
 export type Modo = 'nao-interromper' | 'apenas-pausar' | 'cuidar-tempo';
 
@@ -132,7 +122,10 @@ const IDS_EXEMPLO = new Set(['musica', 'leitura', 'cinema']);
 
 // ─── Armazenamento (um store simples, compartilhado entre a Home e as telas de grupo) ──
 const CHAVE = 'consi:home:grupos:v2';
+const CHAVE_ACOMPANHADOS = 'consi:home:apps-acompanhados:v1';
 let estado: Grupo[] = iniciais;
+/** Ids dos apps acompanhados. No navegador, os de exemplo; no Android, os escolhidos pela pessoa. */
+let acompanhados: string[] = comAppsDoAparelho ? [] : APPS_EXEMPLO.map((a) => a.id);
 let carregado = false;
 const ouvintes = new Set<() => void>();
 
@@ -143,22 +136,72 @@ function avisar() {
 function carregar() {
   if (carregado) return;
   carregado = true;
-  lerEstado(CHAVE)
-    .then((bruto) => {
-      if (!bruto) return;
-      const lido = (JSON.parse(bruto) as Grupo[]).filter((g) => !IDS_EXEMPLO.has(g.id));
-      // O "Livre" sempre existe e vem primeiro.
-      estado = [{ ...livre, ...lido.find((g) => g.id === ID_LIVRE) }, ...lido.filter((g) => g.id !== ID_LIVRE)];
+  Promise.all([lerEstado(CHAVE), lerEstado(CHAVE_ACOMPANHADOS), respostasSalvas(), carregarApps()])
+    .then(([bruto, brutoAcompanhados, respostas]) => {
+      if (brutoAcompanhados) acompanhados = JSON.parse(brutoAcompanhados) as string[];
+      else if (comAppsDoAparelho) acompanhados = appsQueIncomodam(respostas.apps);
+      if (bruto) {
+        const lido = (JSON.parse(bruto) as Grupo[]).filter((g) => !IDS_EXEMPLO.has(g.id));
+        // O "Livre" sempre existe e vem primeiro.
+        estado = [{ ...livre, ...lido.find((g) => g.id === ID_LIVRE) }, ...lido.filter((g) => g.id !== ID_LIVRE)];
+      }
+      if (comAppsDoAparelho) migrarExemplos();
+      estado = [...estado];
       avisar();
     })
     .catch(() => {});
 }
 
+/**
+ * Versões antigas do APK gravavam os apps de exemplo ("instagram"…). Com a lista real, eles
+ * viram o pacote instalado (com.instagram.android) ou saem, se o app não estiver no celular.
+ */
+function migrarExemplos() {
+  const instalados = new Set(appsAgora().map((a) => a.id));
+  if (!instalados.size) return;
+  const exemplos = new Set(APPS_EXEMPLO.map((a) => a.id));
+  const temExemplo = (ids: string[]) => ids.some((id) => exemplos.has(id));
+  if (!estado.some((g) => temExemplo(g.apps)) && !temExemplo(acompanhados)) return;
+  const trocar = (ids: string[]) => [
+    ...new Set(ids.map((id) => (exemplos.has(id) ? pacoteDoExemplo(id, instalados) : id)).filter((id) => !exemplos.has(id))),
+  ];
+  estado = estado.map((g) => ({ ...g, apps: trocar(g.apps) }));
+  gravarEstado(CHAVE, JSON.stringify(estado)).catch(() => {});
+  gravarAcompanhados(trocar(acompanhados));
+}
+
 function gravar(novo: Grupo[]) {
+  // Um app posto num grupo passa a ser acompanhado.
+  const novos = novo.flatMap((g) => g.apps).filter((id) => !acompanhados.includes(id));
+  if (novos.length) gravarAcompanhados([...acompanhados, ...novos]);
   estado = novo;
   avisar();
   gravarEstado(CHAVE, JSON.stringify(novo)).catch(() => {});
 }
+
+function gravarAcompanhados(ids: string[]) {
+  acompanhados = ids;
+  gravarEstado(CHAVE_ACOMPANHADOS, JSON.stringify(ids)).catch(() => {});
+}
+
+/** Do onboarding: os apps nas caixas "Me perco no tempo" e "Abro no automático". */
+export const appsQueIncomodam = (classificacao: Record<string, CaixaDeApp>) =>
+  Object.entries(classificacao)
+    .filter(([, caixa]) => caixa !== 'nao-incomoda')
+    .map(([id]) => id);
+
+/**
+ * Fim do "Quais apps mais te incomodam?": os apps que incomodam passam a ser acompanhados
+ * (entram no "Livre", que pausa). Os que "não incomodam" ficam de fora.
+ */
+export function definirAcompanhados(ids: string[]) {
+  gravarAcompanhados([...new Set(ids)]);
+  estado = [...estado];
+  avisar();
+}
+
+/** Os ids dos apps acompanhados (em algum grupo ou no Livre). */
+export const appsAcompanhados = () => acompanhados;
 
 function assinar(f: () => void) {
   carregar();
@@ -169,7 +212,7 @@ function assinar(f: () => void) {
 /** Os grupos com os apps do "Livre" calculados (os que não estão em nenhum outro grupo). */
 function comLivre(lista: Grupo[]): Grupo[] {
   const usados = new Set(lista.filter((g) => g.id !== ID_LIVRE).flatMap((g) => g.apps));
-  const soltos = APPS.map((a) => a.id).filter((id) => !usados.has(id));
+  const soltos = acompanhados.filter((id) => !usados.has(id));
   return lista.map((g) => (g.id === ID_LIVRE ? { ...g, apps: soltos } : g));
 }
 

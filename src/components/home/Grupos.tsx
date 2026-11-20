@@ -1,11 +1,11 @@
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ID_LIVRE, appPorId, limiteDoGrupo, linhasDaGrade, useGrupos, type Grupo as GrupoHome } from '@/data/gruposHome';
-import { borderWidth, primitivas, radius, space, useTema, type Cores } from '@/theme';
+import { ID_LIVRE, limiteDoGrupo, linhasDaGrade, useGrupos, type Grupo as GrupoHome } from '@/data/gruposHome';
+import { borderWidth, radius, space, useTema, type Cores } from '@/theme';
 
 import { Etiqueta, fundoDoTom, type TomEtiqueta } from '../Etiqueta';
 import { Icone } from '../Icone';
+import { IconeApp as IconeApp32 } from '../IconeApp';
 import { Texto } from '../Texto';
 
 type Props = {
@@ -138,14 +138,9 @@ function Apps({ grupo }: { grupo: GrupoHome }) {
   );
 }
 
-/** Ícone de marca do app (provisório), num quadrado claro de 32 px. */
+/** Ícone do app num quadrado de 32 px (o real do aparelho ou a marca de exemplo). */
 export function IconeApp({ id, lado = 32 }: { id: string; lado?: number }) {
-  const app = appPorId(id);
-  return (
-    <View style={[styles.app, { width: lado, height: lado, backgroundColor: primitivas.neutral[200] }]}>
-      {app ? <FontAwesome6 name={app.marca as 'instagram'} brand size={lado / 2} color={primitivas.neutral[950]} /> : null}
-    </View>
-  );
+  return <IconeApp32 id={id} lado={lado} style={{ borderRadius: 5 }} />;
 }
 
 function useEstiloCard() {
