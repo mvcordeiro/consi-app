@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
@@ -8,10 +8,10 @@ import { Alternancia, Filtro, Folha, Icone, Texto, useEspacoBarra } from '@/comp
 import { Aparecer } from '@/components/animacao';
 import { ChevronDireita, ChevronEsquerda } from '@/components/diario/assets';
 import { useAvisoMomento } from '@/components/diario/AvisoMomento';
+import { useAvisoPendente } from '@/components/diario/avisoPendente';
 import { Constelacao } from '@/components/diario/Constelacao';
 import { BuscaDiario, ComeceAEscrever, FiltroDiario, GrupoIndice, ItemIndice, LinhaFiltros } from '@/components/diario/Indice';
 import { Premo } from '@/components/diario/Premo';
-import { SetaVoltar } from '@/components/onboarding/assets';
 import { perguntaDeHoje, proximaPergunta, usePreferenciasDiario } from '@/data/diarioPreferencias';
 import { emocaoPorId } from '@/data/emocoes';
 import {
@@ -44,7 +44,8 @@ export default function Diario() {
   const momentos = useMomentos();
   const [prefs, mudarPrefs] = usePreferenciasDiario();
   const { guardado } = useLocalSearchParams<{ guardado?: string }>();
-  const [aviso, mostrarAviso] = useAvisoMomento();
+  // o aviso sobe acima do botão "Registrar emoção"
+  const [aviso, mostrarAviso] = useAvisoMomento(70);
 
   const [opcoes, setOpcoes] = useState(false);
   const [filtro, setFiltro] = useState<FiltroId>('tudo');
@@ -54,21 +55,27 @@ export default function Diario() {
   });
   const [diasLinha, setDiasLinha] = useState(7);
 
-  // Chegou de "Guardar momento": mostra o aviso uma vez, com o desfazer.
-  // "Voltar" fecha a linha do tempo do momento guardado e volta para a visão escolhida.
-  const [fechado, setFechado] = useState<string | null>(null);
-  const destaque = guardado && guardado !== fechado ? Number(guardado) : null;
+  // Chegou de "Guardar momento": fica na visão escolhida (lista ou linha do tempo), com o
+  // momento novo destacado e o aviso com desfazer. Cada momento guardado avisa uma vez só.
+  const destaque = guardado ? Number(guardado) : null;
+  const [avisado, setAvisado] = useState<number | null>(null);
   useEffect(() => {
-    if (!destaque) return;
+    if (!destaque || destaque === avisado) return;
     const m = momentoPorEm(destaque);
     if (!m) return;
-    mostrarAviso('Momento guardado', m, () => {
-      apagarMomento(m.em);
-      mostrarAviso('Momento desfeito', m, () => restaurarMomento(m));
-    });
-  }, [destaque, mostrarAviso]);
+    const t = setTimeout(() => {
+      setAvisado(destaque);
+      mostrarAviso('Momento guardado', m, () => {
+        apagarMomento(m.em);
+        mostrarAviso('Momento desfeito', m, () => restaurarMomento(m));
+      });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [destaque, avisado, mostrarAviso]);
+  // voltando de uma entrada apagada na edição
+  useAvisoPendente(useCallback((a) => mostrarAviso(a.titulo, a.momento, a.desfazer), [mostrarAviso]));
 
-  const linhaDoTempo = !!destaque || prefs.visao === 'linha';
+  const linhaDoTempo = prefs.visao === 'linha';
   const abrirDia = (chave: string) => router.push({ pathname: '/diario/dia', params: { data: chave } });
   const abrirNovo = (params: Record<string, string> = {}) => router.push({ pathname: '/diario/novo', params });
 
@@ -77,25 +84,7 @@ export default function Diario() {
       {linhaDoTempo ? (
         <View style={styles.tela}>
           <View style={styles.margem}>
-            {destaque ? (
-              <View style={styles.cabecalho}>
-                <Pressable
-                  onPress={() => setFechado(guardado ?? null)}
-                  hitSlop={10}
-                  accessibilityRole="button"
-                  accessibilityLabel="Voltar"
-                  style={styles.voltar}
-                >
-                  <SetaVoltar width={7.06} height={12.71} corTraco={cores.icon.primary} />
-                </Pressable>
-                <Texto estilo="Texto/Botões e rótulos" style={styles.centro}>
-                  Sua linha do tempo
-                </Texto>
-                <View style={styles.voltar} />
-              </View>
-            ) : (
-              <BuscaDiario onPress={() => router.push('/diario/busca')} onControles={() => setOpcoes(true)} />
-            )}
+            <BuscaDiario onPress={() => router.push('/diario/busca')} onControles={() => setOpcoes(true)} />
           </View>
           <ScrollView contentContainerStyle={{ paddingTop: space[24], paddingBottom: espacoBarra + 160 }} showsVerticalScrollIndicator={false}>
             <Constelacao
@@ -120,28 +109,26 @@ export default function Diario() {
           pergunta={perguntaDeHoje(prefs)}
           onTrocarPergunta={() => mudarPrefs({ pergunta: proximaPergunta(prefs) })}
           onOpcoes={() => setOpcoes(true)}
-          onAbrirMomento={(em) => abrirNovo({ em: String(em), voltar: '1' })}
+          onAbrirMomento={(em) => router.push({ pathname: '/diario/momento', params: { em: String(em) } })}
           onNovo={abrirNovo}
         />
       )}
 
       {/* Registrar emoção (Figma 760:7248): action/secondary, Premo · Vazio e o rótulo */}
-      {!destaque ? (
-        <Pressable
-          onPress={() => abrirNovo()}
-          accessibilityRole="button"
-          accessibilityLabel="Registrar emoção"
-          style={({ pressed }) => [
-            styles.registrar,
-            { bottom: espacoBarra + space[24], backgroundColor: pressed ? cores.action.secondary.pressed : cores.action.secondary.default },
-          ]}
-        >
-          <Premo tamanho={42} />
-          <Texto estilo="Texto/Botões e rótulos" cor={cores.text['on-secondary']}>
-            Registrar emoção
-          </Texto>
-        </Pressable>
-      ) : null}
+      <Pressable
+        onPress={() => abrirNovo()}
+        accessibilityRole="button"
+        accessibilityLabel="Registrar emoção"
+        style={({ pressed }) => [
+          styles.registrar,
+          { bottom: espacoBarra + space[24], backgroundColor: pressed ? cores.action.secondary.pressed : cores.action.secondary.default },
+        ]}
+      >
+        <Premo tamanho={42} />
+        <Texto estilo="Texto/Botões e rótulos" cor={cores.text['on-secondary']}>
+          Registrar emoção
+        </Texto>
+      </Pressable>
 
       {aviso}
 
@@ -352,8 +339,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   margem: { paddingHorizontal: space[24] },
   topo: { paddingTop: space[12], gap: 18, marginBottom: 25 },
-  cabecalho: { height: 48, flexDirection: 'row', alignItems: 'center' },
-  voltar: { width: 44, height: 44, justifyContent: 'center' },
   centro: { flex: 1, textAlign: 'center' },
   pagina: { gap: space[20], padding: space[16], borderRadius: 20, borderWidth: 1 },
   paginaTopo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -135,14 +135,33 @@ export async function adicionarMomento(m: Omit<Momento, 'em'> & { em?: number })
   return novo;
 }
 
+/** Quando o horário de um momento muda, o instante antigo aponta para o novo. */
+const renomes = new Map<number, number>();
+
+/** O instante atual de um momento que pode ter mudado de horário (telas abertas pelo antigo). */
+export function emAtual(em: number) {
+  let atual = em;
+  for (let i = 0; i < 20 && renomes.has(atual); i++) atual = renomes.get(atual)!;
+  return atual;
+}
+
 /** Junta `mudancas` no momento `em`. Trocar `em` (outro horário) também é permitido. */
-export const atualizarMomento = (em: number, mudancas: Partial<Momento>) =>
-  mudar((l) => l.map((m) => (m.em === em ? { ...m, ...mudancas } : m)));
+export const atualizarMomento = (em: number, mudancas: Partial<Momento>) => {
+  if (mudancas.em && mudancas.em !== em) {
+    renomes.set(em, mudancas.em);
+    renomes.delete(mudancas.em);
+  }
+  return mudar((l) => l.map((m) => (m.em === em ? { ...m, ...mudancas } : m)));
+};
 
 export const apagarMomento = (em: number) => mudar((l) => l.filter((m) => m.em !== em));
 
 /** Devolve um momento apagado (o "Desfazer"). */
-export const restaurarMomento = (m: Momento) => mudar((l) => [...l.filter((x) => x.em !== m.em), m]);
+export const restaurarMomento = (m: Momento) => {
+  // voltou com o instante antigo: ele deixa de apontar para outro
+  renomes.delete(m.em);
+  return mudar((l) => [...l.filter((x) => x.em !== m.em), m]);
+};
 
 // ─── Datas ──────────────────────────────────────────────────────────────────
 export const DIAS_SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];

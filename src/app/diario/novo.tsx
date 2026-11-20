@@ -64,7 +64,7 @@ export default function NovoMomento() {
   const { width, height } = useWindowDimensions();
   // Figma: o carrossel começa a ~16% da altura (233 px numa tela de 917)
   const respiro = Math.max(24, Math.round(height * 0.16));
-  const params = useLocalSearchParams<{ em?: string; emocao?: string; data?: string; pergunta?: string; acao?: string; voltar?: string }>();
+  const params = useLocalSearchParams<{ em?: string; emocao?: string; data?: string; pergunta?: string; acao?: string }>();
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const gravador = useGravador();
   const campo = useRef<TextInputInstance | null>(null);
@@ -233,12 +233,8 @@ export default function NovoMomento() {
       em = m.em;
       AsyncStorage.removeItem(CHAVE_RASCUNHO).catch(() => {});
     }
-    // Aberto pelo Índice: volta para a lista. Senão (novo, Home, Pausa): fecha tudo por cima
-    // das abas e mostra o momento na linha do tempo da aba Diário.
-    if (params.voltar) {
-      router.back();
-      return;
-    }
+    // Novo, Home ou Pausa: fecha tudo por cima das abas e volta para a tela principal do
+    // Diário (na visão escolhida, lista ou linha do tempo), com o aviso "Momento guardado".
     if (router.canDismiss()) router.dismissAll();
     router.navigate({ pathname: '/diario', params: { guardado: String(em) } });
   };

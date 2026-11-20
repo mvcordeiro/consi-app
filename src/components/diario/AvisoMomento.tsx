@@ -13,12 +13,16 @@ const nativo = Platform.OS !== 'web';
 const VISIVEL_MS = 5000;
 
 /**
- * Aviso "Momento guardado" (Figma 760:6257): cartão bg/inverse acima da barra, com o Premo
- * da emoção, "Satisfeito · hoje, 16:40" e "Desfazer" em action/primary. Some em 5 s.
+ * Aviso "Momento guardado" (Figma 760:6257): cartão bg/sunken (o bg/inverse do Figma ficava preto
+ * no modo Light e o Premo laranja perdia contraste) acima da barra, com o Premo
+ * da emoção, "Satisfeito · hoje, 16:40" e "Desfazer" em text/link. Some em 5 s.
  * Uso: const [aviso, mostrar] = useAvisoMomento(); … {aviso} … mostrar(titulo, momento, desfazer?)
  */
-export function useAvisoMomento(): [ReactNode, (titulo: string, m: Momento, desfazer?: () => void) => void] {
-  const { cores } = useTema();
+export function useAvisoMomento(
+  /** Espaço extra acima da posição padrão (ex.: para não cobrir o botão flutuante). */
+  acima = 0,
+): [ReactNode, (titulo: string, m: Momento, desfazer?: () => void) => void] {
+  const { cores, elevacao } = useTema();
   const espacoBarra = useEspacoBarra();
   const [aviso, setAviso] = useState<{ titulo: string; m: Momento; desfazer?: () => void } | null>(null);
   const [v] = useState(() => new Animated.Value(0));
@@ -60,8 +64,9 @@ export function useAvisoMomento(): [ReactNode, (titulo: string, m: Momento, desf
       style={[
         styles.aviso,
         {
-          bottom: espacoBarra + space[24],
-          backgroundColor: cores.bg.inverse,
+          bottom: espacoBarra + space[24] + acima,
+          backgroundColor: cores.bg.sunken,
+          ...elevacao[2],
           opacity: v,
           transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
         },
@@ -69,10 +74,10 @@ export function useAvisoMomento(): [ReactNode, (titulo: string, m: Momento, desf
     >
       <Premo id={aviso.m.id} tamanho={36} />
       <View style={styles.textos}>
-        <Texto estilo="Texto/Médio" cor={cores.text['on-inverse']}>
+        <Texto estilo="Texto/Médio">
           {aviso.titulo}
         </Texto>
-        <Texto estilo="Legenda/Pequena" cor={cores.text['on-inverse']} style={styles.suave} numberOfLines={1}>
+        <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} numberOfLines={1}>
           {emocaoPorId(aviso.m.id)?.nome} · {quando(aviso.m.em)}
         </Texto>
       </View>
@@ -86,7 +91,7 @@ export function useAvisoMomento(): [ReactNode, (titulo: string, m: Momento, desf
           hitSlop={12}
           accessibilityRole="button"
         >
-          <Texto estilo="Texto/Botões e rótulos" cor={cores.action.primary.default}>
+          <Texto estilo="Texto/Botões e rótulos" cor={cores.text.link}>
             Desfazer
           </Texto>
         </Pressable>
@@ -111,5 +116,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
   },
   textos: { flex: 1 },
-  suave: { opacity: 0.6 },
 });

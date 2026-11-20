@@ -17,6 +17,7 @@ import type { IconeSvg } from './onboarding/assets';
 export const ALTURA_BARRA = 64;
 /** Distância entre a barra e a borda de baixo da área segura. */
 export const MARGEM_BARRA = space[8];
+const PARADA = new Animated.Value(0);
 
 const icones: Record<string, IconeSvg> = {
   hobbies: IconeHobbies,
@@ -40,7 +41,11 @@ export function useEspacoBarra() {
 export function BarraNavegacao({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
   const { cores } = useTema();
   const { bottom } = useSafeAreaInsets();
-  const { imersivo, saida } = useModoImersivo();
+  const { imersivo: imersivoHome, saida: saidaHome } = useModoImersivo();
+  // o modo imersivo é da Início: em qualquer outra aba a barra fica sempre no lugar
+  const naInicio = state.routes[state.index]?.name === 'index';
+  const imersivo = imersivoHome && naInicio;
+  const saida = naInicio ? saidaHome : PARADA;
 
   return (
     <Animated.View

@@ -18,8 +18,8 @@ import { Botao, Etiqueta, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { ChevronEsquerda } from '@/components/diario/assets';
 import { PlayerAudio } from '@/components/diario/Audio';
+import { useAvisoPendente } from '@/components/diario/avisoPendente';
 import { TextoComDestaques } from '@/components/diario/CampoMomento';
-import { EditarMomento } from '@/components/diario/EditarMomento';
 import { FotoAnexada, VisualizarFoto } from '@/components/diario/Fotos';
 import { Premo } from '@/components/diario/Premo';
 import { sairPeloLado, useArrasteLateral, voltarAoLugar } from '@/components/hobbies/Arraste';
@@ -28,7 +28,6 @@ import { emocaoPorId } from '@/data/emocoes';
 import {
   acharTermo,
   apagarMomento,
-  atualizarMomento,
   chaveDia,
   dataDaChave,
   diaLongo,
@@ -65,8 +64,9 @@ export default function DiaAberto() {
   const dia = dataDaChave(data ?? chaveDia(new Date()));
   const todos = useMomentos();
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
+  // voltando de uma entrada apagada na edição: "Momento apagado" com o desfazer
+  useAvisoPendente((a) => mostrarAviso(a.titulo, a.desfazer ? { rotulo: 'Desfazer', onPress: a.desfazer } : undefined));
 
-  const [editando, setEditando] = useState<Momento | null>(null);
   const [arrastando, setArrastando] = useState(false);
   const [busca, setBusca] = useState<string | null>(null);
   const [foto, setFoto] = useState<string | null>(null);
@@ -74,7 +74,6 @@ export default function DiaAberto() {
   const momentos = useMemo(() => todos.filter((m) => chaveDia(m.em) === chaveDia(dia)), [todos, dia]);
   const principal = maisSentida(momentos);
   const outras = [...new Set(momentos.map((m) => m.id))].filter((id) => id !== principal).slice(0, AO_REDOR.length);
-  const marcadoresUsados = useMemo(() => [...new Set(todos.flatMap((m) => m.marcadores ?? []))], [todos]);
   const visiveis = busca?.trim()
     ? momentos.filter(
         (m) =>
@@ -193,7 +192,7 @@ export default function DiaAberto() {
               ultimo={i === visiveis.length - 1}
               onArrastando={setArrastando}
               onApagar={() => apagar(m)}
-              onEditar={() => setEditando(m)}
+              onAbrir={() => router.push({ pathname: '/diario/momento', params: { em: String(m.em) } })}
               onFoto={setFoto}
             />
           ))}
@@ -219,22 +218,6 @@ export default function DiaAberto() {
 
       {aviso}
 
-      <EditarMomento
-        momento={editando}
-        marcadoresUsados={marcadoresUsados}
-        onFechar={() => setEditando(null)}
-        onSalvar={(em, mudancas) => {
-          atualizarMomento(em, mudancas);
-          setEditando(null);
-          // trocou o horário para outro dia: o momento sai desta lista
-          if (mudancas.em && chaveDia(mudancas.em) !== chaveDia(dia)) mostrarAviso('Momento movido de dia');
-          else mostrarAviso('Momento atualizado');
-        }}
-        onApagar={(m) => {
-          setEditando(null);
-          apagar(m);
-        }}
-      />
       <VisualizarFoto uri={foto} onFechar={() => setFoto(null)} />
     </View>
   );
@@ -246,14 +229,14 @@ function LinhaMomento({
   ultimo,
   onArrastando,
   onApagar,
-  onEditar,
+  onAbrir,
   onFoto,
 }: {
   momento: Momento;
   ultimo: boolean;
   onArrastando: (a: boolean) => void;
   onApagar: () => void;
-  onEditar: () => void;
+  onAbrir: () => void;
   onFoto: (uri: string) => void;
 }) {
   const { cores } = useTema();
@@ -284,7 +267,7 @@ function LinhaMomento({
         </Texto>
       </Animated.View>
       <Animated.View {...handlers} style={{ transform: [{ translateX: x }] }}>
-        <Pressable onPress={onEditar} accessibilityRole="button" accessibilityHint="Toque para editar, arraste para a esquerda para apagar" style={[styles.momento, { backgroundColor: cores.bg.raised }]}>
+        <Pressable onPress={onAbrir} accessibilityRole="button" accessibilityHint="Toque para abrir, arraste para a esquerda para apagar" style={[styles.momento, { backgroundColor: cores.bg.raised }]}>
           <Premo id={momento.id} tamanho={40} />
           <View style={styles.textos}>
             <View style={styles.topoMomento}>

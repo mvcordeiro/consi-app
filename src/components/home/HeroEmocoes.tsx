@@ -114,9 +114,14 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
       resetar();
       emocoesDeHoje().then(setRegistros);
       setAgora(Date.now());
-      // Depois de sair da Home pela primeira vez, a volta não repete o appear-in das etiquetas.
-      return () => setPrimeiraEntrada(false);
-    }, [resetar]),
+      return () => {
+        // Depois de sair da Home pela primeira vez, a volta não repete o appear-in das etiquetas.
+        setPrimeiraEntrada(false);
+        // Saindo da Home (ex.: "Quero explorar essa emoção" → Diário), a barra de navegação
+        // não pode ficar escondida: a próxima aba pode abrir sem a Home voltar ao foco.
+        setImersivo(false);
+      };
+    }, [resetar, setImersivo]),
   );
 
   // Atualiza o "há X min" das etiquetas.

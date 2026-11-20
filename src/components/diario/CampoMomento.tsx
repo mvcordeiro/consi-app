@@ -3,7 +3,7 @@ import { useState, type ReactNode, type Ref } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 
 import type { Destaque } from '@/data/momentos';
-import { tipografia, useTema } from '@/theme';
+import { tipografia, useTema, type EstiloDeTexto } from '@/theme';
 
 import { Texto } from '../Texto';
 
@@ -50,10 +50,22 @@ export function trechos(texto: string, destaques: Destaque[] = []) {
 }
 
 /** Texto com os destaques (fundo bg/selected), para mostrar fora do editor. */
-export function TextoComDestaques({ texto, destaques, cor, linhas }: { texto: string; destaques?: Destaque[]; cor?: string; linhas?: number }) {
+export function TextoComDestaques({
+  texto,
+  destaques,
+  cor,
+  linhas,
+  estilo = 'Texto/Pequeno',
+}: {
+  texto: string;
+  destaques?: Destaque[];
+  cor?: string;
+  linhas?: number;
+  estilo?: EstiloDeTexto;
+}) {
   const { cores } = useTema();
   return (
-    <Texto estilo="Texto/Pequeno" cor={cor ?? cores.text.secondary} numberOfLines={linhas}>
+    <Texto estilo={estilo} cor={cor ?? cores.text.secondary} numberOfLines={linhas}>
       {trechos(texto, destaques).map((p, i) =>
         p.destaque ? (
           <Text key={i} style={{ backgroundColor: cores.bg.selected, color: cores.text.primary }}>

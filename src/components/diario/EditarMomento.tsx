@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -66,23 +65,10 @@ function Chip({ rotulo, ativo, onPress }: { rotulo: string; ativo?: boolean; onP
  * (a escolhida com anel tracejado em action/secondary); "Quando" e marcadores em etiquetas;
  * o texto com borda border/focus e "editado agora". Tocar no horário mostra os ajustes de
  * 15 min; "+ marcador" abre as sugestões e um campo para criar outro.
+ * É a mesma tela de edição para a lista e para a linha do tempo (rota /diario/editar).
+ * Use com key={momento.em}: o estado começa do momento como está guardado.
  */
-export function EditarMomento(props: {
-  momento: Momento | null;
-  marcadoresUsados: string[];
-  onFechar: () => void;
-  onSalvar: (em: number, mudancas: Partial<Momento>) => void;
-  onApagar: (m: Momento) => void;
-}) {
-  const { momento, onFechar } = props;
-  return (
-    <Modal visible={!!momento} transparent animationType="slide" onRequestClose={onFechar} statusBarTranslucent>
-      {momento ? <ConteudoEditar key={momento.em} {...props} momento={momento} /> : null}
-    </Modal>
-  );
-}
-
-function ConteudoEditar({
+export function EditorMomento({
   momento,
   marcadoresUsados,
   onFechar,
@@ -91,7 +77,8 @@ function ConteudoEditar({
 }: {
   momento: Momento;
   marcadoresUsados: string[];
-  onFechar: () => void;
+  /** Cancelar: diz se havia alterações (para a tela perguntar antes de descartar). */
+  onFechar: (alterado: boolean) => void;
   onSalvar: (em: number, mudancas: Partial<Momento>) => void;
   onApagar: (m: Momento) => void;
 }) {
@@ -123,6 +110,14 @@ function ConteudoEditar({
     setEm(novo);
   };
 
+  const alterado =
+    id !== momento.id ||
+    em !== momento.em ||
+    texto !== (momento.texto ?? '') ||
+    JSON.stringify(destaques) !== JSON.stringify(momento.destaques ?? []) ||
+    JSON.stringify(marcadores) !== JSON.stringify(momento.marcadores ?? []) ||
+    (anexos.length !== (momento.anexos?.length ?? 0));
+
   const salvar = () => {
     const mudouTexto = (momento.texto ?? '') !== texto;
     onSalvar(momento.em, {
@@ -151,7 +146,7 @@ function ConteudoEditar({
         <KeyboardAvoidingView behavior="padding" style={[styles.folha, { backgroundColor: cores.bg.raised }]}>
           <View style={[styles.alca, { backgroundColor: cores.text.tertiary }]} />
           <View style={styles.cabecalho}>
-            <Pressable onPress={onFechar} hitSlop={10} accessibilityRole="button">
+            <Pressable onPress={() => onFechar(alterado)} hitSlop={10} accessibilityRole="button">
               <Texto estilo="Texto/Botões e rótulos" cor={cores.text.secondary}>
                 Cancelar
               </Texto>
