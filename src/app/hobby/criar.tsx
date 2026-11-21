@@ -349,7 +349,8 @@ function Formulario({
       </Folha>
 
       <Folha visivel={previa} onFechar={() => setPrevia(false)} titulo="Prévia do card" descricao="Assim ela aparece em Para você.">
-        <View style={[styles.previa, { backgroundColor: cores.bg.raised }]} pointerEvents="none">
+        {/* A folha já é bg/raised: o card da prévia vai em bg/base com borda, para se destacar. */}
+        <View style={[styles.previa, { backgroundColor: cores.bg.base, borderColor: cores.border.subtle }]} pointerEvents="none">
           <CardSugestao
             sugestao={{
               id: 'previa',
@@ -516,5 +517,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
   },
-  previa: { borderRadius: radius.card },
+  previa: { borderRadius: radius.card, borderWidth: 1 },
 });

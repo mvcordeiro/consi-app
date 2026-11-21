@@ -61,7 +61,14 @@ export default function Hobbies() {
   const hobbyFiltro = filtro && h.hobbies.includes(filtro) ? filtro : h.hobbies[0];
   const hobbyAba = aba && h.hobbies.includes(aba) ? aba : h.hobbies[0];
 
-  const pilha = h.pilha(hobbyFiltro);
+  // Cards mandados para o fundo (arrastar para cima), na ordem em que foram passados.
+  const [passadas, setPassadas] = useState<string[]>([]);
+  const pilhaBase = h.pilha(hobbyFiltro);
+  const pilha = [
+    ...pilhaBase.filter((s) => !passadas.includes(s.id)),
+    ...passadas.map((id) => pilhaBase.find((s) => s.id === id)).filter((s): s is Atividade => !!s),
+  ];
+  const passar = (s: Atividade) => setPassadas((p) => [...p.filter((id) => id !== s.id), s.id]);
   const naAba = h.atividades.filter((a) => a.hobby === hobbyAba && a.status === 'andamento');
 
   const decidir = (s: Atividade, d: Decisao) => {
@@ -139,6 +146,7 @@ export default function Hobbies() {
             margem={MARGEM}
             totalComentarios={h.totalComentarios}
             onDecidir={decidir}
+            onPassar={passar}
             onConversa={(s) => irPara.conversa(s.id)}
             onMais={(s) => irPara.detalhe(s.id)}
             onArrastando={setArrastando}
