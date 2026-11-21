@@ -1,100 +1,117 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Alternancia, Botao, CabecalhoVoltar, Icone, Texto } from '@/components';
+import { Botao, CabecalhoVoltar, Folha, Icone, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { IconeHobby } from '@/components/hobbies';
-import { catalogoHobbies, hobbyInfo } from '@/data/catalogo';
+import { hobbyInfo, type HobbyId } from '@/data/catalogo';
 import { useHobbies } from '@/data/hobbiesEstado';
-import type { Hobby } from '@/data/onboarding';
 import { inset, radius, space, useTema } from '@/theme';
 
-const TODOS: Hobby[] = catalogoHobbies.map((x) => x.id);
-
-
 /**
- * Seus hobbies (engrenagem de "Suas atividades"; sem design no Figma).
- * Liga e desliga os hobbies que aparecem nos filtros e nas abas, com o
- * "Controle / Alternância" do Design System. Pelo menos um precisa ficar ligado.
+ * Seus hobbies ("•••" de Suas atividades; sem design no Figma).
+ * A lista dos hobbies da pessoa, cada um com a lixeira para remover (com confirmação e
+ * Desfazer). As atividades do hobby removido ficam guardadas e voltam se ele for adicionado
+ * de novo. Pelo menos um hobby precisa ficar.
  */
 export default function EditarHobbies() {
-  const h = useHobbies();
-  // Espera os hobbies gravados carregarem antes de montar a lista (senão ela começa com os padrão).
-  return h.carregado ? <Lista inicial={h.hobbies} /> : null;
-}
-
-function Lista({ inicial }: { inicial: Hobby[] }) {
   const { cores } = useTema();
   const h = useHobbies();
-  const [escolhidos, setEscolhidos] = useState<Hobby[]>(inicial);
-  // Os desligados continuam na lista até salvar, para dar para religar.
-  const [lista] = useState<Hobby[]>(inicial);
+  const [aviso, mostrarAviso] = useAviso({ comBarra: false });
+  const [removendo, setRemovendo] = useState<HobbyId | null>(null);
+  // Mantém o nome na folha enquanto ela anima a saída.
+  const [ultimo, setUltimo] = useState<HobbyId | null>(null);
+  if (removendo && removendo !== ultimo) setUltimo(removendo);
 
-  const alternar = (hb: Hobby, ligar: boolean) =>
-    setEscolhidos((atual) =>
-      ligar ? TODOS.filter((x) => x === hb || atual.includes(x)) : atual.filter((x) => x !== hb),
-    );
+  if (!h.carregado) return null;
 
-  const salvar = () => {
-    h.definirHobbies(escolhidos);
-    router.back();
+  const nome = ultimo ? hobbyInfo(ultimo).nome : '';
+  const guardadas = h.atividades.filter((a) => a.hobby === ultimo).length;
+  const descricao =
+    `${nome} sai de Para você e de Suas atividades. ` +
+    (guardadas
+      ? `${guardadas === 1 ? 'A sua atividade fica guardada e volta' : `As suas ${guardadas} atividades ficam guardadas e voltam`} se você adicionar o hobby de novo.`
+      : 'Você pode adicionar o hobby de novo quando quiser.');
+
+  const remover = () => {
+    if (!removendo) return;
+    const antes = h.hobbies;
+    setRemovendo(null);
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    h.definirHobbies(antes.filter((x) => x !== removendo));
+    mostrarAviso(`${hobbyInfo(removendo).nome} saiu dos seus hobbies`, {
+      rotulo: 'Desfazer',
+      onPress: () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        h.definirHobbies(antes);
+      },
+    });
   };
+
+  const unico = h.hobbies.length === 1;
 
   return (
     <SafeAreaView style={[styles.tela, { backgroundColor: cores.bg.base }]} edges={['top', 'bottom', 'left', 'right']}>
       <View style={styles.margemTopo}>
-        <CabecalhoVoltar rotulo="Ajustes" />
+        <CabecalhoVoltar rotulo="Hobbies" />
       </View>
       <ScrollView contentContainerStyle={styles.conteudo}>
         <Aparecer style={styles.textos}>
           <Texto estilo="Títulos/Grande">Seus hobbies</Texto>
           <Texto estilo="Texto/Médio" cor={cores.text.secondary}>
-            Os hobbies que aparecem em Para você e em Suas atividades. Desligue os que não fazem mais sentido ou explore novos.
+            Os hobbies que aparecem em Para você e em Suas atividades. Remova os que não fazem mais sentido ou explore novos.
           </Texto>
         </Aparecer>
         <View style={styles.lista}>
-          {lista.map((hb, i) => {
-            const ligado = escolhidos.includes(hb);
-            const ultimo = ligado && escolhidos.length === 1;
-            return (
-              <Aparecer key={hb} atraso={100 + i * 60}>
-                <View style={[styles.linha, { backgroundColor: cores.bg.raised }]}>
-                  <View style={styles.icone}>
-                    <IconeHobby hobby={hb} caixa={24} />
-                  </View>
-                  <View style={styles.flex}>
-                    <Texto estilo="Texto/Médio">{hobbyInfo(hb).nome}</Texto>
-                    {ultimo ? (
-                      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-                        Mantenha pelo menos um hobby
-                      </Texto>
-                    ) : null}
-                  </View>
-                  <Alternancia
-                    ligado={ligado}
-                    rotulo={hobbyInfo(hb).nome}
-                    onMudar={(v) => (ultimo ? undefined : alternar(hb, v))}
-                  />
+          {h.hobbies.map((hb, i) => (
+            <Aparecer key={hb} atraso={100 + i * 60}>
+              <View style={[styles.linha, { backgroundColor: cores.bg.raised }]}>
+                <View style={styles.icone}>
+                  <IconeHobby hobby={hb} caixa={24} />
                 </View>
-              </Aparecer>
-            );
-          })}
+                <View style={styles.flex}>
+                  <Texto estilo="Texto/Médio">{hobbyInfo(hb).nome}</Texto>
+                  {unico ? (
+                    <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+                      Mantenha pelo menos um hobby
+                    </Texto>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={() => setRemovendo(hb)}
+                  disabled={unico}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remover ${hobbyInfo(hb).nome}`}
+                  accessibilityState={{ disabled: unico }}
+                  style={({ pressed }) => [
+                    styles.lixeira,
+                    { backgroundColor: pressed ? cores.bg.base : 'transparent', opacity: unico ? 0.4 : 1 },
+                  ]}
+                >
+                  <Icone nome="lixeira" tamanho={20} cor={unico ? cores.text.disabled : cores.feedback.error} />
+                </Pressable>
+              </View>
+            </Aparecer>
+          ))}
         </View>
         <Botao
           rotulo="Explorar mais hobbies"
           estilo="secundario"
           icone={(cor) => <Icone nome="adicionar" tamanho={20} cor={cor} />}
-          onPress={() => {
-            h.definirHobbies(escolhidos);
-            router.replace('/hobby/novo');
-          }}
+          onPress={() => router.replace('/hobby/novo')}
         />
       </ScrollView>
-      <View style={styles.rodape}>
-        <Botao rotulo="Salvar" corRotulo={cores.text['on-primary']} onPress={salvar} />
-      </View>
+
+      <Folha visivel={!!removendo} onFechar={() => setRemovendo(null)} titulo={`Remover ${nome}?`} descricao={descricao}>
+        <View style={styles.botoes}>
+          <Botao rotulo="Remover" estado="erro" onPress={remover} />
+          <Botao rotulo="Cancelar" estilo="secundario" onPress={() => setRemovendo(null)} />
+        </View>
+      </Folha>
+      {aviso}
     </SafeAreaView>
   );
 }
@@ -116,5 +133,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
   },
   icone: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  rodape: { paddingHorizontal: inset.lg, paddingTop: space[12], paddingBottom: space[8] },
+  lixeira: { width: 40, height: 40, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
+  botoes: { gap: space[12] },
 });

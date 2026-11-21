@@ -17,10 +17,12 @@ type Props = {
   icone?: (cor: string) => ReactNode;
   /** Ícone de 16 px à direita ("Ícone direito" do componente). */
   iconeDireita?: (cor: string) => ReactNode;
+  /** Contorno tracejado: etiqueta de ação (ex.: "Sugerir atividade"), não um filtro. */
+  tracejado?: boolean;
   onPress?: () => void;
 };
 
-export function Filtro({ rotulo, ativo = false, icone, iconeDireita, onPress }: Props) {
+export function Filtro({ rotulo, ativo = false, icone, iconeDireita, tracejado = false, onPress }: Props) {
   const { cores } = useTema();
   return (
     <Pressable
@@ -33,6 +35,7 @@ export function Filtro({ rotulo, ativo = false, icone, iconeDireita, onPress }: 
         {
           backgroundColor: ativo ? cores.bg.selected : cores.bg.base,
           borderColor: ativo ? 'transparent' : cores.border.focus,
+          borderStyle: tracejado ? 'dashed' : 'solid',
           opacity: pressed ? 0.8 : 1,
         },
       ]}

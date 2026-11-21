@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Botao, CabecalhoAba, Filtro, Icone, Texto, useAviso, useEspacoBarra } from '@/components';
+import { Botao, CabecalhoAba, Filtro, Folha, Icone, ItemFolha, Texto, useAviso, useEspacoBarra } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import {
   AbasHobbies,
@@ -27,7 +27,9 @@ const NA_ABA = 3;
  * Hobbies (Figma 671:5292). "Para você" é uma pilha de sugestões com filtro por hobby e a
  * interação de arrastar da seção 671:5840; os filtros terminam em "+ Novo hobby" e
  * "Sugerir atividade +". "Suas atividades" lista o que a pessoa aceitou ou criou, com o mesmo
- * gesto (esquerda apaga, direita finaliza). Telas secundárias em src/app/hobby/.
+ * gesto (esquerda apaga, direita finaliza). O "+" pergunta se é uma atividade ou um hobby novo;
+ * o "•••" abre "Seus hobbies", onde dá para remover cada hobby.
+ * Telas secundárias em src/app/hobby/.
  */
 export default function Hobbies() {
   const { cores } = useTema();
@@ -86,6 +88,14 @@ export default function Hobbies() {
     });
   };
 
+  // "+" de Suas atividades: pergunta antes se é uma atividade nova ou um hobby novo.
+  const [adicionar, setAdicionar] = useState(false);
+  const depoisDaFolha = (fn: () => void) => {
+    setAdicionar(false);
+    // espera a folha descer antes de abrir a próxima tela
+    setTimeout(fn, 220);
+  };
+
   if (!h.carregado) return null;
 
   return (
@@ -118,14 +128,10 @@ export default function Hobbies() {
                   icone={(cor) => <IconeHobby hobby={hb} caixa={16} cor={cor} />}
                 />
               ))}
-              <Filtro
-                rotulo="Novo hobby"
-                onPress={irPara.novoHobby}
-                icone={(cor) => <Icone nome="adicionar" tamanho={16} cor={cor} />}
-              />
-              {/* Sempre a última etiqueta */}
+              {/* Sempre a última etiqueta; tracejada por ser uma ação, não um filtro */}
               <Filtro
                 rotulo="Sugerir atividade"
+                tracejado
                 onPress={() => irPara.criar('comunidade', hobbyFiltro)}
                 iconeDireita={(cor) => <Icone nome="adicionar" tamanho={16} cor={cor} />}
               />
@@ -164,10 +170,10 @@ export default function Hobbies() {
               Suas atividades
             </Texto>
             <Pressable
-              onPress={() => irPara.criar('privada', hobbyAba)}
+              onPress={() => setAdicionar(true)}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Criar atividade"
+              accessibilityLabel="Adicionar atividade ou hobby"
               style={styles.botaoIcone}
             >
               <Icone nome="adicionar" />
@@ -176,10 +182,10 @@ export default function Hobbies() {
               onPress={irPara.editar}
               hitSlop={10}
               accessibilityRole="button"
-              accessibilityLabel="Editar seus hobbies"
+              accessibilityLabel="Gerenciar seus hobbies"
               style={styles.botaoIcone}
             >
-              <Icone nome="engrenagem" />
+              <Icone nome="menu-horizontal" />
             </Pressable>
           </View>
 
@@ -216,6 +222,23 @@ export default function Hobbies() {
         </View>
       </ScrollView>
       {acoes.folhas}
+
+      {/* "+" de Suas atividades: atividade nova (no hobby da aba) ou hobby novo */}
+      <Folha visivel={adicionar} onFechar={() => setAdicionar(false)} titulo="O que você quer adicionar?">
+        <View>
+          <ItemFolha
+            rotulo={`Nova atividade de ${hobbyInfo(hobbyAba).nome}`}
+            icone={(cor) => <Icone nome="lista-tarefas" cor={cor} />}
+            onPress={() => depoisDaFolha(() => irPara.criar('privada', hobbyAba))}
+          />
+          <ItemFolha
+            rotulo="Novo hobby"
+            icone={(cor) => <Icone nome="lampada" cor={cor} />}
+            onPress={() => depoisDaFolha(irPara.novoHobby)}
+          />
+        </View>
+      </Folha>
+
       {aviso}
     </View>
   );
@@ -284,6 +307,7 @@ const styles = StyleSheet.create({
   tituloLinha: { flexDirection: 'row', alignItems: 'center', gap: space[16] },
   botaoIcone: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   lista: { gap: space[24], marginBottom: space[12] },
+  botoes: { gap: space[12] },
   centro: { textAlign: 'center' },
   vazio: {
     height: ALTURA_CARD_SUGESTAO,
