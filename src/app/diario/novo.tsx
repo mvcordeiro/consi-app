@@ -229,7 +229,13 @@ export default function NovoMomento() {
       });
       em = Number(params.em);
     } else {
-      const m = await adicionarMomento({ ...(dados as Omit<Momento, 'em'>), em: quando, origem: 'diario' });
+      // Escrito a partir de uma pergunta da Página de hoje: a pergunta vai junto com o momento.
+      const m = await adicionarMomento({
+        ...(dados as Omit<Momento, 'em'>),
+        em: quando,
+        origem: 'diario',
+        pergunta: params.pergunta || undefined,
+      });
       em = m.em;
       apagarEstado(CHAVE_RASCUNHO).catch(() => {});
     }

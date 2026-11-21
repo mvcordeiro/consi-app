@@ -111,6 +111,8 @@ const MIGRACOES: string[] = [
      chave TEXT PRIMARY KEY NOT NULL,
      valor TEXT NOT NULL
    );`,
+  // 2: a pergunta da Página de hoje que o momento respondeu
+  `ALTER TABLE momentos ADD COLUMN pergunta TEXT;`,
 ];
 
 async function migrar(db: SQLite.SQLiteDatabase) {
@@ -154,6 +156,8 @@ export type MomentoGravado = {
   anexos?: AnexoGravado[];
   origem?: 'home' | 'pausa' | 'diario';
   editadoEm?: number;
+  /** A pergunta ("prompt") da Página de hoje que a pessoa respondeu. */
+  pergunta?: string;
 };
 
 type LinhaMomento = {
@@ -164,6 +168,7 @@ type LinhaMomento = {
   marcadores: string | null;
   origem: string | null;
   editado_em: number | null;
+  pergunta: string | null;
 };
 type LinhaAnexo = { momento_em: number; tipo: string; uri: string; duracao: number | null };
 
@@ -190,13 +195,14 @@ export async function lerMomentos(): Promise<MomentoGravado[]> {
     if (an) m.anexos = an;
     if (l.origem) m.origem = l.origem as MomentoGravado['origem'];
     if (l.editado_em != null) m.editadoEm = l.editado_em;
+    if (l.pergunta) m.pergunta = l.pergunta;
     return m;
   });
 }
 
 async function inserirMomento(db: SQLite.SQLiteDatabase, m: MomentoGravado) {
   await db.runAsync(
-    'INSERT OR REPLACE INTO momentos (em, emocao, texto, destaques, marcadores, origem, editado_em) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    'INSERT OR REPLACE INTO momentos (em, emocao, texto, destaques, marcadores, origem, editado_em, pergunta) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     m.em,
     m.id,
     m.texto ?? null,
@@ -204,6 +210,7 @@ async function inserirMomento(db: SQLite.SQLiteDatabase, m: MomentoGravado) {
     m.marcadores ? JSON.stringify(m.marcadores) : null,
     m.origem ?? null,
     m.editadoEm ?? null,
+    m.pergunta ?? null,
   );
   await db.runAsync('DELETE FROM anexos WHERE momento_em = ?', m.em);
   for (const [i, a] of (m.anexos ?? []).entries()) {

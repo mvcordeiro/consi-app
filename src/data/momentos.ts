@@ -29,6 +29,8 @@ export type Momento = {
   marcadores?: string[];
   anexos?: Anexo[];
   origem?: OrigemMomento;
+  /** A pergunta ("prompt") da Página de hoje que a pessoa respondeu. */
+  pergunta?: string;
   /** Última edição do texto. */
   editadoEm?: number;
 };

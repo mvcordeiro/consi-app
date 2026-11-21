@@ -80,7 +80,23 @@ export default function EntradaMomento() {
           ) : null}
         </Aparecer>
 
-        <Aparecer atraso={220} deslocamento={10} duracao={600}>
+        <Aparecer atraso={220} deslocamento={10} duracao={600} style={styles.blocos}>
+          {/* Escrito a partir de uma pergunta da Página de hoje: a pergunta fica em destaque, no
+              mesmo desenho do cartão da pergunta no Diário. */}
+          {momento.pergunta ? (
+            <View
+              style={[styles.pergunta, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}
+              accessibilityLabel={`Você respondeu à pergunta: ${momento.pergunta}`}
+            >
+              <View style={styles.perguntaTopo}>
+                <Icone nome="aspas" tamanho={16} cor={cores.text.accent} />
+                <Texto estilo="Legenda/Pequena" cor={cores.text.accent}>
+                  Você respondeu
+                </Texto>
+              </View>
+              <Texto estilo="Títulos/Pequeno">{momento.pergunta}</Texto>
+            </View>
+          ) : null}
           <View style={[styles.cartao, { backgroundColor: cores.bg.base }]}>
             {momento.texto ? (
               <TextoComDestaques texto={momento.texto} destaques={momento.destaques} estilo="Texto/Grande" cor={cores.text.primary} />
@@ -151,6 +167,9 @@ const styles = StyleSheet.create({
   centro: { textAlign: 'center' },
   marcadores: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[8], marginTop: space[8] },
   cartao: { gap: space[16], paddingTop: 18, paddingHorizontal: 20, paddingBottom: 14, borderRadius: 20 },
+  blocos: { gap: space[12] },
+  pergunta: { gap: space[8], padding: space[16], borderRadius: 20, borderWidth: 1 },
+  perguntaTopo: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   vazio: { gap: space[16], paddingVertical: space[8] },
   linha: { flexDirection: 'row', gap: 10 },
   editado: { alignSelf: 'flex-end' },
