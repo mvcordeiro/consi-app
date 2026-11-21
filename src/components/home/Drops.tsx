@@ -1,22 +1,20 @@
 import { router } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Atividade } from '@/data/catalogo';
 import { emocaoPorId } from '@/data/emocoes';
 import { useHobbies } from '@/data/hobbiesEstado';
-import { borderWidth, duration, easing, radius, space, useTema } from '@/theme';
+import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
 import { Botao } from '../Botao';
 import { CabecalhoSecao } from '../CabecalhoSecao';
+import { Filtro } from '../Filtro';
 import { irPara, PilhaSugestoes, type Decisao } from '../hobbies';
 import { Texto } from '../Texto';
 import { BalaoEmocao } from './BalaoEmocao';
-import { IconeHobbies, SetaArrastar } from './assets';
-
-const nativo = Platform.OS !== 'web';
-const curva = Easing.bezier(...easing.standard);
+import { MECANICAS, RevelarSemGesto, useMovimentoReduzido, type IdMecanica } from './revelar';
 
 type Props = {
   /** Margem lateral da página: a pilha "sangra" até a borda para as abas de feedback. */
@@ -28,36 +26,45 @@ type Props = {
 };
 
 /**
- * Drops para você — o card "Puxe para revelar". Arrastar a aba até o fim revela o drop: uma
- * sugestão de hobby, com o mesmo card e o mesmo gesto de "Para você" da aba Hobbies
- * (esquerda ignora, direita aceita e vira atividade). Quando não há mais sugestões nos hobbies
- * da pessoa, aparece a conclusão (no estilo da de "Isso faz sentido para você?").
+ * Drops para você — o card escondido. Uma pequena interação revela o drop: uma sugestão de
+ * hobby, com o mesmo card e o mesmo gesto de "Para você" da aba Hobbies (esquerda ignora,
+ * direita aceita e vira atividade). Quando não há mais sugestões nos hobbies da pessoa,
+ * aparece a conclusão (no estilo da de "Isso faz sentido para você?").
+ *
+ * PREVIEW: há 7 formas de revelar (ver ./revelar). Por enquanto a Home mostra um seletor
+ * para comparar todas; nenhuma é a padrão ainda.
  */
 export function Drops({ margem, onArrastando, onAceito }: Props) {
   const { cores } = useTema();
   const h = useHobbies();
+  const movimentoReduzido = useMovimentoReduzido();
   const [etapa, setEtapa] = useState<'escondido' | 'drop'>('escondido');
   const [drop, setDrop] = useState<Atividade | null>(null);
+  const [mecanica, setMecanica] = useState<IdMecanica>('arrastar');
+  // Muda a cada troca de mecânica ou volta ao card escondido: remonta a mecânica do zero.
+  const [rodada, setRodada] = useState(0);
   // O que a pessoa fez com os drops desde que abriu a Home (para a conclusão).
   const [feitos, setFeitos] = useState({ aceitos: 0, ignorados: 0 });
   // Cada drop sai de um hobby diferente, em rodízio.
-  const vez = useRef(0);
+  const [vez, setVez] = useState(0);
 
   const proximo = () => {
     const n = h.hobbies.length;
     for (let i = 0; i < n; i++) {
-      const hobby = h.hobbies[(vez.current + i) % n];
+      const hobby = h.hobbies[(vez + i) % n];
       const s = h.pilha(hobby)[0];
       if (s) return { s, i };
     }
     return null;
   };
   const acabou = h.hobbies.every((hb) => !h.pilha(hb).length);
+  const previa = proximo()?.s.hobby ?? null;
 
   const revelar = () => {
     const p = proximo();
     if (!p) return;
-    vez.current = (vez.current + p.i + 1) % h.hobbies.length;
+    setVez((vez + p.i + 1) % h.hobbies.length);
+    onArrastando(false);
     setDrop(p.s);
     setEtapa('drop');
   };
@@ -72,6 +79,7 @@ export function Drops({ margem, onArrastando, onAceito }: Props) {
     setFeitos((f) => (d === 'aceitar' ? { ...f, aceitos: f.aceitos + 1 } : { ...f, ignorados: f.ignorados + 1 }));
     setDrop(null);
     setEtapa('escondido');
+    setRodada((r) => r + 1);
   };
 
   const reverIgnorados = () => {
@@ -79,9 +87,19 @@ export function Drops({ margem, onArrastando, onAceito }: Props) {
     setFeitos({ aceitos: 0, ignorados: 0 });
   };
 
+  const escolher = useCallback((id: IdMecanica) => {
+    setMecanica(id);
+    setDrop(null);
+    setEtapa('escondido');
+    setRodada((r) => r + 1);
+  }, []);
+
+  const Mecanica = MECANICAS.find((m) => m.id === mecanica)!.Componente;
+
   return (
     <View style={styles.secao}>
       <CabecalhoSecao titulo="Drops para você" subtitulo="Convites para fazer espaço para o que importa." espacado />
+      <SeletorPreview margem={margem} atual={mecanica} onEscolher={escolher} />
       {etapa === 'drop' && drop ? (
         <Aparecer key={drop.id} deslocamento={0} escalaInicial={0.97} duracao={400}>
           <PilhaSugestoes
@@ -107,106 +125,54 @@ export function Drops({ margem, onArrastando, onAceito }: Props) {
           />
         </Aparecer>
       ) : (
-        <Aparecer key="escondido" deslocamento={0} escalaInicial={0.97} duracao={400}>
-          <CardEscondido onRevelar={revelar} />
+        <Aparecer key={`escondido-${rodada}`} deslocamento={0} escalaInicial={0.97} duracao={400}>
+          <View style={styles.escondido}>
+            <Mecanica
+              onRevelar={revelar}
+              onArrastando={onArrastando}
+              hobbyPrevia={previa}
+              movimentoReduzido={movimentoReduzido}
+            />
+            <RevelarSemGesto onRevelar={revelar} />
+          </View>
         </Aparecer>
       )}
     </View>
   );
 }
 
-/** Card D · Puxe para revelar. */
-function CardEscondido({ onRevelar }: { onRevelar: () => void }) {
+/**
+ * Só no preview: escolhe qual das 7 mecânicas de revelar aparece, para comparar.
+ * Sai daqui quando a rotação entrar na branch principal.
+ */
+function SeletorPreview({
+  margem,
+  atual,
+  onEscolher,
+}: {
+  margem: number;
+  atual: IdMecanica;
+  onEscolher: (id: IdMecanica) => void;
+}) {
   const { cores } = useTema();
   return (
-    <View style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}>
-      <View style={[styles.iconeDrop, { backgroundColor: cores.action.primary.default }]}>
-        <IconeHobbies width={24.01} height={23.66} corTraco={cores.text.primary} />
-      </View>
-      <Texto estilo="Títulos/Médio" style={styles.centro}>
-        Seu próximo drop está escondido.
+    <View style={styles.seletor}>
+      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+        PREVIEW · COMO REVELAR
       </Texto>
-      <Texto estilo="Texto/Pequeno" style={styles.centro}>
-        Puxe a aba e descubra uma atividade feita para o seu momento.
-      </Texto>
-      <ArrastarParaRevelar onRevelar={onRevelar} />
-    </View>
-  );
-}
-
-const ALCA = 38;
-const RECUO_ESQUERDA = 8;
-const RECUO_DIREITA = 14;
-
-/** Percurso da alça no trilho, medido no layout. */
-function usePercurso() {
-  const [percurso, setPercurso] = useState(0);
-  const medir = (e: LayoutChangeEvent) =>
-    setPercurso(Math.max(0, e.nativeEvent.layout.width - RECUO_ESQUERDA * 2 - ALCA));
-  return [percurso, medir] as const;
-}
-
-/** Drag affordance / reveal — a alça só abre o drop se for arrastada até perto do fim. */
-function ArrastarParaRevelar({ onRevelar }: { onRevelar: () => void }) {
-  const { cores } = useTema();
-  const [x] = useState(() => new Animated.Value(0));
-  const [percurso, medir] = usePercurso();
-
-  const pan = useMemo(() => {
-    const voltar = () =>
-      Animated.spring(x, { toValue: 0, useNativeDriver: nativo, bounciness: 6 }).start();
-    return PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 4,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderMove: (_, g) => x.setValue(Math.min(Math.max(g.dx, 0), percurso)),
-      onPanResponderRelease: (_, g) => {
-        if (percurso > 0 && g.dx >= percurso * 0.85) {
-          Animated.timing(x, {
-            toValue: percurso,
-            duration: duration.fast,
-            easing: curva,
-            useNativeDriver: nativo,
-          }).start(() => onRevelar());
-        } else {
-          voltar();
-        }
-      },
-      onPanResponderTerminate: voltar,
-    });
-  }, [x, percurso, onRevelar]);
-
-  const opacidadeRotulo = percurso
-    ? x.interpolate({ inputRange: [0, percurso * 0.6], outputRange: [1, 0], extrapolate: 'clamp' })
-    : 1;
-
-  return (
-    <View
-      onLayout={medir}
-      style={[styles.trilho, { backgroundColor: cores.action.primary.default }]}
-      accessible
-      accessibilityRole="adjustable"
-      accessibilityLabel="Arraste para revelar"
-      accessibilityActions={[{ name: 'activate', label: 'Revelar drop' }]}
-      onAccessibilityAction={onRevelar}
-    >
-      <Animated.View style={[styles.rotuloArrastar, { opacity: opacidadeRotulo }]}>
-        <Texto estilo="Texto/Botões e rótulos">Arraste para revelar</Texto>
-      </Animated.View>
-      <Animated.View
-        {...pan.panHandlers}
-        hitSlop={12}
-        style={[
-          styles.alca,
-          { backgroundColor: cores.action.primary.pressed, transform: [{ translateX: x }] },
-        ]}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginHorizontal: -margem }}
+        contentContainerStyle={[styles.chips, { paddingHorizontal: margem }]}
       >
-        <SetaArrastar width={20} height={20} corTraco={cores.text.primary} />
-      </Animated.View>
+        {MECANICAS.map((m, i) => (
+          <Filtro key={m.id} rotulo={`${i + 1} · ${m.nome}`} ativo={m.id === atual} onPress={() => onEscolher(m.id)} />
+        ))}
+      </ScrollView>
     </View>
   );
 }
-
 
 /**
  * Conclusão — sem mais drops nos hobbies da pessoa. Mesmo card da conclusão dos padrões
@@ -248,48 +214,14 @@ function Conclusao({ aceitos, podeRever, onRever }: { aceitos: number; podeRever
   );
 }
 
+
 const styles = StyleSheet.create({
   secao: { gap: space[24] },
   centro: { textAlign: 'center', alignSelf: 'stretch' },
   dica: { marginTop: space[24] },
-  card: {
-    alignItems: 'center',
-    gap: space[16],
-    // borda interna no Figma: desconta 1 px do padding
-    paddingHorizontal: space[24] - borderWidth.thin,
-    paddingVertical: 22 - borderWidth.thin,
-    borderRadius: radius.xl,
-    borderWidth: borderWidth.thin,
-    overflow: 'hidden',
-  },
-  iconeDrop: {
-    width: 52,
-    height: 52,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trilho: {
-    alignSelf: 'stretch',
-    height: 54,
-    borderRadius: 27,
-    justifyContent: 'center',
-    paddingLeft: RECUO_ESQUERDA,
-    paddingRight: RECUO_DIREITA,
-    overflow: 'hidden',
-  },
-  rotuloArrastar: {
-    position: 'absolute',
-    left: RECUO_ESQUERDA + ALCA + 11,
-    right: RECUO_DIREITA,
-  },
-  alca: {
-    width: ALCA,
-    height: ALCA,
-    borderRadius: ALCA / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  escondido: { gap: space[8] },
+  seletor: { gap: space[8], marginTop: -space[8] },
+  chips: { gap: space[8] },
   conclusao: {
     alignItems: 'center',
     gap: space[20],
