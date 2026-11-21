@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+  <!-- Filtro / Etiqueta · Ativo: bg/selected -->
+  <solid android:color="@color/consi_widget_selecionado" />
+  <corners android:radius="999dp" />
+</shape>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modo Light do Consi (src/theme/tokens.ts). O modo Dark está em values-night. -->
+<resources>
+  <!-- bg/base -->
+  <color name="consi_widget_fundo">#FFF7E8</color>
+  <!-- bg/selected (fundo das etiquetas de emoção, como na Home) -->
+  <color name="consi_widget_selecionado">#FDDB94</color>
+  <!-- border/focus (contorno do botão secundário) -->
+  <color name="consi_widget_borda">#AB6A0A</color>
+  <!-- text/primary e text/secondary -->
+  <color name="consi_widget_texto">#222222</color>
+  <color name="consi_widget_texto_2">#4D4D4B</color>
+  <!-- action/primary/default e text/on-primary -->
+  <color name="consi_widget_botao">#FAAA27</color>
+  <color name="consi_widget_botao_texto">#161616</color>
+  <!-- Balões (useCoresSvg: corBalao = action/primary/default, corTraco = icon/primary) -->
+  <color name="consi_balao">#FAAA27</color>
+  <color name="consi_traco">#222222</color>
+</resources>

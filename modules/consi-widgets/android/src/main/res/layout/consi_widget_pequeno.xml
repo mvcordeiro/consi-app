@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gerado por scripts/gerar-widgets-layouts.js (ids usados em Widgets.kt). Não edite à mão. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@android:id/background"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/consi_widget_fundo"
+  android:clipToOutline="true"
+  android:padding="16dp">
+  <LinearLayout android:id="@+id/toque" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center">
+      <FrameLayout android:id="@+id/nuvem" android:layout_width="112dp" android:layout_height="100dp">
+        <ImageView android:id="@+id/b1" android:layout_width="34dp" android:layout_height="34dp" android:scaleType="fitCenter" android:src="@drawable/consi_emocao_vazio" android:layout_gravity="top|start" android:layout_marginStart="2dp"/>
+        <ImageView android:id="@+id/b2" android:layout_width="30dp" android:layout_height="30dp" android:scaleType="fitCenter" android:src="@drawable/consi_emocao_vazio" android:layout_gravity="top|end" android:layout_marginTop="6dp"/>
+        <ImageView android:id="@+id/b3" android:layout_width="30dp" android:layout_height="30dp" android:scaleType="fitCenter" android:src="@drawable/consi_emocao_vazio" android:layout_gravity="bottom|start" android:layout_marginBottom="4dp"/>
+        <ImageView android:id="@+id/b4" android:layout_width="34dp" android:layout_height="34dp" android:scaleType="fitCenter" android:src="@drawable/consi_emocao_vazio" android:layout_gravity="bottom|end" android:layout_marginEnd="2dp"/>
+        <ImageView android:id="@+id/b0" android:layout_width="60dp" android:layout_height="60dp" android:scaleType="fitCenter" android:src="@drawable/consi_emocao_vazio" android:layout_gravity="center"/>
+      </FrameLayout>
+      <ImageView android:id="@+id/vazio" android:layout_width="72dp" android:layout_height="72dp" android:scaleType="fitCenter" android:src="@drawable/consi_emocao_vazio" android:visibility="gone"/>
+      <TextView android:id="@+id/resumo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="14sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:layout_marginTop="8dp" android:text="Como você está?"/>
+      <TextView android:id="@+id/dica" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="12sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:layout_marginTop="4dp" android:text="Toque para escrever" android:visibility="gone"/>
+  </LinearLayout>
+</FrameLayout>

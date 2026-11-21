@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="consi_widget_pequeno_nome">Consi · Seu dia</string>
+  <string name="consi_widget_pequeno_descricao">As emoções que você registrou hoje.</string>
+  <string name="consi_widget_medio_nome">Consi · Dia e atalhos</string>
+  <string name="consi_widget_medio_descricao">Suas emoções de hoje e atalhos para registrar, escrever e explorar atividades.</string>
+  <string name="consi_widget_grande_nome">Consi · Check-in</string>
+  <string name="consi_widget_grande_descricao">Toque no balão, escolha a emoção e registre sem procurar o app.</string>
+</resources>

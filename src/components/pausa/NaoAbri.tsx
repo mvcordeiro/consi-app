@@ -12,6 +12,8 @@ import { AnelProgresso } from '../onboarding/AnelProgresso';
 export const DURACAO_NAO_ABRI = 10000;
 
 const TITULO = 'Boa! Dessa vez você não abriu.';
+/** Quando a pessoa já estava usando o app e escolheu parar. */
+const TITULO_DEPOIS_DE_USAR = 'Boa! Você soube a hora de parar.';
 const DESCRICAO = 'Registramos essa escolha no Consi.\nQue tal aproveitar e contar como você está?';
 const LADO_ANEL = 152;
 
@@ -19,13 +21,23 @@ const LADO_ANEL = 152;
  * Depois de "Dessa vez não abro" (sem frame no Figma; pedido do produto): o mesmo emoji do botão
  * no centro, uma mensagem positiva e o convite para o check-in. Um anel em contorno em volta do
  * emoji esvazia em 10 s, mostrando o tempo até a tela sumir. Embaixo, "Fazer check-in" em
- * destaque (estado Ativo) e "Sair" com aparência de desabilitado (mas tocável).
+ * destaque (botão principal, rótulo em text/primary) e "Sair" com aparência de desabilitado
+ * (mas tocável). Depois de já ter usado o app, o título muda para "soube a hora de parar".
  */
-export function NaoAbri({ onCheckin, onFim }: { onCheckin: () => void; onFim: () => void }) {
+export function NaoAbri({
+  depoisDeUsar = false,
+  onCheckin,
+  onFim,
+}: {
+  depoisDeUsar?: boolean;
+  onCheckin: () => void;
+  onFim: () => void;
+}) {
   const { cores } = useTema();
   const [restante] = useState(() => new Animated.Value(1));
   const saiu = useRef(false);
-  const fimTitulo = fimDoTexto(TITULO, 250);
+  const titulo = depoisDeUsar ? TITULO_DEPOIS_DE_USAR : TITULO;
+  const fimTitulo = fimDoTexto(titulo, 250);
 
   useEffect(() => {
     const a = Animated.timing(restante, {
@@ -73,12 +85,12 @@ export function NaoAbri({ onCheckin, onFim }: { onCheckin: () => void; onFim: ()
           </View>
         </Aparecer>
         <View style={styles.textos}>
-          <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={250} />
+          <TextoAnimado texto={titulo} estilo="Títulos/Grande" atraso={250} />
           <TextoAnimado texto={DESCRICAO} estilo="Texto/Médio" cor={cores.text.secondary} atraso={fimTitulo} />
         </View>
       </View>
       <Aparecer atraso={fimDoTexto(DESCRICAO, fimTitulo)} style={styles.rodape}>
-        <Botao rotulo="Fazer check-in" ativo corRotulo={cores.icon.primary} onPress={sair(onCheckin)} />
+        <Botao rotulo="Fazer check-in" corRotulo={cores.text.primary} onPress={sair(onCheckin)} />
         <Botao rotulo="Sair" estilo="secundario" apagado onPress={sair(onFim)} />
       </Aparecer>
     </View>

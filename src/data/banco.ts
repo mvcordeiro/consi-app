@@ -113,6 +113,11 @@ const MIGRACOES: string[] = [
    );`,
   // 2: a pergunta da Página de hoje que o momento respondeu
   `ALTER TABLE momentos ADD COLUMN pergunta TEXT;`,
+  // 3: "Dessa vez não abro" depois de já ter usado o app (tempo liberado acabou ou Cuidar tempo)
+  `ALTER TABLE resistencias ADD COLUMN depois_de_usar INTEGER NOT NULL DEFAULT 0;`,
+  // 4: o que veio depois da escolha na pausa: um check-in (o momento) ou um hobby explorado
+  `ALTER TABLE resistencias ADD COLUMN checkin_em INTEGER;
+   ALTER TABLE resistencias ADD COLUMN hobby TEXT;`,
 ];
 
 async function migrar(db: SQLite.SQLiteDatabase) {
@@ -154,7 +159,7 @@ export type MomentoGravado = {
   destaques?: { inicio: number; fim: number }[];
   marcadores?: string[];
   anexos?: AnexoGravado[];
-  origem?: 'home' | 'pausa' | 'diario' | 'hobby';
+  origem?: 'home' | 'pausa' | 'diario' | 'hobby' | 'widget';
   editadoEm?: number;
   /** A pergunta ("prompt") da Página de hoje que a pessoa respondeu. */
   pergunta?: string;
@@ -242,9 +247,59 @@ export async function sincronizarMomentos(antes: MomentoGravado[], depois: Momen
 }
 
 // ─── Resistências ───────────────────────────────────────────────────────────
-export async function inserirResistencia(r: { em: number; grupo: string; app?: string }) {
+export type ResistenciaGravada = {
+  em: number;
+  grupo: string;
+  app?: string;
+  depoisDeUsar?: boolean;
+  /** O check-in (momento) feito logo depois, na própria pausa. */
+  checkinEm?: number;
+  /** O hobby explorado no lugar do app. */
+  hobby?: string;
+};
+
+export async function inserirResistencia(r: ResistenciaGravada) {
   const db = await banco();
-  await db.runAsync('INSERT INTO resistencias (em, grupo, app) VALUES (?, ?, ?)', r.em, r.grupo, r.app ?? null);
+  await db.runAsync(
+    'INSERT INTO resistencias (em, grupo, app, depois_de_usar, checkin_em, hobby) VALUES (?, ?, ?, ?, ?, ?)',
+    r.em,
+    r.grupo,
+    r.app ?? null,
+    r.depoisDeUsar ? 1 : 0,
+    r.checkinEm ?? null,
+    r.hobby ?? null,
+  );
+}
+
+/** Liga a escolha feita em `em` ao que veio depois (o check-in ou o hobby). */
+export async function completarResistencia(em: number, d: { checkinEm?: number; hobby?: string }) {
+  const db = await banco();
+  if (d.checkinEm !== undefined) await db.runAsync('UPDATE resistencias SET checkin_em = ? WHERE em = ?', d.checkinEm, em);
+  if (d.hobby !== undefined) await db.runAsync('UPDATE resistencias SET hobby = ? WHERE em = ?', d.hobby, em);
+}
+
+/** As escolhas de não abrir desde `desde` (ms), da mais recente para a mais antiga. */
+export async function listarResistencias(desde: number): Promise<ResistenciaGravada[]> {
+  const db = await banco();
+  const linhas = await db.getAllAsync<{
+    em: number;
+    grupo: string;
+    app: string | null;
+    depois_de_usar: number;
+    checkin_em: number | null;
+    hobby: string | null;
+  }>(
+    'SELECT em, grupo, app, depois_de_usar, checkin_em, hobby FROM resistencias WHERE em >= ? ORDER BY em DESC',
+    desde,
+  );
+  return linhas.map((l) => ({
+    em: l.em,
+    grupo: l.grupo,
+    app: l.app ?? undefined,
+    depoisDeUsar: l.depois_de_usar === 1,
+    checkinEm: l.checkin_em ?? undefined,
+    hobby: l.hobby ?? undefined,
+  }));
 }
 
 // ─── Importação única do AsyncStorage ───────────────────────────────────────
@@ -320,7 +375,7 @@ export async function exportarTudo() {
     formato: 1,
     exportadoEm: new Date().toISOString(),
     momentos: await lerMomentos(),
-    resistencias: await db.getAllAsync('SELECT em, grupo, app FROM resistencias ORDER BY em DESC'),
+    resistencias: await db.getAllAsync('SELECT em, grupo, app, depois_de_usar, checkin_em, hobby FROM resistencias ORDER BY em DESC'),
     estado,
   };
 }

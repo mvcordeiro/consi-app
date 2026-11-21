@@ -20,6 +20,7 @@ function origemDoMomento(m: Momento) {
   if (m.origem === 'pausa') return 'Registrado numa pausa';
   if (m.origem === 'home') return 'Registrado no Início';
   if (m.origem === 'hobby') return 'Ao finalizar uma atividade';
+  if (m.origem === 'widget') return 'Registrado pelo widget';
   return 'Escrito no Diário';
 }
 
