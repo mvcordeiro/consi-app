@@ -26,6 +26,11 @@ import androidx.core.content.ContextCompat
  * se o grupo não quer o flutuante ou a pessoa o arrastou para o X, a notificação fixa.
  * Abrir uma tela por cima de outro app exige a permissão de sobrepor; sem ela, a pausa vira
  * uma notificação para tocar e a contagem fica na notificação.
+ *
+ * Sair e voltar não zera nada: passar pela tela inicial, pelas abas recentes ou pelo próprio
+ * Consi (pausa) não conta como trocar de app. O ciclo do "Cuidar tempo" fica guardado por app e
+ * continua contando com o app fechado; só recomeça se a pessoa ficou longe dele por mais tempo
+ * que o intervalo.
  */
 class VigiaService : Service() {
   private val handler = Handler(Looper.getMainLooper())
@@ -115,29 +120,64 @@ class VigiaService : Service() {
     mostrarContagem(app, regra, agora)
   }
 
+  /** Telas de passagem: tela inicial, abas recentes / barra do sistema e o próprio Consi. */
+  private fun dePassagem(p: String?) = p == null || p == packageName || p in inicios
+
+  /** O último app de verdade (não de passagem) que esteve na frente, e quando ele saiu. */
+  private var ultimoApp: String? = null
+  private var saiuEm = 0L
+
   private fun trocarPara(novo: String?, agora: Long) {
     if (novo == naFrente) return
-    val antes = naFrente
-    // A liberação "até sair do app" acaba quando outro app (que não o Consi) vem para a frente.
-    if (antes != null && antes == prefs.liberadoNaSessao && novo != packageName) prefs.liberadoNaSessao = null
+    // Guarda o ciclo do app que sai da frente, para retomar quando ele voltar.
+    naFrente?.let {
+      if (!dePassagem(it)) {
+        saiuEm = agora
+        if (proximoLembrete > 0) prefs.guardarCiclo(it, proximoLembrete, agora)
+      }
+    }
     naFrente = novo
-    desdeNaFrente = agora
-    proximoLembrete = 0L
-    pausaDepoisDoLembrete = 0L
-    bolhaDescartadaPara = null
-    if (novo == null) mostrarContagem(null, null, agora)
+    if (dePassagem(novo)) {
+      if (novo == null) mostrarContagem(null, null, agora)
+      return
+    }
+    val app = novo!!
+    // Outro app de verdade, ou o mesmo depois de muito tempo longe: começa um uso novo.
+    if (app != ultimoApp || (saiuEm > 0 && agora - saiuEm > LONGE_MS)) {
+      // A liberação "até sair do app" e o X do timer valem só para o uso anterior.
+      if (ultimoApp != null && ultimoApp == prefs.liberadoNaSessao) prefs.liberadoNaSessao = null
+      bolhaDescartadaPara = null
+      pausaDepoisDoLembrete = 0L
+      desdeNaFrente = agora
+    }
+    ultimoApp = app
+    proximoLembrete = retomarCiclo(app, agora)
+  }
+
+  /**
+   * O ciclo do "Cuidar tempo" ao voltar ao app: o mesmo de antes (o tempo continuou contando),
+   * a não ser que a pessoa tenha ficado longe por mais que o intervalo; aí começa um novo.
+   */
+  private fun retomarCiclo(app: String, agora: Long): Long {
+    val regra = prefs.regras()[app] ?: return 0L
+    if (regra.modo != "cuidar-tempo") return 0L
+    val intervalo = regra.intervaloMin * 60_000L
+    val guardado = prefs.proximoLembrete(app)
+    val longe = agora - prefs.vistoEm(app)
+    return if (guardado > 0 && longe <= intervalo) guardado else agora + intervalo
   }
 
   private fun liberado(app: String, agora: Long) = prefs.liberadoAte(app) > agora || prefs.liberadoNaSessao == app
 
   private fun cuidarTempo(app: String, regra: Regra, agora: Long) {
     val intervalo = regra.intervaloMin * 60_000L
-    if (proximoLembrete == 0L) proximoLembrete = desdeNaFrente + intervalo
+    if (proximoLembrete == 0L) proximoLembrete = agora + intervalo
     if (agora >= proximoLembrete) {
       val minutos = ((agora - desdeNaFrente) / 60_000L).toInt().coerceAtLeast(1)
       Notificacoes.lembrete(this, regra, app, minutos)
       // "Só reiniciar o timer": a contagem recomeça daqui.
       proximoLembrete = agora + intervalo
+      prefs.guardarCiclo(app, proximoLembrete, agora)
       if (regra.aoIgnorar == "pausa") pausaDepoisDoLembrete = agora + IGNORAR_LEMBRETE_MS
     }
     if (pausaDepoisDoLembrete in 1..agora) {
@@ -215,6 +255,8 @@ class VigiaService : Service() {
     private const val JANELA_MS = 30_000L
     private const val REABRIR_PAUSA_MS = 4_000L
     private const val IGNORAR_LEMBRETE_MS = 60_000L
+    /** Longe do app por mais que isso (tela apagada, outro app…) = um uso novo ao voltar. */
+    private const val LONGE_MS = 10 * 60_000L
 
     fun iniciar(context: Context) {
       try {

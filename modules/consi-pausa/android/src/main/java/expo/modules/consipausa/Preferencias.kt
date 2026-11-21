@@ -40,6 +40,18 @@ internal class Preferencias(context: Context) {
 
   fun liberarAte(pacote: String, ate: Long) = prefs.edit().putLong("liberado:$pacote", ate).apply()
 
+  /**
+   * "Cuidar tempo": quando vence o lembrete do app e quando ele foi visto na frente pela última
+   * vez. Guardado para o timer continuar valendo depois que a pessoa sai e volta (ou "fecha" o
+   * app pelas abas recentes).
+   */
+  fun proximoLembrete(pacote: String) = prefs.getLong("lembrete:$pacote", 0L)
+
+  fun vistoEm(pacote: String) = prefs.getLong("visto:$pacote", 0L)
+
+  fun guardarCiclo(pacote: String, proximo: Long, visto: Long) =
+    prefs.edit().putLong("lembrete:$pacote", proximo).putLong("visto:$pacote", visto).apply()
+
   fun regras(): Map<String, Regra> {
     val json = regrasJson
     cache?.let { (de, valor) -> if (de == json) return valor }
