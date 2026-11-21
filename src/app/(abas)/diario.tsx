@@ -113,18 +113,20 @@ export default function Diario() {
         />
       )}
 
-      {/* Registrar emoção (Figma 760:7248): action/secondary, Premo · Vazio e o rótulo */}
+      {/* Registrar emoção (Figma 760:7248): Premo · Vazio e o rótulo. A ação principal da tela,
+          então usa action/primary e text/on-primary como o Botão primário (laranja no Light, azul
+          no Dark); o action/secondary do Figma invertia as cores dos dois temas. */}
       <Pressable
         onPress={() => abrirNovo()}
         accessibilityRole="button"
         accessibilityLabel="Registrar emoção"
         style={({ pressed }) => [
           styles.registrar,
-          { bottom: espacoBarra + space[24], backgroundColor: pressed ? cores.action.secondary.pressed : cores.action.secondary.default },
+          { bottom: espacoBarra + space[24], backgroundColor: pressed ? cores.action.primary.pressed : cores.action.primary.default },
         ]}
       >
         <Premo tamanho={42} />
-        <Texto estilo="Texto/Botões e rótulos" cor={cores.text['on-secondary']}>
+        <Texto estilo="Texto/Botões e rótulos" cor={cores.text['on-primary']}>
           Registrar emoção
         </Texto>
       </Pressable>
