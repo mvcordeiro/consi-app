@@ -1,8 +1,19 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Animated, Easing, PanResponder, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import {
+  Animated,
+  Easing,
+  PanResponder,
+  Platform,
+  StyleSheet,
+  View,
+  type GestureResponderEvent,
+  type LayoutChangeEvent,
+} from 'react-native';
 
 import { categorias, catalogoHobbies, type HobbyId, type HobbyInfo } from '@/data/catalogo';
 import { hobbies as paraBolha } from '@/data/hobbies';
+import { useHobbiesPersonalizados } from '@/data/hobbiesPersonalizados';
+import { icones } from '@/components/icones';
 import { easing, useTema } from '@/theme';
 
 import { Bolha } from '../onboarding/Bolha';
@@ -12,14 +23,20 @@ import { vibrar } from './Arraste';
 const nativo = Platform.OS !== 'web';
 
 const TAMANHO = 92;
-/** Espaçamento da espiral (filotaxia) dentro de cada grupo. */
-const PASSO_ESPIRAL = 60;
+/**
+ * Espaçamento da espiral (filotaxia) dentro de cada grupo. Mais apertado que antes (pedido da
+ * pessoa, 2026-11-21): bolhas vizinhas ficam a ~110 px, só um respiro entre as de 92 px.
+ */
+const PASSO_ESPIRAL = 66;
 const ANGULO_DOURADO = (137.508 * Math.PI) / 180;
 /**
  * Distância entre os centros dos grupos (grade hexagonal). O maior grupo (9 bolhas) tem raio
- * de ~265 px na espiral; com a bolha e o rótulo, 660 evita que grupos vizinhos se misturem.
+ * de ~200 px na espiral; com a bolha e o rótulo, 520 junta os grupos sem misturá-los.
  */
-const ENTRE_GRUPOS = 660;
+const ENTRE_GRUPOS = 520;
+/** Zoom com dois dedos: de 45 % (ver tudo) a 180 %. */
+const ZOOM_MIN = 0.45;
+const ZOOM_MAX = 1.8;
 
 type Posicionada = { h: HobbyInfo; x: number; y: number; ordem: number };
 type Rotulo = { id: string; nome: string; x: number; y: number };
@@ -65,7 +82,7 @@ function montarLayout(destaques: HobbyId[]) {
     let raio = 0;
     g.itens.forEach((h, i) => {
       // espiral de girassol: espalha sem sobrepor e fica orgânica
-      const r = i === 0 ? 0 : PASSO_ESPIRAL * Math.sqrt(i + 0.6) * 1.5;
+      const r = i === 0 ? 0 : PASSO_ESPIRAL * Math.sqrt(i + 1.2);
       const a = i * ANGULO_DOURADO + gi;
       const x = c.x + r * Math.cos(a);
       const y = c.y + r * Math.sin(a);
@@ -102,23 +119,34 @@ type Props = {
 
 /**
  * Canvas infinito de hobbies: bolhas (as mesmas do onboarding) agrupadas por categoria,
- * que a pessoa explora arrastando em qualquer direção, com inércia. As bolhas perto do centro
- * da tela ficam maiores e as das bordas encolhem e somem um pouco, como um mapa que respira.
+ * que a pessoa explora como um mapa: arrastando com um dedo (com inércia) e aproximando ou
+ * afastando com dois (pinça, ancorada entre os dedos). As bolhas perto do centro da tela ficam
+ * maiores e as das bordas encolhem e somem um pouco, como um mapa que respira.
  */
 export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques = [], busca }: Props) {
   const { cores } = useTema();
   const [tela, setTela] = useState<{ w: number; h: number } | null>(null);
   const [desloc] = useState(() => new Animated.ValueXY({ x: 0, y: 0 }));
+  const [escala] = useState(() => new Animated.Value(1));
+  const area = useRef<{ measureInWindow: (cb: (x: number, y: number) => void) => void } | null>(null);
   const chaveDestaques = destaques.join(',');
+  // Hobbies criados pela pessoa entram no canvas (grupo "Criados por você").
+  const criados = useHobbiesPersonalizados().length;
   // eslint-disable-next-line react-hooks/exhaustive-deps -- recalcula só quando a lista muda
-  const layout = useMemo(() => montarLayout(destaques), [chaveDestaques]);
-  const vivo = useRef({ tela, layout, atual: { x: 0, y: 0 } });
+  const layout = useMemo(() => montarLayout(destaques), [chaveDestaques, criados]);
+  const vivo = useRef({ tela, layout, atual: { x: 0, y: 0 }, escala: 1, origem: { x: 0, y: 0 } });
   useEffect(() => {
     const id = desloc.addListener((v) => {
       vivo.current.atual = v;
     });
-    return () => desloc.removeListener(id);
-  }, [desloc]);
+    const idE = escala.addListener(({ value }) => {
+      vivo.current.escala = value;
+    });
+    return () => {
+      desloc.removeListener(id);
+      escala.removeListener(idE);
+    };
+  }, [desloc, escala]);
   useLayoutEffect(() => {
     vivo.current.tela = tela;
     vivo.current.layout = layout;
@@ -131,6 +159,10 @@ export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques 
     const { width, height } = e.nativeEvent.layout;
     if (!tela) desloc.setValue(centrar(0, 0, { w: width, h: height }));
     setTela({ w: width, h: height });
+    // Onde a área está na janela: o ponto entre os dedos é medido em coordenadas da janela.
+    area.current?.measureInWindow((x, y) => {
+      vivo.current.origem = { x, y };
+    });
   };
 
   // Busca: leva o canvas até o primeiro resultado.
@@ -158,31 +190,79 @@ export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques 
         Animated.spring(desloc, { toValue: alvo, useNativeDriver: nativo, speed: 10, bounciness: 4 }).start();
       }
     };
+    /*
+     * Gesto: o canvas (deslocado por `desloc`, em unidades do canvas) fica dentro de uma camada
+     * que escala em volta do centro da área. Um ponto P do canvas aparece a s · (P + T − C) do
+     * centro; para o ponto entre os dedos ficar parado durante a pinça: T = T0 + f/s − f0/s0.
+     */
+    const g0 = { modo: 'pan' as 'pan' | 'pinca', base: { x: 0, y: 0 }, s0: 1, d0: 1, f0: { x: 0, y: 0 }, p0: { x: 0, y: 0 } };
+    const toques = (e: GestureResponderEvent) => e.nativeEvent.touches;
+    const focal = (e: GestureResponderEvent) => {
+      const [a, b] = toques(e);
+      const t = vivo.current.tela ?? { w: 0, h: 0 };
+      const o = vivo.current.origem;
+      return { x: (a.pageX + b.pageX) / 2 - o.x - t.w / 2, y: (a.pageY + b.pageY) / 2 - o.y - t.h / 2 };
+    };
+    const distancia = (e: GestureResponderEvent) => {
+      const [a, b] = toques(e);
+      return Math.max(1, Math.hypot(a.pageX - b.pageX, a.pageY - b.pageY));
+    };
+    const iniciar = (e: GestureResponderEvent) => {
+      g0.base = { ...vivo.current.atual };
+      g0.s0 = vivo.current.escala;
+      if (toques(e).length >= 2) {
+        g0.modo = 'pinca';
+        g0.d0 = distancia(e);
+        g0.f0 = focal(e);
+      } else {
+        g0.modo = 'pan';
+        const [a] = toques(e);
+        g0.p0 = a ? { x: a.pageX, y: a.pageY } : { x: 0, y: 0 };
+      }
+    };
+    const pega = (e: GestureResponderEvent, dx: number, dy: number) => toques(e).length >= 2 || Math.hypot(dx, dy) > 6;
     return PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.hypot(g.dx, g.dy) > 6,
-      onMoveShouldSetPanResponderCapture: (_, g) => Math.hypot(g.dx, g.dy) > 6,
-      onPanResponderGrant: () => {
+      onMoveShouldSetPanResponder: (e, g) => pega(e, g.dx, g.dy),
+      onMoveShouldSetPanResponderCapture: (e, g) => pega(e, g.dx, g.dy),
+      onPanResponderGrant: (e) => {
         desloc.stopAnimation();
-        desloc.extractOffset();
+        escala.stopAnimation();
+        iniciar(e);
       },
-      onPanResponderMove: (_, g) => desloc.setValue({ x: g.dx, y: g.dy }),
+      onPanResponderMove: (e) => {
+        const n = toques(e).length;
+        // Um dedo entrou ou saiu: recomeça a conta do ponto onde está, sem pular.
+        if ((n >= 2) !== (g0.modo === 'pinca')) iniciar(e);
+        if (g0.modo === 'pinca' && n >= 2) {
+          const s = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, (g0.s0 * distancia(e)) / g0.d0));
+          const f = focal(e);
+          escala.setValue(s);
+          desloc.setValue({ x: g0.base.x + f.x / s - g0.f0.x / g0.s0, y: g0.base.y + f.y / s - g0.f0.y / g0.s0 });
+        } else if (n >= 1) {
+          const [a] = toques(e);
+          desloc.setValue({ x: g0.base.x + (a.pageX - g0.p0.x) / g0.s0, y: g0.base.y + (a.pageY - g0.p0.y) / g0.s0 });
+        }
+      },
       onPanResponderTerminationRequest: () => false,
       onPanResponderRelease: (_, g) => {
-        desloc.flattenOffset();
-        Animated.decay(desloc, { velocity: { x: g.vx, y: g.vy }, deceleration: 0.994, useNativeDriver: nativo }).start(prender);
+        if (g0.modo === 'pinca') return prender();
+        const s = vivo.current.escala;
+        Animated.decay(desloc, {
+          velocity: { x: g.vx / s, y: g.vy / s },
+          deceleration: 0.994,
+          useNativeDriver: nativo,
+        }).start(prender);
       },
-      onPanResponderTerminate: () => {
-        desloc.flattenOffset();
-        prender();
-      },
+      onPanResponderTerminate: () => prender(),
     });
   });
 
   const encontrados = busca ? new Set(busca) : null;
 
   return (
-    <View style={styles.area} onLayout={aoMedir} {...gesto.panHandlers}>
+    <View ref={area as never} style={styles.area} onLayout={aoMedir} {...gesto.panHandlers}>
       {tela ? (
+        <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: escala }] }]}>
         <Animated.View
           style={[
             styles.canvas,
@@ -229,7 +309,7 @@ export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques 
               >
                 <Entrada atraso={Math.min(b.ordem, 24) * 30}>
                   <Bolha
-                    Icone={paraBolha[b.h.id].Icone}
+                    Icone={paraBolha[b.h.id]?.Icone ?? icones[b.h.icone][0]}
                     rotulo={meu ? `${b.h.nome} · seu` : b.h.nome}
                     tamanho={TAMANHO}
                     larguraRotulo={TAMANHO - 16}
@@ -249,6 +329,7 @@ export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques 
             );
           })}
         </Animated.View>
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -261,8 +342,8 @@ export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques 
 function lente(desloc: Animated.ValueXY, x: number, y: number, tela: { w: number; h: number }, minimo: number) {
   const cx = tela.w / 2 - x;
   const cy = tela.h / 2 - y;
-  const rx = tela.w * 0.75;
-  const ry = tela.h * 0.75;
+  const rx = tela.w * 1.0;
+  const ry = tela.h * 1.0;
   const sx = desloc.x.interpolate({
     inputRange: [cx - rx, cx - rx * 0.35, cx, cx + rx * 0.35, cx + rx],
     outputRange: [minimo, 0.92, 1, 0.92, minimo],
