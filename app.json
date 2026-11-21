@@ -78,8 +78,8 @@
         "url": "https://PREENCHER-ENDERECO-DO-ARQUIVO/consi-versao.json"
       },
       "supabase": {
-        "url": "https://PREENCHER-PROJETO.supabase.co",
-        "anonKey": "PREENCHER-CHAVE-PUBLICA"
+        "url": "https://qxrxvosvavtlqhzzhhfg.supabase.co",
+        "anonKey": "sb_publishable_MVNK1FvjdTFjTBuo-WTRaw__KaKsgbF"
       },
       "router": {
         "asyncRoutes": {

@@ -7,6 +7,7 @@ e-mail e código.
 
 Arquivos:
 - `supabase/migrations/0001_sugestoes.sql`: tabelas, triggers, RLS, view `sugestoes_ranking`, RPC `mesclar_sugestoes`
+- `supabase/migrations/0002_permissoes.sql`: grants das tabelas para `anon`/`authenticated`
 - `src/data/nuvem/cliente.ts`: cliente, sessão no SecureStore, `garantirSessao()`, erros (`ErroNuvem`, tipo `offline`)
 - `src/data/nuvem/sugestoes.ts`, `novidades.ts`, `moderacao.ts`: funções que as telas chamam
 
@@ -50,8 +51,15 @@ No piloto, a pré-moderação cuida do conteúdo e o placar de votos é indicati
 
 ## 3. Rodar a migration
 
-Opção simples: **SQL Editor → New query**, cole todo o conteúdo de `supabase/migrations/0001_sugestoes.sql` e **Run**.
-Deve terminar sem erro (rodar duas vezes dá erro de "already exists"; é só uma vez).
+Opção simples: **SQL Editor → New query**, cole todo o conteúdo de `supabase/migrations/0001_sugestoes.sql` e **Run**;
+depois faça o mesmo com `0002_permissoes.sql`. Deve terminar sem erro (rodar duas vezes dá erro de "already exists"; é só uma vez).
+
+A `0002` existe porque projetos novos do Supabase não dão acesso automático às tabelas para os papéis da API
+(`anon`, `authenticated`): sem ela, tudo volta "permission denied" antes mesmo da RLS.
+
+No projeto **Consi** (`qxrxvosvavtlqhzzhhfg`, us-west-2) as duas já rodaram em 2026-11-21 e estão registradas em
+`supabase_migrations.schema_migrations` (versões `0001` e `0002`). O deploy automático de migrations pela integração
+com o GitHub está desligado; uma migration nova deve ser rodada à mão do mesmo jeito.
 
 Opção com CLI (se um dia for usar): `npx supabase link --project-ref xxxx` e `npx supabase db push`.
 
