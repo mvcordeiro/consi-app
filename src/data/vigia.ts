@@ -80,10 +80,23 @@ export function usePermissoes() {
 export const pedirAcessoUso = () => ConsiPausa?.abrirAjustesAcessoUso();
 export const pedirSobrepor = () => ConsiPausa?.abrirAjustesSobrepor();
 
-/** Android 13+: a permissão de notificação é pedida na hora (lembretes do "Cuidar tempo"). */
+/**
+ * Notificações (lembretes do "Cuidar tempo"). No Android 13+ o próprio aviso do sistema pede;
+ * se a pessoa já recusou de vez (o aviso não aparece mais) ou desligou nos Ajustes, abre a tela
+ * de notificações do Consi.
+ */
 export async function pedirNotificacoes() {
-  if (Platform.OS !== 'android' || Number(Platform.Version) < 33) return;
-  await PermissionsAndroid.request('android.permission.POST_NOTIFICATIONS').catch(() => {});
+  if (!ConsiPausa) return;
+  if (Platform.OS === 'android' && Number(Platform.Version) >= 33) {
+    const r = await PermissionsAndroid.request('android.permission.POST_NOTIFICATIONS').catch(() => 'denied');
+    // Recusou agora: o Android deixa pedir de novo no próximo toque.
+    if (r === 'granted' || r === 'denied') return;
+  }
+  try {
+    if (!ConsiPausa.podeNotificar()) ConsiPausa.abrirAjustesNotificacoes();
+  } catch {
+    // sem a tela de ajustes, segue sem notificações
+  }
 }
 
 /** Ajustes: liga ou desliga a pausa nos apps. */

@@ -1,45 +1,83 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Texto } from '@/components';
+import { Botao, Icone, Texto } from '@/components';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
-import { IconeDownload, PontoNotificacao, SetaVoltar, SwitchLigado } from '@/components/onboarding/assets';
-import { pedirAcessoUso, temPausaDeVerdade, usePermissoes } from '@/data/vigia';
+import { PontoNotificacao, SetaVoltar, SwitchLigado } from '@/components/onboarding/assets';
+import {
+  pedirAcessoUso,
+  pedirNotificacoes,
+  pedirSobrepor,
+  temPausaDeVerdade,
+  usePermissoes,
+  type Permissoes,
+} from '@/data/vigia';
 import { borderWidth, gap, radius, space, useCoresSvg, useTema } from '@/theme';
 
 /**
- * F1 · Permissões — passo a passo ilustrado (caminho do Android).
- * No APK Android, o Continuar abre o Acesso de uso do Android (os passos ilustrados); ao voltar
- * com a permissão ligada, segue sozinho. Sem ligar, um segundo toque segue assim mesmo (recusar
- * não pode travar o onboarding). No navegador e no iPhone, só ilustra. O conteúdo rola e o botão
- * fica fixo embaixo.
- * Títulos centralizados; os cartões imitam a tela do sistema, então ficam à esquerda.
+ * F1 · Permissões — o caminho real do Android, uma permissão por vez.
+ * Cada cartão diz para que serve e mostra a tela do sistema que vai abrir (com o toque que a
+ * pessoa precisa dar). O botão de baixo abre a tela da próxima permissão que falta; ao voltar
+ * para o Consi, o cartão vira "Ligado" e o botão passa para a seguinte. "Agora não" pula a
+ * permissão da vez (recusar não pode travar o onboarding; dá para ligar depois em Ajustes).
+ * Com tudo resolvido, o botão vira Continuar e segue para os apps (que já usam o Acesso de uso
+ * para mostrar os mais usados).
+ * No navegador e no iPhone não há permissões reais: os cartões só ilustram e o botão segue.
  */
-const TITULO = 'Precisamos de algumas permissões para seguir';
-const SUB = 'Você pode editar isso depois.';
+type Chave = 'acessoUso' | 'sobrepor' | 'notificacoes';
+
+const PERMISSOES: {
+  chave: Chave;
+  titulo: string;
+  paraQue: string;
+  botao: string;
+}[] = [
+  {
+    chave: 'acessoUso',
+    titulo: 'Acesso de uso',
+    paraQue: 'Para saber qual app você abriu e quais você mais usa.',
+    botao: 'Abrir Acesso de uso',
+  },
+  {
+    chave: 'sobrepor',
+    titulo: 'Sobrepor a outros apps',
+    paraQue: 'Para a pausa aparecer por cima do app, antes dele abrir.',
+    botao: 'Abrir Sobrepor a outros apps',
+  },
+  {
+    chave: 'notificacoes',
+    titulo: 'Notificações',
+    paraQue: 'Para os lembretes de tempo e a pausa que chega como aviso.',
+    botao: 'Permitir notificações',
+  },
+];
+
+const TITULO = 'O Android pede 3 permissões para o Consi pausar seus apps';
+const SUB = 'Cada botão abre a tela certa do celular. Ligue a opção e volte para cá.';
 const T_SUB = fimDoTexto(TITULO, 150);
 const T_PASSOS = fimDoTexto(SUB, T_SUB);
 
 export default function F1Permissoes() {
   const { cores } = useTema();
   const transicao = useTransicao();
-  const coresSvg = useCoresSvg();
-  const { permissoes } = usePermissoes();
-  const pediu = useRef(false);
+  const { permissoes, reler } = usePermissoes();
+  const [puladas, setPuladas] = useState<Chave[]>([]);
 
-  const seguir = () => transicao.sair(() => router.push('/onboarding/compromisso'));
-  const continuar = () => {
-    if (!temPausaDeVerdade || permissoes.acessoUso || pediu.current) return seguir();
-    pediu.current = true;
-    pedirAcessoUso();
+  const ligada = (c: Chave) => !temPausaDeVerdade || permissoes[c as keyof Permissoes];
+  // A próxima permissão a pedir: a primeira que não está ligada nem foi pulada.
+  const vez = temPausaDeVerdade ? PERMISSOES.find((p) => !ligada(p.chave) && !puladas.includes(p.chave)) : undefined;
+
+  const seguir = () => transicao.sair(() => router.push('/onboarding/aplicativos'));
+  const pedir = async (c: Chave) => {
+    if (c === 'acessoUso') pedirAcessoUso();
+    else if (c === 'sobrepor') pedirSobrepor();
+    else {
+      await pedirNotificacoes();
+      reler();
+    }
   };
-  // De volta dos Ajustes do Android com a permissão ligada: segue.
-  useEffect(() => {
-    if (pediu.current && permissoes.acessoUso) seguir();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permissoes.acessoUso]);
 
   return (
     <TelaOnboarding
@@ -47,7 +85,21 @@ export default function F1Permissoes() {
       comTextura={false}
       rolavel
       atrasoRodape={T_PASSOS + 500}
-      rodape={<BotaoContinuar onPress={continuar} />}
+      rodape={
+        vez ? (
+          <View style={styles.rodape}>
+            <BotaoContinuar rotulo={vez.botao} onPress={() => pedir(vez.chave)} />
+            <Botao
+              rotulo="Agora não"
+              estilo="secundario"
+              apagado
+              onPress={() => setPuladas((p) => [...p, vez.chave])}
+            />
+          </View>
+        ) : (
+          <BotaoContinuar onPress={seguir} />
+        )
+      }
     >
       <View style={styles.cabecalho}>
         <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />
@@ -55,88 +107,176 @@ export default function F1Permissoes() {
       </View>
 
       <View style={styles.passos}>
-        <Passo ordem={0} titulo="1. Clique em aplicativos instalados">
-          <View style={styles.linha}>
-            <View style={[styles.iconeDownload, { backgroundColor: cores.action.secondary.pressed }]}>
-              <IconeDownload {...coresSvg} />
-            </View>
-            <View style={styles.comPonto}>
-              <Texto estilo="Texto/Pequeno">Aplicativos instalados</Texto>
-              <View style={styles.ponto}>
-                <PontoNotificacao {...coresSvg} />
-              </View>
-            </View>
-          </View>
-        </Passo>
-
-        <Passo ordem={1} titulo="2. Busque pelo Consi e clique nele">
-          <Voltar rotulo="Apps instalados" estilo="Texto/Pequeno" />
-          <View style={styles.itemConsi}>
-            <View style={styles.comPonto}>
-              <Texto estilo="Texto/Pequeno">Consi</Texto>
-              <View style={[styles.ponto, { right: -9 }]}>
-                <PontoNotificacao {...coresSvg} />
-              </View>
-            </View>
-            <Texto estilo="Legenda/Pequena" cor={cores.text.link}>
-              Desativado
-            </Texto>
-          </View>
-        </Passo>
-
-        <Passo ordem={2} titulo="3. Ative a permissão">
-          <Voltar rotulo="Consi" estilo="Texto/Médio" />
-          <View style={[styles.alternar, { borderColor: cores.border.focus }]}>
-            <Texto estilo="Texto/Botões e rótulos">Ativado</Texto>
-            <SwitchLigado {...coresSvg} />
-          </View>
-        </Passo>
+        {PERMISSOES.map((p, i) => (
+          <Cartao
+            key={p.chave}
+            ordem={i}
+            titulo={`${i + 1}. ${p.titulo}`}
+            paraQue={p.paraQue}
+            estado={
+              temPausaDeVerdade && ligada(p.chave)
+                ? 'ligada'
+                : vez?.chave === p.chave
+                  ? 'vez'
+                  : puladas.includes(p.chave)
+                    ? 'pulada'
+                    : 'espera'
+            }
+          >
+            {p.chave === 'acessoUso' ? (
+              <TelaDoSistema
+                lista="Acesso de uso"
+                opcao="Permitir acesso de uso"
+                nota="Alguns celulares abrem direto na tela do Consi."
+              />
+            ) : p.chave === 'sobrepor' ? (
+              <TelaDoSistema
+                lista="Sobrepor a outros apps"
+                opcao="Permitir sobreposição"
+                nota="Em alguns celulares o nome é “Aparecer na parte superior”."
+              />
+            ) : (
+              <AvisoDoSistema />
+            )}
+          </Cartao>
+        ))}
       </View>
     </TelaOnboarding>
   );
 }
 
-function Passo({ titulo, ordem, children }: { titulo: string; ordem: number; children: ReactNode }) {
+type Estado = 'ligada' | 'vez' | 'pulada' | 'espera';
+
+function Cartao({
+  titulo,
+  paraQue,
+  ordem,
+  estado,
+  children,
+}: {
+  titulo: string;
+  paraQue: string;
+  ordem: number;
+  estado: Estado;
+  children: ReactNode;
+}) {
   const { cores } = useTema();
   return (
     <Aparecer atraso={T_PASSOS + ordem * 150} deslocamento={16} style={styles.passo}>
-      <Texto estilo="Títulos/Pequeno" style={styles.centro}>
-        {titulo}
+      <View style={styles.tituloCartao}>
+        <Texto estilo="Títulos/Pequeno" style={styles.flex}>
+          {titulo}
+        </Texto>
+        {estado === 'ligada' ? (
+          <View style={styles.linha}>
+            <Icone nome="selo" tamanho={16} cor={cores.feedback.success} />
+            <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
+              Ligado
+            </Texto>
+          </View>
+        ) : estado === 'pulada' ? (
+          <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+            Depois, em Ajustes
+          </Texto>
+        ) : null}
+      </View>
+      <Texto estilo="Texto/Pequeno" cor={cores.text.link}>
+        {paraQue}
       </Texto>
-      <View style={[styles.cartao, { borderColor: cores.icon.primary }]}>{children}</View>
+      {/* Só a permissão da vez mostra o caminho; as outras ficam resumidas. */}
+      {estado === 'vez' || !temPausaDeVerdade ? (
+        <View
+          style={[
+            styles.cartao,
+            { borderColor: estado === 'vez' ? cores.border.focus : cores.icon.primary },
+            estado === 'vez' && { borderWidth: borderWidth.thick },
+          ]}
+        >
+          {children}
+        </View>
+      ) : null}
     </Aparecer>
   );
 }
 
-function Voltar({ rotulo, estilo }: { rotulo: string; estilo: 'Texto/Pequeno' | 'Texto/Médio' }) {
+/** A tela de Ajustes do Android que vai abrir: a lista com o Consi e, dentro dele, a chave. */
+function TelaDoSistema({ lista, opcao, nota }: { lista: string; opcao: string; nota: string }) {
+  const { cores } = useTema();
+  const coresSvg = useCoresSvg();
+  return (
+    <>
+      <Voltar rotulo={lista} />
+      <View style={styles.item}>
+        <View style={styles.comPonto}>
+          <Texto estilo="Texto/Pequeno">Consi</Texto>
+          <View style={styles.ponto}>
+            <PontoNotificacao {...coresSvg} />
+          </View>
+        </View>
+        <Texto estilo="Legenda/Pequena" cor={cores.text.link}>
+          Toque no Consi
+        </Texto>
+      </View>
+      <View style={[styles.alternar, { borderColor: cores.border.focus }]}>
+        <Texto estilo="Texto/Botões e rótulos" style={styles.flex}>
+          {opcao}
+        </Texto>
+        <SwitchLigado {...coresSvg} />
+      </View>
+      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+        {nota} Depois, use o voltar do celular.
+      </Texto>
+    </>
+  );
+}
+
+/** O aviso do próprio Android (Android 13+) para notificações. */
+function AvisoDoSistema() {
+  const { cores } = useTema();
+  return (
+    <>
+      <Texto estilo="Texto/Pequeno">Permitir que o Consi envie notificações?</Texto>
+      <View style={[styles.alternar, { borderColor: cores.border.focus, justifyContent: 'center' }]}>
+        <Texto estilo="Texto/Botões e rótulos">Permitir</Texto>
+      </View>
+      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+        Se o aviso não aparecer, abrimos a tela de notificações do Consi.
+      </Texto>
+    </>
+  );
+}
+
+function Voltar({ rotulo }: { rotulo: string }) {
   const coresSvg = useCoresSvg();
   return (
     <View style={styles.linha}>
       <View style={styles.seta}>
         <SetaVoltar {...coresSvg} />
       </View>
-      <Texto estilo={estilo}>{rotulo}</Texto>
+      <Texto estilo="Texto/Médio">{rotulo}</Texto>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   cabecalho: { gap: gap.default },
-  centro: { textAlign: 'center' },
   passos: { marginTop: gap.section, gap: gap.section },
-  passo: { gap: space[16] },
+  passo: { gap: space[8] },
+  tituloCartao: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
+  rodape: { gap: space[12] },
   cartao: {
+    marginTop: space[8],
     borderWidth: borderWidth.thin,
     borderRadius: radius.sm,
     paddingHorizontal: space[12],
     paddingVertical: space[20],
-    gap: space[20],
+    gap: space[16],
   },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
-  iconeDownload: { padding: space[4], borderRadius: radius.xs },
-  ponto: { position: 'absolute', right: -11, top: 2 },
+  ponto: { position: 'absolute', right: -9, top: 2 },
   seta: { width: 6, height: 12, alignItems: 'center', justifyContent: 'center' },
-  itemConsi: { paddingHorizontal: space[12] },
+  item: { paddingHorizontal: space[12], gap: space[4] },
   comPonto: { alignSelf: 'flex-start' },
   alternar: {
     flexDirection: 'row',
@@ -145,5 +285,6 @@ const styles = StyleSheet.create({
     padding: space[12],
     borderWidth: borderWidth.thin,
     borderRadius: radius.full,
+    gap: space[8],
   },
 });
