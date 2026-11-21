@@ -113,6 +113,8 @@ const MIGRACOES: string[] = [
    );`,
   // 2: a pergunta da Página de hoje que o momento respondeu
   `ALTER TABLE momentos ADD COLUMN pergunta TEXT;`,
+  // 3: "Dessa vez não abro" depois de já ter usado o app (tempo liberado acabou ou Cuidar tempo)
+  `ALTER TABLE resistencias ADD COLUMN depois_de_usar INTEGER NOT NULL DEFAULT 0;`,
 ];
 
 async function migrar(db: SQLite.SQLiteDatabase) {
@@ -242,9 +244,25 @@ export async function sincronizarMomentos(antes: MomentoGravado[], depois: Momen
 }
 
 // ─── Resistências ───────────────────────────────────────────────────────────
-export async function inserirResistencia(r: { em: number; grupo: string; app?: string }) {
+export async function inserirResistencia(r: { em: number; grupo: string; app?: string; depoisDeUsar?: boolean }) {
   const db = await banco();
-  await db.runAsync('INSERT INTO resistencias (em, grupo, app) VALUES (?, ?, ?)', r.em, r.grupo, r.app ?? null);
+  await db.runAsync(
+    'INSERT INTO resistencias (em, grupo, app, depois_de_usar) VALUES (?, ?, ?, ?)',
+    r.em,
+    r.grupo,
+    r.app ?? null,
+    r.depoisDeUsar ? 1 : 0,
+  );
+}
+
+/** As escolhas de não abrir desde `desde` (ms), da mais recente para a mais antiga. */
+export async function listarResistencias(desde: number) {
+  const db = await banco();
+  const linhas = await db.getAllAsync<{ em: number; grupo: string; app: string | null; depois_de_usar: number }>(
+    'SELECT em, grupo, app, depois_de_usar FROM resistencias WHERE em >= ? ORDER BY em DESC',
+    desde,
+  );
+  return linhas.map((l) => ({ em: l.em, grupo: l.grupo, app: l.app ?? undefined, depoisDeUsar: l.depois_de_usar === 1 }));
 }
 
 // ─── Importação única do AsyncStorage ───────────────────────────────────────
@@ -320,7 +338,7 @@ export async function exportarTudo() {
     formato: 1,
     exportadoEm: new Date().toISOString(),
     momentos: await lerMomentos(),
-    resistencias: await db.getAllAsync('SELECT em, grupo, app FROM resistencias ORDER BY em DESC'),
+    resistencias: await db.getAllAsync('SELECT em, grupo, app, depois_de_usar FROM resistencias ORDER BY em DESC'),
     estado,
   };
 }

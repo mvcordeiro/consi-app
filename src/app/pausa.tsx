@@ -27,7 +27,7 @@ import { BalaoVazio, emocoes, salvarEmocao, type Emocao } from '@/data/emocoes';
 import { sortearFrase } from '@/data/frases';
 import { useGrupos } from '@/data/gruposHome';
 import { useHobbies } from '@/data/hobbiesEstado';
-import { perguntaTempoNoApp, regraDaPausa, registrarResistencia } from '@/data/pausa';
+import { marcarLiberacao, pausaDepoisDeUsar, perguntaTempoNoApp, regraDaPausa, registrarResistencia } from '@/data/pausa';
 import { seguirParaOApp } from '@/data/vigia';
 import { duration, easing, space, useTema } from '@/theme';
 
@@ -79,6 +79,16 @@ export default function Pausa() {
   // mensagem. Depende do período porque os grupos gravados chegam depois da primeira renderização.
   const periodo = grupo.periodoFilosofico ?? null;
   const frase = useMemo(() => sortearFrase(periodo), [periodo]);
+  // A pessoa já estava usando o app (o tempo liberado acabou, ou "Cuidar tempo"): a saída
+  // positiva vira "parar por aqui", em vez de "não abrir".
+  const [depoisDeUsar, setDepoisDeUsar] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    pausaDepoisDeUsar(grupo, params.app, doVigia).then((d) => vivo && setDepoisDeUsar(d));
+    return () => {
+      vivo = false;
+    };
+  }, [grupo, params.app, doVigia]);
 
   const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();
@@ -119,7 +129,10 @@ export default function Pausa() {
   // ─── Saídas ───────────────────────────────────────────────────────────────
   // Pausa do vigia: libera o app e volta para ele, deixando o Consi na Home por trás.
   const irParaOApp = (minutos: number) => {
-    if (doVigia && seguirParaOApp(params.app, minutos)) router.dismissTo('/');
+    if (doVigia && seguirParaOApp(params.app, minutos)) {
+      marcarLiberacao(params.app, minutos);
+      router.dismissTo('/');
+    }
     else router.back();
   };
   const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : irParaOApp(0));
@@ -137,7 +150,7 @@ export default function Pausa() {
   };
   const explorarHobby = () => router.dismissTo({ pathname: '/hobbies', params: { hobby: hobbyRoda } });
   const naoAbro = () => {
-    registrarResistencia({ grupo: grupo.id, app: params.app });
+    registrarResistencia({ grupo: grupo.id, app: params.app, depoisDeUsar });
     setEtapa('naoAbri');
   };
   const sumir = useCallback(() => router.dismissTo('/'), []);
@@ -341,7 +354,7 @@ export default function Pausa() {
             >
               <View style={styles.pilha}>
                 <Botao
-                  rotulo="Dessa vez não abro"
+                  rotulo={depoisDeUsar ? 'Acho que já foi o suficiente' : 'Dessa vez não abro'}
                   corRotulo={cores.icon.primary}
                   icone={(cor) => <Icone nome="rosto-positivo" cor={cor} />}
                   onPress={naoAbro}
@@ -421,7 +434,7 @@ export default function Pausa() {
 
       {etapa === 'naoAbri' ? (
         <View style={[styles.cheia, { paddingTop: top, paddingBottom: bottom }]}>
-          <NaoAbri onCheckin={() => abrirCheckin('naoAbri')} onFim={sumir} />
+          <NaoAbri depoisDeUsar={depoisDeUsar} onCheckin={() => abrirCheckin('naoAbri')} onFim={sumir} />
         </View>
       ) : null}
 

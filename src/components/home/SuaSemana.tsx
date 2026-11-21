@@ -16,12 +16,16 @@ import {
   type Emocao,
   type RegistroEmocao,
 } from '@/data/emocoes';
+import { appPorId, useGrupos } from '@/data/gruposHome';
+import { resistenciasDaSemana, type Resistencia } from '@/data/pausa';
 import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
 import { DiaCalendario } from '../DiaCalendario';
 import { Etiqueta } from '../Etiqueta';
 import { Folha } from '../Folha';
+import { Icone } from '../Icone';
+import { IconeApp } from '../IconeApp';
 import { ABA_A, AbaArraste, BordasArraste, sairPeloLado, useArrasteLateral, useLarguraTela, voltarAoLugar } from '../hobbies/Arraste';
 import { Texto } from '../Texto';
 import { IconeCheckin, IconeRelogio } from './assets';
@@ -41,9 +45,9 @@ function ultimosDias(): Dia[] {
 }
 
 /**
- * V2 - Momentos / Feed — seletor dos últimos 7 dias e os check-ins de cada dia.
- * Por enquanto registra só os check-ins de emoção da hero:
- * "Você fez check-in às 14:05 sentindo Alegria".
+ * V2 - Momentos / Feed — seletor dos últimos 7 dias e os momentos de cada dia, do mais recente
+ * para o mais antigo: os check-ins de emoção ("Você fez check-in às 14:05 sentindo Alegria") e as
+ * escolhas da pausa ("Você não abriu o Instagram às 14:05" / "Você parou o Instagram às 14:05").
  */
 export function SuaSemana({
   margem,
@@ -59,6 +63,8 @@ export function SuaSemana({
 }) {
   const { cores } = useTema();
   const [registros, setRegistros] = useState<RegistroEmocao[]>([]);
+  // "Dessa vez não abro" na pausa (só leitura aqui).
+  const [resistencias, setResistencias] = useState<Resistencia[]>([]);
   // Check-in sendo editado (troca de emoção, pela folha).
   const [editando, setEditando] = useState<RegistroEmocao | null>(null);
 
@@ -89,6 +95,7 @@ export function SuaSemana({
   useFocusEffect(
     useCallback(() => {
       emocoesDaSemana().then(setRegistros);
+      resistenciasDaSemana().then(setResistencias);
       setDias((atual) => {
         const novos = ultimosDias();
         return novos[novos.length - 1].id === atual[atual.length - 1].id ? atual : novos;
@@ -105,7 +112,20 @@ export function SuaSemana({
         .filter((x): x is { r: RegistroEmocao; e: Emocao } => !!x.e),
     [registros, dia],
   );
-  const total = checkins.length;
+  const escolhas = useMemo(
+    () => resistencias.filter((r) => mesmoDia(new Date(r.em), dia.data)),
+    [resistencias, dia],
+  );
+  // Check-ins e escolhas juntos, do mais recente para o mais antigo.
+  const itens = useMemo(
+    () =>
+      [
+        ...checkins.map((c) => ({ tipo: 'checkin' as const, em: c.r.em, c })),
+        ...escolhas.map((r) => ({ tipo: 'escolha' as const, em: r.em, r })),
+      ].sort((a, b) => b.em - a.em),
+    [checkins, escolhas],
+  );
+  const total = itens.length;
 
   return (
     <View style={styles.secao}>
@@ -130,21 +150,27 @@ export function SuaSemana({
               {total} {total === 1 ? 'MOMENTO REGISTRADO' : 'MOMENTOS REGISTRADOS'}
             </Texto>
             <View style={styles.lista}>
-              {checkins.map(({ r, e }) => (
-                <CardCheckin
-                  key={r.em}
-                  registro={r}
-                  emocao={e}
-                  margem={margem}
-                  onArrastando={onArrastando}
-                  onApagar={() => apagar(r)}
-                  onEditar={() => setEditando(r)}
-                />
-              ))}
+              {itens.map((i) =>
+                i.tipo === 'checkin' ? (
+                  <CardCheckin
+                    key={`c${i.em}`}
+                    registro={i.c.r}
+                    emocao={i.c.e}
+                    margem={margem}
+                    onArrastando={onArrastando}
+                    onApagar={() => apagar(i.c.r)}
+                    onEditar={() => setEditando(i.c.r)}
+                  />
+                ) : (
+                  <CardEscolha key={`r${i.em}`} escolha={i.r} />
+                ),
+              )}
             </View>
-            <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
-              Arraste para esquerda para apagar, direita para editar.
-            </Texto>
+            {checkins.length > 0 ? (
+              <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
+                Arraste um check-in para esquerda para apagar, direita para editar.
+              </Texto>
+            ) : null}
           </>
         ) : (
           <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
@@ -279,6 +305,41 @@ function CardCheckin({
         corIcone={cores.bg['success-subtle']}
         topo={topoAba}
       />
+    </View>
+  );
+}
+
+/**
+ * Escolha da pausa — "Você não abriu o Instagram às 14:05" (ou "parou", quando a pessoa já
+ * estava usando o app). Mesmas etiquetas do check-in; só leitura, sem arraste.
+ */
+function CardEscolha({ escolha }: { escolha: Resistencia }) {
+  const { cores } = useTema();
+  const grupos = useGrupos();
+  const hora = horaMinuto(escolha.em);
+  const app = escolha.app ? appPorId(escolha.app) : undefined;
+  const nomeApp = app?.nome ?? grupos.find((g) => g.id === escolha.grupo)?.nome ?? 'um app';
+  const acao = escolha.depoisDeUsar ? 'Parou' : 'Não abriu';
+  return (
+    <View
+      accessible
+      accessibilityLabel={`Você ${acao.toLowerCase()} ${nomeApp} às ${hora}`}
+      style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}
+    >
+      <Texto estilo="Texto/Botões e rótulos">Você</Texto>
+      <Etiqueta
+        rotulo={acao}
+        tom="sucesso"
+        iconeNode={<Icone nome="rosto-positivo" tamanho={15} cor={cores.text.primary} />}
+        style={styles.etiqueta}
+      />
+      <Etiqueta
+        rotulo={nomeApp}
+        style={styles.etiqueta}
+        iconeNode={app ? <IconeApp app={app} lado={15} /> : undefined}
+      />
+      <Texto estilo="Texto/Botões e rótulos">às</Texto>
+      <Etiqueta rotulo={hora} tom="info" icone={IconeRelogio} style={styles.etiqueta} />
     </View>
   );
 }
