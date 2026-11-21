@@ -353,7 +353,8 @@ function AppArrastavel({
         },
       ]}
     >
-      <IconeApp app={app} lado={lado} proporcaoMarca={0.48} style={styles.iconeApp} />
+      {/* Só os apps de exemplo (navegador) ganham o quadrado claro atrás da marca. */}
+      <IconeApp app={app} lado={lado} proporcaoMarca={0.48} style={app.icone ? undefined : styles.iconeApp} />
     </Animated.View>
   );
 }
@@ -428,9 +429,9 @@ const styles = StyleSheet.create({
   centro: { textAlign: 'center' },
   // área livre entre o texto e as caixas, com respiro em cima e embaixo
   areaApps: { flex: 1, marginTop: space[32], marginBottom: gap.section + space[8] },
+  // Sem fundo: o ícone real do app já tem a forma dele (combinado com a pessoa, 2026-11-21).
   app: {
     position: 'absolute',
-    backgroundColor: primitivas.neutral[100],
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
