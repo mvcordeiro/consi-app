@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { DevSettings, StyleSheet, View } from 'react-native';
 
 import { Botao, Folha, Tela, Texto } from '@/components';
+import { AjustesLembretesTela } from '@/components/AjustesLembretesTela';
 import { AjustesPausa } from '@/components/AjustesPausa';
 import { Filtro } from '@/components/Filtro';
 import { definirAparencia, useAparencia, type Aparencia } from '@/data/aparencia';
@@ -68,6 +69,7 @@ export default function Ajustes() {
       <Texto estilo="Títulos/Grande">Ajustes</Texto>
 
       <AjustesPausa />
+      <AjustesLembretesTela />
 
       <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
         <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>

@@ -36,6 +36,7 @@ class VigiaService : Service() {
   private val handler = Handler(Looper.getMainLooper())
   private lateinit var prefs: Preferencias
   private lateinit var bolha: Bolha
+  private lateinit var tempoDeTela: TempoDeTela
   private var naFrente: String? = null
   private var desdeNaFrente = 0L
   private var proximoLembrete = 0L
@@ -48,6 +49,11 @@ class VigiaService : Service() {
   private val passo = object : Runnable {
     override fun run() {
       val acesa = (getSystemService(Context.POWER_SERVICE) as PowerManager).isInteractive
+      try {
+        tempoDeTela.passo(System.currentTimeMillis(), acesa)
+      } catch (_: Throwable) {
+        // sem o lembrete de tela, o vigia segue
+      }
       try {
         if (acesa) verificar(System.currentTimeMillis()) else trocarPara(null, System.currentTimeMillis())
       } catch (_: Throwable) {
@@ -63,6 +69,7 @@ class VigiaService : Service() {
     super.onCreate()
     prefs = Preferencias(this)
     bolha = Bolha(this) { bolhaDescartadaPara = naFrente }
+    tempoDeTela = TempoDeTela(this, prefs)
     Notificacoes.criarCanais(this)
     inicios = telasIniciais()
   }
@@ -70,7 +77,7 @@ class VigiaService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     if (intent?.action == Notificacoes.ACAO_REPOR) {
       // A pessoa tirou a notificação fixa: ela volta (o Consi precisa dela no topo).
-      if (prefs.ativa) Notificacoes.atualizarFixa(this, contagemNaNotificacao)
+      if (prefs.precisaDoVigia) Notificacoes.atualizarFixa(this, contagemNaNotificacao)
       return START_STICKY
     }
     val tipo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
@@ -84,7 +91,7 @@ class VigiaService : Service() {
       stopSelf()
       return START_NOT_STICKY
     }
-    if (!prefs.ativa) {
+    if (!prefs.precisaDoVigia) {
       ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
       stopSelf()
       return START_NOT_STICKY
@@ -109,7 +116,8 @@ class VigiaService : Service() {
     if (novo != null) trocarPara(novo, agora)
 
     val app = naFrente
-    val regra = if (app == null || app == packageName || app in inicios) null else prefs.regras()[app]
+    // Só os lembretes de tela ligados (pausa nos apps desligada): nenhum app é pausado.
+    val regra = if (!prefs.ativa || app == null || app == packageName || app in inicios) null else prefs.regras()[app]
     // Guarda o ciclo a cada ~10 s: se o Android reiniciar o serviço, o timer continua de onde estava.
     if (app != null && regra?.modo == "cuidar-tempo" && proximoLembrete > 0 && agora - guardadoEm > 10_000L) {
       prefs.guardarCiclo(app, proximoLembrete, agora)

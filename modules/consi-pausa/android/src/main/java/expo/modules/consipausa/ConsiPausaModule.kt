@@ -96,7 +96,18 @@ class ConsiPausaModule : Module() {
 
     Function("ativarVigia") { ativa: Boolean ->
       prefs.ativa = ativa
-      if (ativa) VigiaService.iniciar(context) else VigiaService.parar(context)
+      reiniciarOuParar()
+    }
+
+    // ─── Lembretes de tempo de tela (uso seguido do celular) ────────────────
+    Function("lembretesTelaLigados") { prefs.lembretesTela }
+
+    Function("lembretesTelaMinutos") { prefs.lembretesTelaMin }
+
+    Function("definirLembretesTela") { ligados: Boolean, minutos: Int ->
+      prefs.lembretesTela = ligados
+      prefs.lembretesTelaMin = minutos.coerceIn(5, 120)
+      reiniciarOuParar()
     }
 
     /** Depois da pausa: libera o app por `minutos` (0 = até a pessoa sair dele). */
@@ -108,6 +119,11 @@ class ConsiPausaModule : Module() {
       }
       Notificacoes.cancelarPausa(context)
     }
+  }
+
+  /** O vigia roda enquanto a pausa nos apps ou os lembretes de tela estiverem ligados. */
+  private fun reiniciarOuParar() {
+    if (prefs.precisaDoVigia) VigiaService.iniciar(context) else VigiaService.parar(context)
   }
 
   private fun restritas(): Boolean {

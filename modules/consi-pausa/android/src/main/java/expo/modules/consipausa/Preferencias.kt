@@ -36,6 +36,26 @@ internal class Preferencias(context: Context) {
     get() = prefs.getString("liberado-sessao", null)
     set(valor) = prefs.edit().putString("liberado-sessao", valor).apply()
 
+  /** Lembretes de cuidado com o tempo de tela (uso seguido do celular, ver TempoDeTela.kt). */
+  var lembretesTela: Boolean
+    get() = prefs.getBoolean("lembretes-tela", false)
+    set(valor) = prefs.edit().putBoolean("lembretes-tela", valor).apply()
+
+  /** De quantos em quantos minutos de uso seguido vem o lembrete (20 ou 30 nos Ajustes). */
+  var lembretesTelaMin: Int
+    get() = prefs.getInt("lembretes-tela-min", 30)
+    set(valor) = prefs.edit().putInt("lembretes-tela-min", valor).apply()
+
+  /** O vigia precisa rodar: pausa nos apps ligada ou lembretes de tela ligados. */
+  val precisaDoVigia get() = ativa || lembretesTela
+
+  /** Índice da próxima sugestão do lembrete de tela (uma diferente a cada vez). */
+  fun proximaSugestao(total: Int): Int {
+    val i = prefs.getInt("sugestao-tela", 0).mod(total)
+    prefs.edit().putInt("sugestao-tela", i + 1).apply()
+    return i
+  }
+
   fun liberadoAte(pacote: String) = prefs.getLong("liberado:$pacote", 0L)
 
   fun liberarAte(pacote: String, ate: Long) = prefs.edit().putLong("liberado:$pacote", ate).apply()

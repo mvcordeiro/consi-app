@@ -42,6 +42,10 @@ type ModuloConsiPausa = {
   vigiaAtiva(): boolean;
   ativarVigia(ativa: boolean): void;
   liberar(pacote: string, minutos: number): void;
+  /** Lembretes de cuidado com o tempo de tela: uso seguido do celular (TempoDeTela.kt). */
+  lembretesTelaLigados(): boolean;
+  lembretesTelaMinutos(): number;
+  definirLembretesTela(ligados: boolean, minutos: number): void;
 };
 
 export const ConsiPausa: ModuloConsiPausa | null =

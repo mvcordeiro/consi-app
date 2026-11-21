@@ -8,6 +8,7 @@ import android.content.Intent
 class InicioReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action != Intent.ACTION_BOOT_COMPLETED && intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
-    if (Preferencias(context).ativa && Uso.temAcesso(context)) VigiaService.iniciar(context)
+    val prefs = Preferencias(context)
+    if ((prefs.ativa && Uso.temAcesso(context)) || prefs.lembretesTela) VigiaService.iniciar(context)
   }
 }

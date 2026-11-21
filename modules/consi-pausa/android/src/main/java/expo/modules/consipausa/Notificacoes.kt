@@ -20,6 +20,8 @@ internal object Notificacoes {
   const val ID_FIXA = 4201
   const val ID_LEMBRETE = 4202
   const val ID_PAUSA = 4203
+  const val ID_CUIDADO_TELA = 4204
+  const val CANAL_CUIDADO_TELA = "consi-cuidado-tela"
   /** A pessoa arrastou a fixa para o lado (Android 14+ deixa): o serviço publica de novo. */
   const val ACAO_REPOR = "expo.modules.consipausa.REPOR_NOTIFICACAO"
 
@@ -39,6 +41,11 @@ internal object Notificacoes {
     nm.createNotificationChannel(
       NotificationChannel(CANAL_LEMBRETES, "Lembretes de tempo", NotificationManager.IMPORTANCE_HIGH).apply {
         description = "Avisos do Cuidar tempo e a pausa quando ela não pode abrir sozinha."
+      },
+    )
+    nm.createNotificationChannel(
+      NotificationChannel(CANAL_CUIDADO_TELA, "Cuidado com o tempo de tela", NotificationManager.IMPORTANCE_DEFAULT).apply {
+        description = "Uma sugestão de pausa depois de muito tempo seguido no celular."
       },
     )
   }
@@ -87,7 +94,8 @@ internal object Notificacoes {
         ),
       )
     if (contagem == null) {
-      b.setContentTitle("Consi").setContentText("Cuidando das pausas antes dos seus apps.").setShowWhen(false)
+      val texto = if (Preferencias(context).ativa) "Cuidando das pausas antes dos seus apps." else "Lembrando você de fazer pausas no celular."
+      b.setContentTitle("Consi").setContentText(texto).setShowWhen(false)
     } else {
       val texto = when {
         contagem.paraCima -> "Tempo no app"
@@ -123,6 +131,34 @@ internal object Notificacoes {
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setContentIntent(abrirPausa(context, pacote, regra.grupo, 2))
+        .build(),
+    )
+
+  /**
+   * Lembrete de cuidado com o tempo de tela (uso seguido do celular). Tocar só fecha: o
+   * lembrete não puxa a pessoa para mais uma tela. Some sozinho depois de 10 minutos.
+   */
+  fun cuidadoComTela(context: Context, minutos: Int, sugestao: String) =
+    publicar(
+      context,
+      ID_CUIDADO_TELA,
+      NotificationCompat.Builder(context, CANAL_CUIDADO_TELA)
+        .setSmallIcon(R.drawable.consi_notificacao)
+        .setContentTitle("$minutos min de celular sem parar")
+        .setContentText(sugestao)
+        .setStyle(NotificationCompat.BigTextStyle().bigText(sugestao))
+        .setAutoCancel(true)
+        .setTimeoutAfter(10 * 60_000L)
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        .setContentIntent(
+          PendingIntent.getBroadcast(
+            context,
+            5,
+            Intent("expo.modules.consipausa.FECHAR_CUIDADO").setPackage(context.packageName),
+            PendingIntent.FLAG_IMMUTABLE,
+          ),
+        )
         .build(),
     )
 

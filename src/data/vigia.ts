@@ -131,6 +131,8 @@ export async function ligarVigia(ligar: boolean) {
 async function ligarSePuder() {
   if (!ConsiPausa) return;
   try {
+    // Os lembretes de tela não dependem do Acesso de uso: religa o vigia se o Android o fechou.
+    if (ConsiPausa.lembretesTelaLigados()) ConsiPausa.definirLembretesTela(true, ConsiPausa.lembretesTelaMinutos());
     if (!ConsiPausa.temAcessoUso()) return;
     if ((await lerEstado(CHAVE_DESLIGADA)) === 'sim') return;
     // Chamado em toda volta ao app: reinicia o serviço se o Android o tiver fechado.
@@ -176,5 +178,34 @@ export function seguirParaOApp(pacote: string | undefined, minutos: number) {
     return ConsiPausa.abrirApp(pacote);
   } catch {
     return false;
+  }
+}
+
+// ─── Lembretes de cuidado com o tempo de tela (só no APK Android) ───────────
+/**
+ * Uso seguido do CELULAR (não de um app): tela acesa e desbloqueada sem uma pausa de pelo menos
+ * 1 minuto. Roda no vigia nativo (TempoDeTela.kt) e não precisa do Acesso de uso.
+ * No iPhone não existe: o iOS não deixa um app saber se a tela está em uso fora dele.
+ */
+export const temLembretesDeTela = ConsiPausa != null;
+
+export const INTERVALOS_TELA = [20, 30] as const;
+
+export type LembretesTela = { ligados: boolean; minutos: number };
+
+export function lerLembretesTela(): LembretesTela {
+  if (!ConsiPausa) return { ligados: false, minutos: 30 };
+  try {
+    return { ligados: ConsiPausa.lembretesTelaLigados(), minutos: ConsiPausa.lembretesTelaMinutos() };
+  } catch {
+    return { ligados: false, minutos: 30 };
+  }
+}
+
+export function definirLembretesTela(l: LembretesTela) {
+  try {
+    ConsiPausa?.definirLembretesTela(l.ligados, l.minutos);
+  } catch {
+    // sem o módulo, nada muda
   }
 }
