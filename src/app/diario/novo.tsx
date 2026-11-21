@@ -1,6 +1,6 @@
 import { apagarEstado, gravarEstado, lerEstado } from '@/data/banco';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   BackHandler,
@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Botao, Folha, Icone, ItemFolha, Texto, useAviso } from '@/components';
+import { Botao, CampoTexto, Folha, Icone, ItemFolha, Texto, useAviso } from '@/components';
 import { Fechar } from '@/components/diario/assets';
 import { GravandoAudio, PlayerAudio, useGravador } from '@/components/diario/Audio';
 import { CampoMomento } from '@/components/diario/CampoMomento';
@@ -31,11 +31,13 @@ import {
   dataDaChave,
   diasAtras,
   hora,
+  MARCADORES_SUGERIDOS,
   MESES,
   momentoPorEm,
   PERGUNTA_DA_EMOCAO,
   plural,
   resumoAnexos,
+  useMomentos,
   type Anexo,
   type Destaque,
   type Momento,
@@ -85,6 +87,22 @@ export default function NovoMomento() {
   const [texto, setTexto] = useState(existente?.texto ?? '');
   const [destaques, setDestaques] = useState<Destaque[]>(existente?.destaques ?? []);
   const [anexos, setAnexos] = useState<Anexo[]>(existente?.anexos ?? []);
+  // Marcadores (etiquetas): onde ou com quem a pessoa estava; os já usados aparecem como sugestão.
+  const [marcadores, setMarcadores] = useState<string[]>(existente?.marcadores ?? []);
+  const [folhaMarcadores, setFolhaMarcadores] = useState(false);
+  const [novoMarcador, setNovoMarcador] = useState('');
+  const todos = useMomentos();
+  const sugestoesMarcador = useMemo(
+    () => [...new Set([...todos.flatMap((m) => m.marcadores ?? []), ...MARCADORES_SUGERIDOS])],
+    [todos],
+  );
+  const alternarMarcador = (m: string) =>
+    setMarcadores((l) => (l.includes(m) ? l.filter((x) => x !== m) : [...l, m]));
+  const criarMarcador = () => {
+    const m = novoMarcador.trim();
+    if (m && !marcadores.includes(m)) setMarcadores((l) => [...l, m]);
+    setNovoMarcador('');
+  };
   const [escrevendo, setEscrevendo] = useState(false);
   const [versaoSalva, setVersaoSalva] = useState('');
   const [folhaFoto, setFolhaFoto] = useState(false);
@@ -219,6 +237,7 @@ export default function NovoMomento() {
       texto: texto.trim() ? texto : undefined,
       destaques: destaques.length ? destaques : undefined,
       anexos: anexos.length ? anexos : undefined,
+      marcadores: marcadores.length ? marcadores : undefined,
     };
     let em = quando;
     if (existente || params.em) {
@@ -388,12 +407,73 @@ export default function NovoMomento() {
           </View>
         ) : (
           <View style={styles.rodape}>
+            {/* Marcadores: os escolhidos (toque tira) e o "+ marcador", que abre as sugestões */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.marcadores}>
+              {marcadores.map((m) => (
+                <Pressable
+                  key={m}
+                  onPress={() => alternarMarcador(m)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Tirar o marcador ${m}`}
+                  style={[styles.chip, { backgroundColor: cores.bg.selected }]}
+                >
+                  <Texto estilo="Texto/Botões e rótulos">{m}  ×</Texto>
+                </Pressable>
+              ))}
+              <Pressable
+                onPress={() => setFolhaMarcadores(true)}
+                accessibilityRole="button"
+                style={[styles.chip, { backgroundColor: cores.bg.base }]}
+              >
+                <Texto estilo="Texto/Botões e rótulos">+ marcador</Texto>
+              </Pressable>
+            </ScrollView>
             <Botao rotulo="Guardar momento" disabled={!emocao && !temConteudo} onPress={() => guardar()} />
           </View>
         )}
       </KeyboardAvoidingView>
 
       {aviso}
+
+      <Folha
+        visivel={folhaMarcadores}
+        onFechar={() => setFolhaMarcadores(false)}
+        titulo="Marcadores"
+        descricao="Marque onde ou com quem você estava."
+      >
+        <View style={styles.sugestoes}>
+          {[...new Set([...marcadores, ...sugestoesMarcador])].map((m) => {
+            const ativo = marcadores.includes(m);
+            return (
+              <Pressable
+                key={m}
+                onPress={() => alternarMarcador(m)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: ativo }}
+                style={[
+                  styles.chip,
+                  { backgroundColor: ativo ? cores.bg.selected : cores.bg.base, borderColor: ativo ? cores.border.focus : 'transparent' },
+                ]}
+              >
+                <Texto estilo="Texto/Botões e rótulos">{m}</Texto>
+              </Pressable>
+            );
+          })}
+        </View>
+        <CampoTexto
+          value={novoMarcador}
+          onChangeText={setNovoMarcador}
+          onSubmitEditing={criarMarcador}
+          placeholder="Criar marcador"
+          acessibilidade="Criar marcador"
+          returnKeyType="done"
+          maxLength={24}
+        />
+        <Botao rotulo="Pronto" onPress={() => {
+          criarMarcador();
+          setFolhaMarcadores(false);
+        }} />
+      </Folha>
 
       <Folha visivel={folhaFoto} onFechar={() => setFolhaFoto(false)} titulo="Adicionar foto">
         <View>
@@ -490,7 +570,10 @@ const styles = StyleSheet.create({
   linhaAnexo: { flexDirection: 'row' },
   fotos: { gap: 10 },
   ferramentas: { flexDirection: 'row', alignItems: 'center', gap: space[16] },
-  rodape: { paddingHorizontal: space[24], paddingTop: 44, paddingBottom: space[24] },
+  rodape: { paddingHorizontal: space[24], paddingTop: space[16], paddingBottom: space[24], gap: space[16] },
+  marcadores: { gap: space[8], paddingVertical: 2 },
+  sugestoes: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  chip: { paddingHorizontal: space[12], paddingVertical: space[8], borderRadius: radius.full, borderWidth: 1, borderColor: 'transparent' },
   barraTeclado: {
     height: 52,
     flexDirection: 'row',
