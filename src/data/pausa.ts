@@ -3,7 +3,14 @@
  * vêm da regra do grupo do app que a pessoa tentou abrir (ver gruposHome.ts).
  */
 
-import { gravarEstado, inserirResistencia, lerEstado, listarResistencias } from './banco';
+import {
+  completarResistencia,
+  gravarEstado,
+  inserirResistencia,
+  lerEstado,
+  listarResistencias,
+  type ResistenciaGravada,
+} from './banco';
 import { DIAS_GUARDADOS, inicioDoDia } from './emocoes';
 import { appPorId, ID_LIVRE, type Grupo } from './gruposHome';
 
@@ -30,18 +37,33 @@ export const perguntaTempoNoApp = (g: Grupo) => true;
 
 // ─── "Dessa vez não abro" ───────────────────────────────────────────────────
 /**
- * `depoisDeUsar`: a pessoa já estava usando o app (o tempo liberado acabou, ou é o "Cuidar
- * tempo", em que a pausa sempre vem depois de um tempo no app) e escolheu parar.
+ * Uma escolha na pausa de não abrir o app (ou de sair dele).
+ * - `depoisDeUsar`: a pessoa já estava usando o app (o tempo liberado acabou, ou é o "Cuidar
+ *   tempo", em que a pausa sempre vem depois de um tempo no app) e escolheu parar.
+ * - `checkinEm`: o check-in feito na mesma pausa (antes ou logo depois da escolha).
+ * - `hobby`: o hobby explorado no lugar do app.
  */
-export type Resistencia = { em: number; grupo: string; app?: string; depoisDeUsar?: boolean };
+export type Resistencia = ResistenciaGravada;
 
-/** Registra que a pessoa desistiu de abrir (ou de continuar usando) o app na pausa. */
-export async function registrarResistencia(r: Omit<Resistencia, 'em'>) {
+/**
+ * Registra que a pessoa desistiu de abrir (ou de continuar usando) o app na pausa.
+ * Devolve o instante do registro, para ligar depois o check-in feito em seguida.
+ */
+export async function registrarResistencia(r: Omit<Resistencia, 'em'>): Promise<number | null> {
+  const em = Date.now();
   try {
-    await inserirResistencia({ ...r, em: Date.now() });
+    await inserirResistencia({ ...r, em });
+    return em;
   } catch {
     // sem armazenamento, o registro vale só para esta sessão
+    return null;
   }
+}
+
+/** Liga a escolha ao check-in feito logo depois, na mesma pausa. */
+export async function ligarCheckin(resistenciaEm: number | null, checkinEm: number | null) {
+  if (!resistenciaEm || !checkinEm) return;
+  await completarResistencia(resistenciaEm, { checkinEm }).catch(() => {});
 }
 
 /** As escolhas de não abrir dos últimos 7 dias (para "Sua semana"). */

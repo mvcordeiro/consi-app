@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Animated,
   BackHandler,
@@ -27,7 +27,14 @@ import { BalaoVazio, emocoes, salvarEmocao, type Emocao } from '@/data/emocoes';
 import { sortearFrase } from '@/data/frases';
 import { useGrupos } from '@/data/gruposHome';
 import { useHobbies } from '@/data/hobbiesEstado';
-import { marcarLiberacao, pausaDepoisDeUsar, perguntaTempoNoApp, regraDaPausa, registrarResistencia } from '@/data/pausa';
+import {
+  ligarCheckin,
+  marcarLiberacao,
+  pausaDepoisDeUsar,
+  perguntaTempoNoApp,
+  regraDaPausa,
+  registrarResistencia,
+} from '@/data/pausa';
 import { seguirParaOApp } from '@/data/vigia';
 import { duration, easing, space, useTema } from '@/theme';
 
@@ -107,6 +114,8 @@ export default function Pausa() {
   const [emocao, setEmocao] = useState<Emocao | null>(null);
   // O check-in vira um momento do Diário: "Quero explorar essa emoção" abre esse momento para escrever.
   const [momentoEm, setMomentoEm] = useState<number | null>(null);
+  // O registro do "Dessa vez não abro" desta pausa (para ligar o check-in feito em seguida).
+  const resistenciaEm = useRef<Promise<number | null> | null>(null);
 
   // Roda de hobbies: os hobbies da pessoa, começando pelo do meio.
   const { hobbies } = useHobbies();
@@ -148,9 +157,25 @@ export default function Pausa() {
     setHobbyEscolhido(null);
     setEtapa('hobbies');
   };
-  const explorarHobby = () => router.dismissTo({ pathname: '/hobbies', params: { hobby: hobbyRoda } });
+  // Explorar um hobby no lugar do app também é não abrir: vira "não abriu … e explorou Música".
+  const explorarHobby = () => {
+    registrarResistencia({
+      grupo: grupo.id,
+      app: params.app,
+      depoisDeUsar,
+      hobby: hobbyRoda,
+      checkinEm: momentoEm ?? undefined,
+    });
+    router.dismissTo({ pathname: '/hobbies', params: { hobby: hobbyRoda } });
+  };
   const naoAbro = () => {
-    registrarResistencia({ grupo: grupo.id, app: params.app, depoisDeUsar });
+    // Um check-in já feito nesta pausa entra junto; um feito depois é ligado em `soltar`.
+    resistenciaEm.current = registrarResistencia({
+      grupo: grupo.id,
+      app: params.app,
+      depoisDeUsar,
+      checkinEm: momentoEm ?? undefined,
+    });
     setEtapa('naoAbri');
   };
   const sumir = useCallback(() => router.dismissTo('/'), []);
@@ -225,7 +250,13 @@ export default function Pausa() {
   const soltar = (e: Emocao) => {
     setSoltou(true);
     setArrastando(false);
-    salvarEmocao(e.id, 'pausa').then((hoje) => setMomentoEm(hoje[0]?.em ?? null));
+    const registro = resistenciaEm.current;
+    salvarEmocao(e.id, 'pausa').then((hoje) => {
+      const em = hoje[0]?.em ?? null;
+      setMomentoEm(em);
+      // Check-in depois do "não abro": vira "não abriu … e se sentiu X".
+      if (registro) registro.then((r) => ligarCheckin(r, em));
+    });
     setTimeout(() => {
       setEmocao(e);
       setEtapa('emocao');

@@ -17,6 +17,7 @@ import {
   type RegistroEmocao,
 } from '@/data/emocoes';
 import { appPorId, useGrupos } from '@/data/gruposHome';
+import { hobbyInfo, type HobbyId } from '@/data/catalogo';
 import { resistenciasDaSemana, type Resistencia } from '@/data/pausa';
 import { borderWidth, radius, space, useTema } from '@/theme';
 
@@ -24,6 +25,7 @@ import { Aparecer } from '../animacao';
 import { DiaCalendario } from '../DiaCalendario';
 import { Etiqueta } from '../Etiqueta';
 import { Folha } from '../Folha';
+import { IconeHobby } from '../hobbies/IconeHobby';
 import { Icone } from '../Icone';
 import { IconeApp } from '../IconeApp';
 import { ABA_A, AbaArraste, BordasArraste, sairPeloLado, useArrasteLateral, useLarguraTela, voltarAoLugar } from '../hobbies/Arraste';
@@ -47,7 +49,11 @@ function ultimosDias(): Dia[] {
 /**
  * V2 - Momentos / Feed — seletor dos últimos 7 dias e os momentos de cada dia, do mais recente
  * para o mais antigo: os check-ins de emoção ("Você fez check-in às 14:05 sentindo Alegria") e as
- * escolhas da pausa ("Você não abriu o Instagram às 14:05" / "Você parou o Instagram às 14:05").
+ * escolhas da pausa, que juntam o que veio logo depois:
+ *   "Você não abriu Instagram às 12:58 e sentiu Fascinação"
+ *   "Você não abriu Instagram às 12:32 e explorou Música"
+ *   "Você saiu de Instagram às 13:32 e sentiu Cansaço" (quando já estava usando o app)
+ * O check-in ligado a uma escolha não aparece de novo como card próprio.
  */
 export function SuaSemana({
   margem,
@@ -104,13 +110,15 @@ export function SuaSemana({
   );
 
   const dia = dias.find((d) => d.id === diaId) ?? dias[dias.length - 1];
+  // Check-ins que já fazem parte de uma escolha da pausa ("… e sentiu X").
+  const ligados = useMemo(() => new Set(resistencias.map((r) => r.checkinEm).filter(Boolean)), [resistencias]);
   const checkins = useMemo(
     () =>
       registros
-        .filter((r) => mesmoDia(new Date(r.em), dia.data))
+        .filter((r) => mesmoDia(new Date(r.em), dia.data) && !ligados.has(r.em))
         .map((r) => ({ r, e: emocaoPorId(r.id) }))
         .filter((x): x is { r: RegistroEmocao; e: Emocao } => !!x.e),
-    [registros, dia],
+    [registros, dia, ligados],
   );
   const escolhas = useMemo(
     () => resistencias.filter((r) => mesmoDia(new Date(r.em), dia.data)),
@@ -162,7 +170,11 @@ export function SuaSemana({
                     onEditar={() => setEditando(i.c.r)}
                   />
                 ) : (
-                  <CardEscolha key={`r${i.em}`} escolha={i.r} />
+                  <CardEscolha
+                    key={`r${i.em}`}
+                    escolha={i.r}
+                    checkin={i.r.checkinEm ? registros.find((x) => x.em === i.r.checkinEm) : undefined}
+                  />
                 ),
               )}
             </View>
@@ -310,20 +322,25 @@ function CardCheckin({
 }
 
 /**
- * Escolha da pausa — "Você não abriu o Instagram às 14:05" (ou "parou", quando a pessoa já
- * estava usando o app). Mesmas etiquetas do check-in; só leitura, sem arraste.
+ * Escolha da pausa — "Você [Não abriu] [Instagram] às [12:58]" (ou "[Saiu] de [Instagram]", quando a
+ * pessoa já estava usando o app), seguida do que veio logo depois, se houve: "e sentiu
+ * [Fascinação]" (check-in na mesma pausa) ou "e explorou [Música]" (hobby no lugar do app).
+ * Mesmas etiquetas do check-in; só leitura, sem arraste.
  */
-function CardEscolha({ escolha }: { escolha: Resistencia }) {
+function CardEscolha({ escolha, checkin }: { escolha: Resistencia; checkin?: RegistroEmocao }) {
   const { cores } = useTema();
   const grupos = useGrupos();
   const hora = horaMinuto(escolha.em);
   const app = escolha.app ? appPorId(escolha.app) : undefined;
   const nomeApp = app?.nome ?? grupos.find((g) => g.id === escolha.grupo)?.nome ?? 'um app';
-  const acao = escolha.depoisDeUsar ? 'Parou' : 'Não abriu';
+  const acao = escolha.depoisDeUsar ? 'Saiu' : 'Não abriu';
+  const emocao = checkin ? emocaoPorId(checkin.id) : undefined;
+  const hobby = escolha.hobby ? hobbyInfo(escolha.hobby as HobbyId) : undefined;
+  const depois = emocao ? ` e sentiu ${emocao.nome}` : hobby ? ` e explorou ${hobby.nome}` : '';
   return (
     <View
       accessible
-      accessibilityLabel={`Você ${acao.toLowerCase()} ${nomeApp} às ${hora}`}
+      accessibilityLabel={`Você ${acao.toLowerCase()} ${escolha.depoisDeUsar ? 'de ' : ''}${nomeApp} às ${hora}${depois}`}
       style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}
     >
       <Texto estilo="Texto/Botões e rótulos">Você</Texto>
@@ -333,6 +350,7 @@ function CardEscolha({ escolha }: { escolha: Resistencia }) {
         iconeNode={<Icone nome="rosto-positivo" tamanho={15} cor={cores.text.primary} />}
         style={styles.etiqueta}
       />
+      {escolha.depoisDeUsar ? <Texto estilo="Texto/Botões e rótulos">de</Texto> : null}
       <Etiqueta
         rotulo={nomeApp}
         style={styles.etiqueta}
@@ -340,6 +358,27 @@ function CardEscolha({ escolha }: { escolha: Resistencia }) {
       />
       <Texto estilo="Texto/Botões e rótulos">às</Texto>
       <Etiqueta rotulo={hora} tom="info" icone={IconeRelogio} style={styles.etiqueta} />
+      {emocao ? (
+        <>
+          <Texto estilo="Texto/Botões e rótulos">e sentiu</Texto>
+          <Etiqueta
+            rotulo={emocao.nome}
+            style={styles.etiqueta}
+            iconeNode={
+              <BalaoEmocao Svg={emocao.Svg} Textura={emocao.Textura} circulo={emocao.circulo} tamanho={15} flutuar={false} />
+            }
+          />
+        </>
+      ) : hobby && escolha.hobby ? (
+        <>
+          <Texto estilo="Texto/Botões e rótulos">e explorou</Texto>
+          <Etiqueta
+            rotulo={hobby.nome}
+            style={styles.etiqueta}
+            iconeNode={<IconeHobby hobby={escolha.hobby as HobbyId} caixa={15} cor={cores.text.primary} />}
+          />
+        </>
+      ) : null}
     </View>
   );
 }
