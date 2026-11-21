@@ -49,8 +49,9 @@ export function Revelacao({
 
   const icone = {
     transform: [
-      { scale: t.interpolate({ inputRange: [0, 0.25, 0.45, 0.85, 1], outputRange: [0.6, 1.25, 1, 1, 0.92] }) },
-      { rotate: t.interpolate({ inputRange: [0, 0.25, 0.45], outputRange: ['-12deg', '8deg', '0deg'], extrapolate: 'clamp' }) },
+      // Começa no tamanho do convite das coberturas (Convite): sem pulo na troca.
+      { scale: t.interpolate({ inputRange: [0, 0.25, 0.45, 0.85, 1], outputRange: [1, 1.25, 1, 1, 0.92] }) },
+      { rotate: t.interpolate({ inputRange: [0, 0.12, 0.25, 0.45], outputRange: ['0deg', '-10deg', '8deg', '0deg'], extrapolate: 'clamp' }) },
     ],
   };
   const onda = (atraso: number) => ({

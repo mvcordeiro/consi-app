@@ -5,7 +5,7 @@ import Svg, { Circle, Defs, G, Mask, Path, Rect } from 'react-native-svg';
 import { duration, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
-import { Casca, PAUSA_PREVIA, Previa, vibrar, type PropsMecanica } from './comum';
+import { Casca, Convite, vibrar, type PropsMecanica } from './comum';
 
 const nativo = Platform.OS !== 'web';
 
@@ -75,7 +75,7 @@ export function LimparVidro({ onRevelar, onArrastando, hobbyPrevia }: PropsMecan
       onArrastando(false);
       vibrar('sucesso');
       Animated.timing(neblina, { toValue: 0, duration: 420, useNativeDriver: nativo }).start(() =>
-        setTimeout(onRevelar, PAUSA_PREVIA),
+        onRevelar(),
       );
     };
 
@@ -136,7 +136,7 @@ export function LimparVidro({ onRevelar, onArrastando, hobbyPrevia }: PropsMecan
 
   return (
     <Casca style={styles.casca}>
-      <Previa hobby={hobbyPrevia} />
+      <Convite hobby={hobbyPrevia} />
       <Animated.View
         onLayout={medir}
         {...pan.panHandlers}
@@ -191,7 +191,7 @@ export function LimparVidro({ onRevelar, onArrastando, hobbyPrevia }: PropsMecan
 }
 
 const styles = StyleSheet.create({
-  casca: { minHeight: 220, justifyContent: 'center' },
+  casca: { minHeight: 236, justifyContent: 'center' },
   centro: { textAlign: 'center', alignSelf: 'stretch' },
   dica: { ...StyleSheet.absoluteFill, justifyContent: 'center', gap: 16, paddingHorizontal: 24 },
 });

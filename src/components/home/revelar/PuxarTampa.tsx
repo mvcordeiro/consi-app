@@ -3,7 +3,7 @@ import { Animated, Easing, PanResponder, Platform, StyleSheet, View, type Layout
 
 import { borderWidth, easing, radius, space, useTema } from '@/theme';
 
-import { Cabeca, Casca, PAUSA_PREVIA, Previa, vibrar, type PropsMecanica } from './comum';
+import { Cabeca, Casca, Convite, vibrar, type PropsMecanica } from './comum';
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
@@ -67,7 +67,7 @@ export function PuxarTampa({ onRevelar, onArrastando, hobbyPrevia, movimentoRedu
           onArrastando(false);
           vibrar('sucesso');
           Animated.timing(y, { toValue: -altura - 24, duration: 260, easing: curva, useNativeDriver: nativo }).start(() =>
-            setTimeout(onRevelar, PAUSA_PREVIA),
+            onRevelar(),
           );
         } else voltar();
       },
@@ -81,7 +81,7 @@ export function PuxarTampa({ onRevelar, onArrastando, hobbyPrevia, movimentoRedu
   return (
     <Casca style={styles.casca}>
       <Animated.View style={{ opacity: altura ? y.interpolate({ inputRange: [-altura * 0.6, 0], outputRange: [1, 0.25], extrapolate: 'clamp' }) : 0.25 }}>
-        <Previa hobby={hobbyPrevia} />
+        <Convite hobby={hobbyPrevia} />
       </Animated.View>
       <Animated.View
         onLayout={medir}

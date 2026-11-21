@@ -13,7 +13,7 @@ import { easing, radius, space, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
 import { IconeHobbies } from '../assets';
-import { Casca, PAUSA_PREVIA, Previa, vibrar, type PropsMecanica } from './comum';
+import { Casca, Convite, vibrar, type PropsMecanica } from './comum';
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
@@ -74,7 +74,7 @@ export function VirarCarta({ onRevelar, onArrastando, hobbyPrevia }: PropsMecani
           onArrastando(false);
           vibrar('sucesso');
           Animated.timing(giro, { toValue: g.dx < 0 ? -1 : 1, duration: 240, easing: curva, useNativeDriver: nativo }).start(() =>
-            setTimeout(onRevelar, PAUSA_PREVIA),
+            onRevelar(),
           );
         } else voltar();
       },
@@ -103,7 +103,7 @@ export function VirarCarta({ onRevelar, onArrastando, hobbyPrevia }: PropsMecani
         pointerEvents="none"
       >
         <Casca style={styles.altura}>
-          <Previa hobby={hobbyPrevia} />
+          <Convite hobby={hobbyPrevia} />
         </Casca>
       </Animated.View>
       {/* Frente: as costas da carta, com uma moldura e o ícone do drop. */}

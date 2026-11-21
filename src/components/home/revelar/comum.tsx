@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { HobbyId } from '@/data/catalogo';
-import { hobbyInfo } from '@/data/catalogo';
 import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { IconeHobby } from '../../hobbies/IconeHobby';
@@ -19,7 +18,7 @@ export type PropsMecanica = {
   onRevelar: () => void;
   /** Trava a rolagem da Home enquanto um gesto está em andamento. */
   onArrastando: (a: boolean) => void;
-  /** Hobby do próximo drop: algumas mecânicas mostram só o hobby por baixo, como prévia. */
+  /** Hobby do próximo drop: o ícone do convite "Seu drop chegou!" por baixo das coberturas. */
   hobbyPrevia: HobbyId | null;
   /** Leitor de tela ou "reduzir movimento": as animações decorativas ficam paradas. */
   movimentoReduzido: boolean;
@@ -85,28 +84,23 @@ export function Cabeca({ instrucao }: { instrucao: string }) {
 }
 
 /**
- * O que fica "por baixo" nas mecânicas com cobertura (vidro, tampa, carta, bolhas):
- * só o hobby do drop, para dar curiosidade sem entregar a atividade.
+ * O que fica "por baixo" nas mecânicas com cobertura (vidro, tampa, carta, bolhas): já o
+ * convite "Seu drop chegou!", igual ao começo da Revelacao. Assim o gesto abre direto no
+ * convite, e o convite leva direto ao drop, sem etapa no meio.
  */
-export function Previa({ hobby }: { hobby: HobbyId | null }) {
+export function Convite({ hobby }: { hobby: HobbyId | null }) {
   const { cores } = useTema();
   return (
-    <View style={styles.previa}>
-      <View style={[styles.iconeDrop, { backgroundColor: cores.action.primary.default }]}>
+    <View style={styles.convite}>
+      <View style={[styles.iconeConvite, { backgroundColor: cores.action.primary.default }]}>
         {hobby ? (
-          <IconeHobby hobby={hobby} caixa={24} cor={cores.text.primary} />
+          <IconeHobby hobby={hobby} caixa={28} cor={cores.text.primary} />
         ) : (
-          <IconeHobbies width={24.01} height={23.66} corTraco={cores.text.primary} />
+          <IconeHobbies width={28} height={28} corTraco={cores.text.primary} />
         )}
       </View>
-      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
-        SEU DROP DE HOJE
-      </Texto>
       <Texto estilo="Títulos/Médio" style={styles.centro}>
-        {hobby ? `Um convite de ${hobbyInfo(hobby).nome}` : 'Um convite para você'}
-      </Texto>
-      <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.centro}>
-        Uma atividade feita para o seu momento.
+        Seu drop chegou!
       </Texto>
     </View>
   );
@@ -135,9 +129,6 @@ export function RevelarSemGesto({ onRevelar }: { onRevelar: () => void }) {
 
 export const ICONE_DROP = 52;
 
-/** Quanto tempo a prévia (o hobby do drop, por baixo da cobertura) fica na tela antes da revelação. */
-export const PAUSA_PREVIA = 1400;
-
 const styles = StyleSheet.create({
   centro: { textAlign: 'center', alignSelf: 'stretch' },
   card: {
@@ -157,6 +148,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  previa: { alignItems: 'center', gap: space[8], alignSelf: 'stretch' },
+  convite: { alignItems: 'center', gap: space[16], alignSelf: 'stretch' },
+  iconeConvite: {
+    width: ICONE_DROP + 12,
+    height: ICONE_DROP + 12,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   semGesto: { alignSelf: 'center', paddingVertical: space[8], paddingHorizontal: space[16] },
 });
