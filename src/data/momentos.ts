@@ -17,8 +17,11 @@ export type Anexo =
 /** Trecho destacado do texto (índices de caractere, fim exclusivo). */
 export type Destaque = { inicio: number; fim: number };
 
-/** 'hobby': nota ou emoção registradas ao finalizar uma atividade dos Hobbies. */
-export type OrigemMomento = 'home' | 'pausa' | 'diario' | 'hobby';
+/**
+ * 'hobby': nota ou emoção registradas ao finalizar uma atividade dos Hobbies.
+ * 'widget': check-in feito pelo widget grande da tela inicial (consi://registrar).
+ */
+export type OrigemMomento = 'home' | 'pausa' | 'diario' | 'hobby' | 'widget';
 
 export type Momento = {
   /** Id da emoção (ver data/emocoes.ts). */

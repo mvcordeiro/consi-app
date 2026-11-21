@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modo Dark do Consi (src/theme/tokens.ts). -->
+<resources>
+  <color name="consi_widget_fundo">#111D4F</color>
+  <color name="consi_widget_selecionado">#2339A0</color>
+  <color name="consi_widget_borda">#6A82EA</color>
+  <color name="consi_widget_texto">#FFFFFF</color>
+  <color name="consi_widget_texto_2">#D1D1CE</color>
+  <color name="consi_widget_botao">#4362E5</color>
+  <color name="consi_widget_botao_texto">#FFFFFF</color>
+  <color name="consi_balao">#4362E5</color>
+  <color name="consi_traco">#FFFFFF</color>
+</resources>

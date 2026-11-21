@@ -9,6 +9,7 @@ import { useAparencia } from '@/data/aparencia';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
 import { carregarHobbiesPersonalizados } from '@/data/hobbiesPersonalizados';
 import { useVigia } from '@/data/vigia';
+import { useWidgets } from '@/data/widgets';
 import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
 
 // Mantém a splash na tela até as fontes carregarem.
@@ -51,6 +52,8 @@ function Pilha() {
   const { cores, modo } = useTema();
   // APK Android: regras dos grupos para o vigia nativo, que abre a pausa antes dos apps.
   useVigia();
+  // APK Android: as emoções de hoje para os widgets da tela inicial.
+  useWidgets();
   return (
     <>
       <StatusBar style={modo === 'dark' ? 'light' : 'dark'} />
@@ -61,6 +64,8 @@ function Pilha() {
         <Stack.Screen name="em-construcao" />
         <Stack.Screen name="grupos-home" options={{ presentation: 'modal' }} />
         <Stack.Screen name="emocao" options={{ animation: 'fade', gestureEnabled: false }} />
+        {/* Entrada dos widgets (consi://registrar): grava a emoção e segue para a Home */}
+        <Stack.Screen name="registrar" options={{ animation: 'none' }} />
         {/* Telas secundárias da aba Hobbies */}
         <Stack.Screen name="hobby" />
         {/* Grupos de apps da Home: criar e abrir/editar */}

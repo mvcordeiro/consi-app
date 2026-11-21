@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget medio do Consi (Widgets.kt). Atualiza quando o app grava uma emoção e à meia-noite (alarme), não por período. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+  android:minWidth="250dp"
+  android:minHeight="180dp"
+  android:targetCellWidth="4"
+  android:targetCellHeight="2"
+  android:resizeMode="horizontal|vertical"
+  android:updatePeriodMillis="0"
+  android:widgetCategory="home_screen"
+  android:initialLayout="@layout/consi_widget_medio"
+  android:previewLayout="@layout/consi_widget_medio"
+  android:description="@string/consi_widget_medio_descricao" />

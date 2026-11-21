@@ -1,0 +1,38 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- Widgets da tela inicial (Widgets.kt). Só o sistema manda os eventos: exported=true é o que o launcher exige. -->
+    <receiver
+      android:name=".WidgetPequeno"
+      android:exported="true"
+      android:label="@string/consi_widget_pequeno_nome">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/consi_widget_pequeno" />
+    </receiver>
+    <receiver
+      android:name=".WidgetMedio"
+      android:exported="true"
+      android:label="@string/consi_widget_medio_nome">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/consi_widget_medio" />
+    </receiver>
+    <receiver
+      android:name=".WidgetGrande"
+      android:exported="true"
+      android:label="@string/consi_widget_grande_nome">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/consi_widget_grande" />
+    </receiver>
+  </application>
+</manifest>
