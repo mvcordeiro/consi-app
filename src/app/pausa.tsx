@@ -24,6 +24,7 @@ import { RodaHobbies } from '@/components/pausa/RodaHobbies';
 import { TempoNoApp } from '@/components/pausa/TempoNoApp';
 import { hobbyInfo, type HobbyId } from '@/data/catalogo';
 import { BalaoVazio, emocoes, salvarEmocao, type Emocao } from '@/data/emocoes';
+import { sortearFrase } from '@/data/frases';
 import { useGrupos } from '@/data/gruposHome';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { perguntaTempoNoApp, regraDaPausa, registrarResistencia } from '@/data/pausa';
@@ -74,6 +75,8 @@ export default function Pausa() {
   const grupos = useGrupos();
   const { grupo } = regraDaPausa(grupos, params);
   const timer = useTimer(grupo.pausaSegundos * 1000);
+  // "Frases filosóficas": uma frase sorteada por pausa, no lugar da mensagem do grupo.
+  const [frase] = useState(sortearFrase);
 
   const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();
@@ -118,7 +121,8 @@ export default function Pausa() {
     else router.back();
   };
   const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : irParaOApp(0));
-  const irPara = (rota: '/hobbies' | '/diario' | '/') => router.dismissTo(rota);
+  // "Diário" abre direto um novo momento (escolher a emoção e escrever), no lugar da pausa.
+  const escreverNoDiario = () => router.replace('/diario/novo');
   // Abre o momento do check-in no Diário para escrever (no lugar da pausa).
   const explorarEmocao = () =>
     router.replace({
@@ -270,8 +274,13 @@ export default function Pausa() {
             >
               <Animated.View style={{ opacity: titulo }}>
                 <Texto estilo="Títulos/Grande" style={styles.textoCentro}>
-                  {grupo.mensagem}
+                  {grupo.mensagemFilosofica ? frase.texto : grupo.mensagem}
                 </Texto>
+                {grupo.mensagemFilosofica ? (
+                  <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={[styles.textoCentro, styles.autor]}>
+                    {frase.autor}
+                  </Texto>
+                ) : null}
               </Animated.View>
               <Animated.View
                 style={{
@@ -351,7 +360,7 @@ export default function Pausa() {
                     rotulo="Diário"
                     corRotulo={cores.icon.primary}
                     icone={(cor) => <Icone nome="livro-marcador" cor={cor} />}
-                    onPress={() => irPara('/diario')}
+                    onPress={escreverNoDiario}
                   />
                 </View>
               </View>
@@ -528,6 +537,7 @@ const styles = StyleSheet.create({
   // Figma: título e "?" com 64 px entre eles, no meio da área acima dos botões
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[64], paddingHorizontal: space[24] },
   textoCentro: { textAlign: 'center' },
+  autor: { marginTop: space[12] },
   // Figma: 12 + 16 px nas laterais, 40 px embaixo; 12 px entre os dois primeiros botões e 32 até a dupla
   rodape: { paddingHorizontal: space[12] + space[16], gap: space[32] },
   pilha: { gap: space[12] },

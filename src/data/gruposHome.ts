@@ -108,7 +108,58 @@ export type Grupo = {
   timerFlutuante?: boolean;
   /** Estilo do timer flutuante (padrão: pílula, a do Figma). */
   estiloTimer?: EstiloTimer;
+  /** No lugar da `mensagem`, uma frase filosófica sorteada a cada pausa (ver frases.ts). */
+  mensagemFilosofica?: boolean;
 };
+
+/** Pausa personalizada: no mínimo 3 s (o menor dos prontos), no máximo 5 min. */
+export const PAUSA_MINIMA = 3;
+export const PAUSA_MAXIMA = 300;
+
+/** Ícones para escolher no grupo, por assunto (abas da folha "Ícone do grupo"). */
+export const CATEGORIAS_ICONES: { nome: string; icones: NomeIcone[] }[] = [
+  {
+    nome: 'Lazer',
+    icones: [
+      'hobby-jogos', 'hobby-atividade', 'xadrez', 'rpg', 'pacman', 'dado-peao', 'quebra-cabeca', 'naipes', 'cubo',
+      'balao-festa', 'cartola', 'palhaco', 'teatro', 'piscina', 'pedestre', 'bagagem', 'aviao-papel', 'mapa',
+      'binoculos', 'gesto-comemoracao',
+    ],
+  },
+  {
+    nome: 'Música e vídeo',
+    icones: [
+      'filtrar-musicas', 'toca-discos', 'contrabaixo', 'microfone', 'karaoke', 'discoteca', 'dj', 'podcast',
+      'audiolivro', 'rolo-filme', 'claquete', 'tv-retro', 'camera', 'camera-instantanea',
+    ],
+  },
+  {
+    nome: 'Leitura e escrita',
+    icones: [
+      'hobby-leitura', 'livro-marcador', 'caderno', 'hobby-escrita', 'pena-escrita', 'maquina-escrever',
+      'texto-quadrado', 'tamanho-fonte', 'aspas', 'traducao', 'lingua-sinais',
+    ],
+  },
+  {
+    nome: 'Trabalho e estudo',
+    icones: [
+      'calendario', 'lista-tarefas', 'lista-numerada', 'lista-marcadores', 'programacao', 'teclado', 'arduino',
+      'mesa-digitalizadora', 'rede-mundial', 'conversa', 'cronometro', 'relogio', 'lampada', 'martelo',
+      'engrenagem', 'cadeado',
+    ],
+  },
+  {
+    nome: 'Arte',
+    icones: ['pincel', 'pena-desenho', 'caneta-vetor', 'spray', 'tesoura', 'blocos', 'inserir-imagem'],
+  },
+  {
+    nome: 'Bem-estar',
+    icones: [
+      'rosto-positivo', 'rosto-abencoado', 'rosto-gargalhando', 'rosto-olhos-brilhantes', 'rosto-mal-humorado',
+      'rosto-chorando-arco-iris', 'beijo-coracao', 'mao-doacao', 'muda-planta', 'gato', 'olho', 'bateria', 'repetir',
+    ],
+  },
+];
 
 export const ID_LIVRE = 'livre';
 

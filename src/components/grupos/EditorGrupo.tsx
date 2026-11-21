@@ -8,18 +8,20 @@ import {
   appsAcompanhados,
   apagarGrupo,
   grupoDoApp,
-  ICONES_GRUPO,
   ID_LIVRE,
   INTERVALOS,
   MENSAGENS_PRONTAS,
   MODOS,
   ORDEM_MODOS,
+  PAUSA_MAXIMA,
+  PAUSA_MINIMA,
   PAUSAS,
   salvarGrupo,
   TEMPOS_NO_APP,
   type AoIgnorar,
   type Grupo,
 } from '@/data/gruposHome';
+import { sortearFrase } from '@/data/frases';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
@@ -29,10 +31,12 @@ import { CampoTexto } from '../CampoTexto';
 import { fundoDoTom } from '../Etiqueta';
 import { Filtro } from '../Filtro';
 import { Folha } from '../Folha';
-import { OpcoesTimer } from './OpcoesTimer';
 import { IconeApp } from '../home/Grupos';
 import { Icone } from '../Icone';
 import { Texto } from '../Texto';
+
+import { FolhaIcone } from './FolhaIcone';
+import { OpcoesTimer } from './OpcoesTimer';
 
 type Props = { inicial: Grupo; novo: boolean };
 
@@ -46,7 +50,7 @@ type Props = { inicial: Grupo; novo: boolean };
 export function EditorGrupo({ inicial, novo }: Props) {
   const { cores } = useTema();
   const [g, setG] = useState<Grupo>(inicial);
-  const [folha, setFolha] = useState<'icone' | 'mensagem' | 'apps' | 'desfazer' | null>(null);
+  const [folha, setFolha] = useState<'icone' | 'mensagem' | 'apps' | 'desfazer' | 'pausa' | null>(null);
   const livre = g.id === ID_LIVRE;
   const mudar = (parte: Partial<Grupo>) => setG((x) => ({ ...x, ...parte }));
   const nomeValido = g.nome.trim().length > 0;
@@ -169,13 +173,18 @@ export function EditorGrupo({ inicial, novo }: Props) {
                   atual={g.pausaSegundos}
                   rotulo={(v) => `${v} s`}
                   onEscolher={(pausaSegundos) => mudar({ pausaSegundos })}
+                  extra={{
+                    rotulo: PAUSAS.includes(g.pausaSegundos) ? 'Personalizar' : `${g.pausaSegundos} s · editar`,
+                    ativo: !PAUSAS.includes(g.pausaSegundos),
+                    onPress: () => setFolha('pausa'),
+                  }}
                 />
               </Secao>
               <Secao titulo="Mensagem da pausa">
                 <Pressable
                   onPress={() => setFolha('mensagem')}
                   accessibilityRole="button"
-                  accessibilityLabel={`Mensagem da pausa: ${g.mensagem}. Trocar`}
+                  accessibilityLabel={`Mensagem da pausa: ${g.mensagemFilosofica ? 'frases filosóficas' : g.mensagem}. Trocar`}
                   style={({ pressed }) => [
                     styles.linhaAcao,
                     { backgroundColor: cores.bg.raised, opacity: pressed ? 0.85 : 1 },
@@ -183,7 +192,7 @@ export function EditorGrupo({ inicial, novo }: Props) {
                 >
                   <Icone nome="aspas" tamanho={20} />
                   <Texto estilo="Texto/Médio" style={styles.flex}>
-                    {g.mensagem}
+                    {g.mensagemFilosofica ? 'Frases filosóficas, uma a cada pausa' : g.mensagem}
                   </Texto>
                   <Icone nome="lapis" tamanho={18} cor={cores.text.tertiary} />
                 </Pressable>
@@ -292,9 +301,19 @@ export function EditorGrupo({ inicial, novo }: Props) {
       <FolhaMensagem
         visivel={folha === 'mensagem'}
         atual={g.mensagem}
+        filosofica={!!g.mensagemFilosofica}
         onFechar={() => setFolha(null)}
         onEscolher={(mensagem) => {
-          mudar({ mensagem });
+          mudar(mensagem === null ? { mensagemFilosofica: true } : { mensagem, mensagemFilosofica: false });
+          setFolha(null);
+        }}
+      />
+      <FolhaPausa
+        visivel={folha === 'pausa'}
+        atual={g.pausaSegundos}
+        onFechar={() => setFolha(null)}
+        onEscolher={(pausaSegundos) => {
+          mudar({ pausaSegundos });
           setFolha(null);
         }}
       />
@@ -356,12 +375,15 @@ function Opcao({
   descricao,
   icone,
   onPress,
+  fundo,
 }: {
   ativo: boolean;
   titulo: string;
   descricao: string;
   icone?: ReactNode;
   onPress: () => void;
+  /** Fundo do card. Nas folhas (bg/raised), use bg/base para ter contraste. */
+  fundo?: string;
 }) {
   const { cores } = useTema();
   return (
@@ -372,7 +394,7 @@ function Opcao({
       style={({ pressed }) => [
         styles.opcao,
         {
-          backgroundColor: cores.bg.raised,
+          backgroundColor: fundo ?? cores.bg.raised,
           borderColor: ativo ? cores.border.focus : 'transparent',
           borderWidth: ativo ? borderWidth.thick : borderWidth.thin,
           opacity: pressed ? 0.85 : 1,
@@ -411,17 +433,21 @@ function Chips({
   atual,
   rotulo,
   onEscolher,
+  extra,
 }: {
   valores: number[];
   atual: number;
   rotulo: (v: number) => string;
   onEscolher: (v: number) => void;
+  /** Um chip a mais no fim (ex.: "Personalizar"). */
+  extra?: { rotulo: string; ativo: boolean; onPress: () => void };
 }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sangria} contentContainerStyle={styles.chips}>
       {valores.map((v) => (
         <Filtro key={v} rotulo={rotulo(v)} ativo={v === atual} onPress={() => onEscolher(v)} />
       ))}
+      {extra ? <Filtro rotulo={extra.rotulo} ativo={extra.ativo} onPress={extra.onPress} /> : null}
     </ScrollView>
   );
 }
@@ -429,6 +455,8 @@ function Chips({
 /** Prévia (só visual) da tela de pausa: mensagem, contagem e a escolha do tempo no app. */
 function PreviaPausa({ grupo }: { grupo: Grupo }) {
   const { cores } = useTema();
+  // Com as frases filosóficas, a prévia mostra uma delas (outra a cada vez que abre o grupo).
+  const [exemplo] = useState(sortearFrase);
   return (
     <View style={[styles.previa, { backgroundColor: cores.bg.sunken, borderColor: cores.border.subtle }]}>
       <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
@@ -438,8 +466,13 @@ function PreviaPausa({ grupo }: { grupo: Grupo }) {
         <Texto estilo="Títulos/Médio">{grupo.pausaSegundos}s</Texto>
       </View>
       <Texto estilo="Títulos/Médio" style={styles.centro}>
-        {grupo.mensagem}
+        {grupo.mensagemFilosofica ? exemplo.texto : grupo.mensagem}
       </Texto>
+      {grupo.mensagemFilosofica ? (
+        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={styles.centro}>
+          {exemplo.autor}
+        </Texto>
+      ) : null}
       <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.centro}>
         Quanto tempo você precisa nesse app?
       </Texto>
@@ -454,37 +487,64 @@ function PreviaPausa({ grupo }: { grupo: Grupo }) {
   );
 }
 
-function FolhaIcone({
+/** Tempo de pausa personalizado: de 1 em 1 ou de 5 em 5 segundos, entre 3 s e 5 min. */
+function FolhaPausa({
   visivel,
   atual,
   onFechar,
   onEscolher,
 }: {
   visivel: boolean;
-  atual: Grupo['icone'];
+  atual: number;
   onFechar: () => void;
-  onEscolher: (i: Grupo['icone']) => void;
+  onEscolher: (s: number) => void;
 }) {
   const { cores } = useTema();
+  const [valor, setValor] = useState(atual);
+  const [aberta, setAberta] = useState(visivel);
+  if (visivel !== aberta) {
+    setAberta(visivel);
+    if (visivel) setValor(atual);
+  }
+  const somar = (d: number) => setValor((v) => Math.min(PAUSA_MAXIMA, Math.max(PAUSA_MINIMA, v + d)));
+  const rotulo = valor >= 60 ? `${Math.floor(valor / 60)} min${valor % 60 ? ` ${valor % 60} s` : ''}` : `${valor} s`;
   return (
-    <Folha visivel={visivel} onFechar={onFechar} titulo="Ícone do grupo">
-      <View style={styles.gradeIcones}>
-        {ICONES_GRUPO.map((i) => (
+    <Folha
+      visivel={visivel}
+      onFechar={onFechar}
+      titulo="Tempo de pausa"
+      descricao={`Quanto tempo você espera antes de abrir o app. No mínimo ${PAUSA_MINIMA} segundos.`}
+    >
+      <View style={styles.seletor}>
+        {[-5, -1].map((d) => (
           <Pressable
-            key={i}
-            onPress={() => onEscolher(i)}
+            key={d}
+            onPress={() => somar(d)}
+            disabled={valor <= PAUSA_MINIMA}
             accessibilityRole="button"
-            accessibilityState={{ selected: i === atual }}
-            accessibilityLabel={i}
-            style={[
-              styles.opcaoIcone,
-              { backgroundColor: i === atual ? cores.action.primary.default : cores.bg.sunken },
-            ]}
+            accessibilityLabel={`Menos ${-d} segundos`}
+            style={[styles.passoPausa, { backgroundColor: cores.bg.base, opacity: valor <= PAUSA_MINIMA ? 0.4 : 1 }]}
           >
-            <Icone nome={i} tamanho={24} cor={i === atual ? cores.text['on-primary'] : undefined} />
+            <Texto estilo="Texto/Botões e rótulos">{d}</Texto>
+          </Pressable>
+        ))}
+        <Texto estilo="Títulos/Grande" style={styles.valorPausa} accessibilityLiveRegion="polite">
+          {rotulo}
+        </Texto>
+        {[1, 5].map((d) => (
+          <Pressable
+            key={d}
+            onPress={() => somar(d)}
+            disabled={valor >= PAUSA_MAXIMA}
+            accessibilityRole="button"
+            accessibilityLabel={`Mais ${d} segundos`}
+            style={[styles.passoPausa, { backgroundColor: cores.bg.base, opacity: valor >= PAUSA_MAXIMA ? 0.4 : 1 }]}
+          >
+            <Texto estilo="Texto/Botões e rótulos">+{d}</Texto>
           </Pressable>
         ))}
       </View>
+      <Botao rotulo={`Usar ${rotulo}`} onPress={() => onEscolher(valor)} />
     </Folha>
   );
 }
@@ -492,14 +552,19 @@ function FolhaIcone({
 function FolhaMensagem({
   visivel,
   atual,
+  filosofica,
   onFechar,
   onEscolher,
 }: {
   visivel: boolean;
   atual: string;
+  /** As frases filosóficas estão escolhidas. */
+  filosofica: boolean;
   onFechar: () => void;
-  onEscolher: (m: string) => void;
+  /** null = frases filosóficas. */
+  onEscolher: (m: string | null) => void;
 }) {
+  const { cores } = useTema();
   const propria = MENSAGENS_PRONTAS.includes(atual) ? '' : atual;
   const [texto, setTexto] = useState(propria);
   return (
@@ -509,9 +574,18 @@ function FolhaMensagem({
       titulo="Mensagem da pausa"
       descricao="Aparece na pausa, antes de abrir o app."
     >
+      <ScrollView style={styles.listaMensagens} keyboardShouldPersistTaps="handled">
       <View style={styles.lista}>
+        <Opcao
+          ativo={filosofica}
+          titulo="Frases filosóficas"
+          descricao="Uma frase diferente a cada pausa: Sêneca, Marco Aurélio, Lao-Tsé, Montaigne…"
+          icone={<Icone nome="aspas" tamanho={20} />}
+          fundo={cores.bg.base}
+          onPress={() => onEscolher(null)}
+        />
         {MENSAGENS_PRONTAS.map((m) => (
-          <Opcao key={m} ativo={m === atual} titulo={m} descricao="" onPress={() => onEscolher(m)} />
+          <Opcao key={m} ativo={!filosofica && m === atual} titulo={m} descricao="" fundo={cores.bg.base} onPress={() => onEscolher(m)} />
         ))}
         <CampoTexto
           rotulo="Ou escreva a sua"
@@ -527,6 +601,7 @@ function FolhaMensagem({
           onPress={() => texto.trim() && onEscolher(texto.trim())}
         />
       </View>
+      </ScrollView>
     </Folha>
   );
 }
@@ -592,7 +667,7 @@ function FolhaApps({
                 style={[
                   styles.linhaAcao,
                   {
-                    backgroundColor: cores.bg.raised,
+                    backgroundColor: cores.bg.base,
                     borderWidth: borderWidth.thin,
                     borderColor: marcado ? cores.border.focus : 'transparent',
                   },
@@ -691,6 +766,10 @@ const styles = StyleSheet.create({
   tempo: { paddingHorizontal: space[12], paddingVertical: space[4], borderRadius: radius.full },
   desfazer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[8], paddingVertical: space[8] },
   rodape: { paddingHorizontal: inset.lg, paddingTop: space[12], paddingBottom: space[8] },
+  listaMensagens: { maxHeight: 460 },
+  seletor: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[8] },
+  passoPausa: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  valorPausa: { minWidth: 110, textAlign: 'center' },
   gradeIcones: { flexDirection: 'row', flexWrap: 'wrap', gap: space[12], justifyContent: 'center' },
   opcaoIcone: { width: 56, height: 56, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
   listaApps: { maxHeight: 420 },
