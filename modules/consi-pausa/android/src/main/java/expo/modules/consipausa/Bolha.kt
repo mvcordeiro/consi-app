@@ -41,11 +41,50 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
   private var alvo: FrameLayout? = null
   private var params: WindowManager.LayoutParams? = null
   private var estilo = ""
+  /** Até quando (ou desde quando, contando para cima) o timer conta, em ms do relógio. */
+  private var marco = 0L
+  private var paraCima = false
+  /** Tamanho da tela quando a bolha foi posicionada (para reposicionar ao girar o celular). */
+  private var telaW = 0
+  private var telaH = 0
+  private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+  /**
+   * Relógio próprio da bolha: atualiza na virada de cada segundo do marco, para os segundos
+   * andarem certinhos (antes, seguiam o passo de 0,7 s do vigia e pulavam).
+   */
+  private val relogio = object : Runnable {
+    override fun run() {
+      val t = texto ?: return
+      val agora = System.currentTimeMillis()
+      val ms = if (paraCima) agora - marco else marco - agora
+      t.text = formatar(ms, paraCima)
+      ajustarATela()
+      // próxima virada de segundo do marco (+ 15 ms de folga)
+      val resto = ((ms % 1000) + 1000) % 1000
+      val espera = if (paraCima) 1000 - resto else if (resto == 0L) 1000 else resto
+      handler.postDelayed(this, espera + 15)
+    }
+  }
 
   val visivel get() = vista != null
 
   private fun dp(v: Float) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v, context.resources.displayMetrics)
   private fun dpi(v: Float) = dp(v).toInt()
+
+  private data class Tela(val w: Int, val h: Int)
+
+  /** Tamanho atual da tela (muda ao girar; o displayMetrics do serviço pode ficar velho). */
+  private fun tamanhoTela(): Tela {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      val b = wm.currentWindowMetrics.bounds
+      return Tela(b.width(), b.height())
+    }
+    val p = android.graphics.Point()
+    @Suppress("DEPRECATION")
+    wm.defaultDisplay.getRealSize(p)
+    return Tela(p.x, p.y)
+  }
 
   private val tipoJanela =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -55,16 +94,46 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
       WindowManager.LayoutParams.TYPE_PHONE
     }
 
-  /** Mostra (ou troca o estilo) e atualiza o tempo. `restanteMs` < 0 = contando para cima. */
-  fun mostrar(estiloPedido: String, ms: Long, contandoParaCima: Boolean) {
+  /**
+   * Mostra (ou troca o estilo) a bolha contando até `marcoMs` (ou desde ele, contando para
+   * cima). O texto é atualizado pelo relógio próprio da bolha.
+   */
+  fun mostrar(estiloPedido: String, marcoMs: Long, contandoParaCima: Boolean) {
+    val novoMarco = marcoMs != marco || contandoParaCima != paraCima
+    marco = marcoMs
+    paraCima = contandoParaCima
     if (vista == null || estilo != estiloPedido) {
       esconder()
       criar(estiloPedido)
+      handler.post(relogio)
+    } else if (novoMarco) {
+      handler.removeCallbacks(relogio)
+      handler.post(relogio)
     }
-    texto?.text = formatar(ms, contandoParaCima)
+  }
+
+  /**
+   * Girou a tela (vídeo em tela cheia, paisagem): a bolha volta para a borda dela, na mesma
+   * altura proporcional, sem sair da tela.
+   */
+  private fun ajustarATela() {
+    val v = vista ?: return
+    val p = params ?: return
+    val m = tamanhoTela()
+    if (m.w == telaW && m.h == telaH) return
+    val fracaoY = if (telaH > 0) p.y.toFloat() / telaH else 0f
+    val esquerda = prefs.getString("bolha-lado", "direita") == "esquerda"
+    telaW = m.w
+    telaH = m.h
+    val largura = if (v.width > 0) v.width else dpi(56f)
+    val altura = if (v.height > 0) v.height else dpi(82f)
+    p.x = if (esquerda) dpi(12f) else telaW - largura - dpi(12f)
+    p.y = (fracaoY * telaH).toInt().coerceIn(dpi(16f), (telaH - altura - dpi(16f)).coerceAtLeast(dpi(16f)))
+    runCatching { wm.updateViewLayout(v, p) }
   }
 
   fun esconder() {
+    handler.removeCallbacks(relogio)
     vista?.let { runCatching { wm.removeView(it) } }
     alvo?.let { runCatching { wm.removeView(it) } }
     vista = null
@@ -73,7 +142,8 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
   }
 
   private fun formatar(ms: Long, paraCima: Boolean): String {
-    val s = (ms / 1000).coerceAtLeast(0)
+    // Contagem regressiva arredonda para cima (mostra 0:01 até o último instante), como um cronômetro.
+    val s = (if (paraCima) ms / 1000 else (ms + 999) / 1000).coerceAtLeast(0)
     if (estilo == "bolha") return "%d:%02d".format(s / 60, s % 60)
     return when {
       s >= 3600 -> "${s / 3600}h${"%02d".format((s % 3600) / 60)}"
@@ -131,7 +201,7 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
     )
     v.contentDescription = "Tempo no app"
 
-    val tela = context.resources.displayMetrics
+    val tela = tamanhoTela()
     val p = WindowManager.LayoutParams(
       WindowManager.LayoutParams.WRAP_CONTENT,
       WindowManager.LayoutParams.WRAP_CONTENT,
@@ -142,9 +212,13 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
       gravity = Gravity.TOP or Gravity.START
       // Figma: 12 px da borda direita, 51 px do topo. Guarda onde a pessoa deixou.
       val lado = prefs.getString("bolha-lado", "direita")
-      x = if (lado == "esquerda") dpi(12f) else tela.widthPixels - dpi(12f) - dpi(if (e == "faixa") 90f else if (e == "bolha") 56f else 49f)
-      y = prefs.getInt("bolha-y", dpi(51f))
+      x = if (lado == "esquerda") dpi(12f) else tela.w - dpi(12f) - dpi(if (e == "faixa") 90f else if (e == "bolha") 56f else 49f)
+      // A altura é guardada como fração da tela, para valer em retrato e em paisagem.
+      y = (prefs.getFloat("bolha-y-fracao", -1f).takeIf { it >= 0f }?.let { it * tela.h }?.toInt() ?: dpi(51f))
+        .coerceIn(dpi(16f), (tela.h - dpi(100f)).coerceAtLeast(dpi(16f)))
     }
+    telaW = tela.w
+    telaH = tela.h
     v.setOnTouchListener(Arraste(v, p))
     runCatching { wm.addView(v, p) }.onFailure { return }
     vista = v
@@ -194,8 +268,8 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
 
   /** Centro do X na tela (para saber se a bolha está em cima dele). */
   private fun centroDoAlvo(): Pair<Float, Float> {
-    val m = context.resources.displayMetrics
-    return m.widthPixels / 2f to m.heightPixels - dp(64f) - dp(28f)
+    val m = tamanhoTela()
+    return m.w / 2f to m.h - dp(64f) - dp(28f)
   }
 
   private inner class Arraste(private val v: View, private val p: WindowManager.LayoutParams) : View.OnTouchListener {
@@ -250,13 +324,16 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
     }
 
     private fun encostarNaBorda() {
-      val largura = context.resources.displayMetrics.widthPixels
+      val largura = tamanhoTela().w
       val meio = p.x + v.width / 2
       val esquerda = meio < largura / 2
       val destino = if (esquerda) dpi(12f) else largura - v.width - dpi(12f)
-      val altura = context.resources.displayMetrics.heightPixels
+      val altura = tamanhoTela().h
       p.y = p.y.coerceIn(dpi(24f), altura - v.height - dpi(24f))
-      prefs.edit().putString("bolha-lado", if (esquerda) "esquerda" else "direita").putInt("bolha-y", p.y).apply()
+      prefs.edit()
+        .putString("bolha-lado", if (esquerda) "esquerda" else "direita")
+        .putFloat("bolha-y-fracao", p.y.toFloat() / altura)
+        .apply()
       ValueAnimator.ofInt(p.x, destino).apply {
         duration = 220
         interpolator = DecelerateInterpolator()

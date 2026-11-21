@@ -111,6 +111,11 @@ class VigiaService : Service() {
 
     val app = naFrente
     val regra = if (app == null || app == packageName || app in inicios) null else prefs.regras()[app]
+    // Guarda o ciclo a cada ~10 s: se o Android reiniciar o serviço, o timer continua de onde estava.
+    if (app != null && regra?.modo == "cuidar-tempo" && proximoLembrete > 0 && agora - guardadoEm > 10_000L) {
+      prefs.guardarCiclo(app, proximoLembrete, agora)
+      guardadoEm = agora
+    }
     if (app != null && regra != null) {
       when (regra.modo) {
         "apenas-pausar" -> if (!liberado(app, agora)) abrirPausa(app, regra, agora)
@@ -126,6 +131,7 @@ class VigiaService : Service() {
   /** O último app de verdade (não de passagem) que esteve na frente, e quando ele saiu. */
   private var ultimoApp: String? = null
   private var saiuEm = 0L
+  private var guardadoEm = 0L
 
   private fun trocarPara(novo: String?, agora: Long) {
     if (novo == naFrente) return
@@ -164,7 +170,9 @@ class VigiaService : Service() {
     val intervalo = regra.intervaloMin * 60_000L
     val guardado = prefs.proximoLembrete(app)
     val longe = agora - prefs.vistoEm(app)
-    return if (guardado > 0 && longe <= intervalo) guardado else agora + intervalo
+    val ciclo = if (guardado > 0 && longe <= intervalo) guardado else agora + intervalo
+    prefs.guardarCiclo(app, ciclo, agora)
+    return ciclo
   }
 
   private fun liberado(app: String, agora: Long) = prefs.liberadoAte(app) > agora || prefs.liberadoNaSessao == app
@@ -209,8 +217,7 @@ class VigiaService : Service() {
     val podeFlutuar = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
     val flutua = c != null && regra != null && regra.flutuante && podeFlutuar && bolhaDescartadaPara != app
     if (flutua && c != null && regra != null) {
-      val ms = if (c.paraCima) agora - c.ate else c.ate - agora
-      bolha.mostrar(regra.estiloTimer, ms, c.paraCima)
+      bolha.mostrar(regra.estiloTimer, c.ate, c.paraCima)
     } else {
       bolha.esconder()
     }
