@@ -15,8 +15,6 @@ const H = ALTURA_CARD_SUGESTAO;
 /** Quanto arrastar (px) para decidir. No Figma, o card a -5° está ~91 px para o lado. */
 const LIMIAR = 96;
 const GIRO_MAX = 5;
-/** Arrastar para cima (px) para mandar o card para o fundo da pilha. */
-const LIMIAR_CIMA = 72;
 const DURACAO_SAIDA = 460;
 /** As cartas de trás: 366 e 348 px de largura (de 386), descendo 20 e 32 px abaixo da da frente. */
 const S1 = 366 / 386;
@@ -33,8 +31,6 @@ type Props = {
   sugestoes: Sugestao[];
   totalComentarios: (id: string) => number;
   onDecidir: (s: Sugestao, d: Decisao) => void;
-  /** Arrastar para cima: o card vai para o fundo da pilha, como num baralho. */
-  onPassar?: (s: Sugestao) => void;
   onConversa: (s: Sugestao) => void;
   onMais: (s: Sugestao) => void;
   /** Avisa enquanto um card está sendo arrastado (para travar a rolagem da página). */
@@ -51,14 +47,11 @@ type Props = {
  * do rosto mal-humorado; para a direita, +5°, feedback/success e o rosto positivo.
  * Ao soltar depois do limite, o card volta ao centro subindo para trás da pilha e some,
  * enquanto o de trás vem para a frente (5ª tela). Os botões do card fazem o mesmo gesto.
- * Arrastar para cima (sem design no Figma) manda o card para o fundo da pilha, como cartas:
- * ele sobe um pouco, passa para trás das outras e o de trás vem para a frente.
  */
 export function PilhaSugestoes({
   sugestoes,
   totalComentarios,
   onDecidir,
-  onPassar,
   onConversa,
   onMais,
   onArrastando,
@@ -67,7 +60,6 @@ export function PilhaSugestoes({
 }: Props) {
   const { cores } = useTema();
   const [pan] = useState(() => new Animated.Value(0));
-  const [panY] = useState(() => new Animated.Value(0));
   const [saindo, setSaindo] = useState<string | null>(null);
   const frente = sugestoes[0];
 
@@ -78,7 +70,6 @@ export function PilhaSugestoes({
     onDecidir,
     onArrastando,
     decidir: (_d: Decisao) => {},
-    passar: () => {},
   });
 
   const decidir = (d: Decisao) => {
@@ -95,21 +86,6 @@ export function PilhaSugestoes({
     });
   };
 
-  /** Para cima: sobe mais um pouco e vai para o fundo da pilha (a Camada anima até lá). */
-  const passar = () => {
-    const vivo = vivoRef.current;
-    const s = vivo.frente;
-    if (!s || vivo.saindo || !onPassar || sugestoes.length < 2) {
-      Animated.spring(panY, { toValue: 0, useNativeDriver: nativo, speed: 14, bounciness: 8 }).start();
-      return;
-    }
-    vibrar('toque');
-    Animated.timing(panY, { toValue: -H * 0.3, duration: 160, easing: curva, useNativeDriver: nativo }).start(() => {
-      onPassar(s);
-      Animated.timing(panY, { toValue: 0, duration: DURACAO_SAIDA, easing: curva, useNativeDriver: nativo }).start();
-    });
-  };
-
   useLayoutEffect(() => {
     const vivo = vivoRef.current;
     vivo.frente = frente;
@@ -117,7 +93,6 @@ export function PilhaSugestoes({
     vivo.onDecidir = onDecidir;
     vivo.onArrastando = onArrastando;
     vivo.decidir = decidir;
-    vivo.passar = passar;
   });
 
   /** Botões do card: primeiro inclina para o lado (mostra o feedback), depois decide. */
@@ -137,15 +112,7 @@ export function PilhaSugestoes({
   const [gesto] = useState(() => {
     const vivo = vivoRef.current;
     const limite = { passou: false };
-    const eixo = { atual: 'x' as 'x' | 'y' };
     const horizontal = (dx: number, dy: number) => Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.2;
-    const paraCima = (dx: number, dy: number) => dy < -10 && Math.abs(dy) > Math.abs(dx) * 1.4;
-    const pega = (dx: number, dy: number) => !vivo.saindo && (horizontal(dx, dy) || paraCima(dx, dy));
-    const soltarCima = (dy: number, vy: number) => {
-      vivo.onArrastando?.(false);
-      if (dy < -LIMIAR_CIMA || (vy < -0.6 && dy < -32)) vivo.passar();
-      else Animated.spring(panY, { toValue: 0, useNativeDriver: nativo, speed: 14, bounciness: 8 }).start();
-    };
     const soltar = (dx: number, vx: number) => {
       vivo.onArrastando?.(false);
       limite.passou = false;
@@ -154,17 +121,10 @@ export function PilhaSugestoes({
       else Animated.spring(pan, { toValue: 0, useNativeDriver: nativo, speed: 14, bounciness: 8 }).start();
     };
     return PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => pega(g.dx, g.dy),
-      onMoveShouldSetPanResponderCapture: (_, g) => pega(g.dx, g.dy),
-      onPanResponderGrant: (_, g) => {
-        eixo.atual = horizontal(g.dx, g.dy) ? 'x' : 'y';
-        vivo.onArrastando?.(true);
-      },
+      onMoveShouldSetPanResponder: (_, g) => !vivo.saindo && horizontal(g.dx, g.dy),
+      onMoveShouldSetPanResponderCapture: (_, g) => !vivo.saindo && horizontal(g.dx, g.dy),
+      onPanResponderGrant: () => vivo.onArrastando?.(true),
       onPanResponderMove: (_, g) => {
-        if (eixo.atual === 'y') {
-          panY.setValue(Math.min(0, g.dy));
-          return;
-        }
         pan.setValue(g.dx);
         const passou = Math.abs(g.dx) > LIMIAR;
         if (passou !== limite.passou) {
@@ -173,8 +133,8 @@ export function PilhaSugestoes({
         }
       },
       onPanResponderTerminationRequest: () => false,
-      onPanResponderRelease: (_, g) => (eixo.atual === 'y' ? soltarCima(g.dy, g.vy) : soltar(g.dx, g.vx)),
-      onPanResponderTerminate: () => (eixo.atual === 'y' ? soltarCima(0, 0) : soltar(0, 0)),
+      onPanResponderRelease: (_, g) => soltar(g.dx, g.vx),
+      onPanResponderTerminate: () => soltar(0, 0),
     });
   });
 
@@ -205,7 +165,6 @@ export function PilhaSugestoes({
               margem={margem}
               zIndex={eFrente && saindo ? 0 : 10 - i}
               pan={eFrente ? pan : null}
-              panY={eFrente ? panY : null}
               handlers={eFrente && !saindo ? gesto.panHandlers : undefined}
               bordas={
                 eFrente ? (
@@ -277,7 +236,6 @@ function Camada({
   margem,
   zIndex,
   pan,
-  panY,
   handlers,
   bordas,
   children,
@@ -286,7 +244,6 @@ function Camada({
   margem: number;
   zIndex: number;
   pan: Animated.Value | null;
-  panY?: Animated.Value | null;
   handlers?: object;
   bordas: ReactNode;
   children: ReactNode;
@@ -331,12 +288,7 @@ function Camada({
           zIndex,
           backgroundColor: cores.bg.raised,
           opacity,
-          transform: [
-            { translateX: pan ?? 0 },
-            { translateY: panY ? Animated.add(translateY, panY) : translateY },
-            { rotate: giro },
-            { scale },
-          ],
+          transform: [{ translateX: pan ?? 0 }, { translateY }, { rotate: giro }, { scale }],
         },
       ]}
     >
