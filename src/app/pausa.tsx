@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   Animated,
   BackHandler,
@@ -75,8 +75,10 @@ export default function Pausa() {
   const grupos = useGrupos();
   const { grupo } = regraDaPausa(grupos, params);
   const timer = useTimer(grupo.pausaSegundos * 1000);
-  // "Frases filosóficas": uma frase sorteada por pausa, no lugar da mensagem do grupo.
-  const [frase] = useState(sortearFrase);
+  // "Frases filosóficas": uma frase sorteada por pausa (do período do grupo), no lugar da
+  // mensagem. Depende do período porque os grupos gravados chegam depois da primeira renderização.
+  const periodo = grupo.periodoFilosofico ?? null;
+  const frase = useMemo(() => sortearFrase(periodo), [periodo]);
 
   const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();

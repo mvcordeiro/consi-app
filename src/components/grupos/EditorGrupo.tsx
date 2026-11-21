@@ -21,7 +21,14 @@ import {
   type AoIgnorar,
   type Grupo,
 } from '@/data/gruposHome';
-import { sortearFrase } from '@/data/frases';
+import {
+  autoresDoPeriodo,
+  frasesDoPeriodo,
+  nomeDoPeriodo,
+  PERIODOS,
+  sortearFrase,
+  type PeriodoFilosofico,
+} from '@/data/frases';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
@@ -184,16 +191,23 @@ export function EditorGrupo({ inicial, novo }: Props) {
                 <Pressable
                   onPress={() => setFolha('mensagem')}
                   accessibilityRole="button"
-                  accessibilityLabel={`Mensagem da pausa: ${g.mensagemFilosofica ? 'frases filosóficas' : g.mensagem}. Trocar`}
+                  accessibilityLabel={`Mensagem da pausa: ${g.mensagemFilosofica ? `frases filosóficas, ${nomeDoPeriodo(g.periodoFilosofico)}` : g.mensagem}. Trocar`}
                   style={({ pressed }) => [
                     styles.linhaAcao,
                     { backgroundColor: cores.bg.raised, opacity: pressed ? 0.85 : 1 },
                   ]}
                 >
                   <Icone nome="aspas" tamanho={20} />
-                  <Texto estilo="Texto/Médio" style={styles.flex}>
-                    {g.mensagemFilosofica ? 'Frases filosóficas, uma a cada pausa' : g.mensagem}
-                  </Texto>
+                  <View style={styles.flex}>
+                    <Texto estilo="Texto/Médio">
+                      {g.mensagemFilosofica ? 'Frases filosóficas, uma a cada pausa' : g.mensagem}
+                    </Texto>
+                    {g.mensagemFilosofica ? (
+                      <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
+                        {nomeDoPeriodo(g.periodoFilosofico)}
+                      </Texto>
+                    ) : null}
+                  </View>
                   <Icone nome="lapis" tamanho={18} cor={cores.text.tertiary} />
                 </Pressable>
               </Secao>
@@ -302,9 +316,14 @@ export function EditorGrupo({ inicial, novo }: Props) {
         visivel={folha === 'mensagem'}
         atual={g.mensagem}
         filosofica={!!g.mensagemFilosofica}
+        periodo={g.periodoFilosofico ?? null}
         onFechar={() => setFolha(null)}
-        onEscolher={(mensagem) => {
-          mudar(mensagem === null ? { mensagemFilosofica: true } : { mensagem, mensagemFilosofica: false });
+        onEscolher={(mensagem, periodo) => {
+          mudar(
+            mensagem === null
+              ? { mensagemFilosofica: true, periodoFilosofico: periodo ?? null }
+              : { mensagem, mensagemFilosofica: false },
+          );
           setFolha(null);
         }}
       />
@@ -376,6 +395,7 @@ function Opcao({
   icone,
   onPress,
   fundo,
+  acessorio,
 }: {
   ativo: boolean;
   titulo: string;
@@ -384,6 +404,8 @@ function Opcao({
   onPress: () => void;
   /** Fundo do card. Nas folhas (bg/raised), use bg/base para ter contraste. */
   fundo?: string;
+  /** Um botão a mais antes do rádio (ex.: o "•••" das frases filosóficas). */
+  acessorio?: ReactNode;
 }) {
   const { cores } = useTema();
   return (
@@ -410,6 +432,7 @@ function Opcao({
           </Texto>
         ) : null}
       </View>
+      {acessorio}
       <View style={[styles.radio, { borderColor: ativo ? cores.border.focus : cores.border.subtle }]}>
         {ativo ? <View style={[styles.radioPonto, { backgroundColor: cores.action.primary.default }]} /> : null}
       </View>
@@ -455,8 +478,9 @@ function Chips({
 /** Prévia (só visual) da tela de pausa: mensagem, contagem e a escolha do tempo no app. */
 function PreviaPausa({ grupo }: { grupo: Grupo }) {
   const { cores } = useTema();
-  // Com as frases filosóficas, a prévia mostra uma delas (outra a cada vez que abre o grupo).
-  const [exemplo] = useState(sortearFrase);
+  // Com as frases filosóficas, a prévia mostra uma do período escolhido (outra a cada troca).
+  const periodo = grupo.periodoFilosofico ?? null;
+  const exemplo = useMemo(() => sortearFrase(periodo), [periodo]);
   return (
     <View style={[styles.previa, { backgroundColor: cores.bg.sunken, borderColor: cores.border.subtle }]}>
       <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
@@ -553,6 +577,7 @@ function FolhaMensagem({
   visivel,
   atual,
   filosofica,
+  periodo,
   onFechar,
   onEscolher,
 }: {
@@ -560,13 +585,25 @@ function FolhaMensagem({
   atual: string;
   /** As frases filosóficas estão escolhidas. */
   filosofica: boolean;
+  /** Período das frases filosóficas (null = todos). */
+  periodo: PeriodoFilosofico | null;
   onFechar: () => void;
-  /** null = frases filosóficas. */
-  onEscolher: (m: string | null) => void;
+  /** null = frases filosóficas, do `periodo` escolhido (null = todos). */
+  onEscolher: (m: string | null, periodo?: PeriodoFilosofico | null) => void;
 }) {
   const { cores } = useTema();
   const propria = MENSAGENS_PRONTAS.includes(atual) ? '' : atual;
   const [texto, setTexto] = useState(propria);
+  // Menu dos períodos (aberto pelo "•••" das frases); fecha sempre que a folha reabre.
+  const [periodos, setPeriodos] = useState(false);
+  const [aberta, setAberta] = useState(visivel);
+  if (visivel !== aberta) {
+    setAberta(visivel);
+    if (visivel) setPeriodos(false);
+  }
+  const descricaoFrases = filosofica
+    ? `${nomeDoPeriodo(periodo)} · uma frase diferente a cada pausa`
+    : 'Uma frase diferente a cada pausa. Toque em ••• para escolher o período.';
   return (
     <Folha
       visivel={visivel}
@@ -579,11 +616,48 @@ function FolhaMensagem({
         <Opcao
           ativo={filosofica}
           titulo="Frases filosóficas"
-          descricao="Uma frase diferente a cada pausa: Sêneca, Marco Aurélio, Lao-Tsé, Montaigne…"
+          descricao={descricaoFrases}
           icone={<Icone nome="aspas" tamanho={20} />}
           fundo={cores.bg.base}
-          onPress={() => onEscolher(null)}
+          onPress={() => onEscolher(null, periodo)}
+          acessorio={
+            <Pressable
+              onPress={() => setPeriodos((v) => !v)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Escolher o período das frases"
+              accessibilityState={{ expanded: periodos }}
+              style={({ pressed }) => [
+                styles.botaoMais,
+                { backgroundColor: periodos || pressed ? cores.bg.raised : 'transparent' },
+              ]}
+            >
+              <Icone nome="menu-horizontal" tamanho={18} cor={cores.icon.primary} />
+            </Pressable>
+          }
         />
+        {periodos ? (
+          <Aparecer style={[styles.menuPeriodos, { backgroundColor: cores.bg.base, borderColor: cores.border.subtle }]}>
+            <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={styles.menuTitulo}>
+              PERÍODO DAS FRASES
+            </Texto>
+            <ItemPeriodo
+              titulo="Todos os períodos"
+              descricao={`${frasesDoPeriodo(null).length} frases, de Heráclito a Camus`}
+              ativo={filosofica && !periodo}
+              onPress={() => onEscolher(null, null)}
+            />
+            {PERIODOS.map((p) => (
+              <ItemPeriodo
+                key={p.id}
+                titulo={p.nome}
+                descricao={`${p.quando} · ${autoresDoPeriodo(p.id).join(', ')}…`}
+                ativo={filosofica && periodo === p.id}
+                onPress={() => onEscolher(null, p.id)}
+              />
+            ))}
+          </Aparecer>
+        ) : null}
         {MENSAGENS_PRONTAS.map((m) => (
           <Opcao key={m} ativo={!filosofica && m === atual} titulo={m} descricao="" fundo={cores.bg.base} onPress={() => onEscolher(m)} />
         ))}
@@ -603,6 +677,40 @@ function FolhaMensagem({
       </View>
       </ScrollView>
     </Folha>
+  );
+}
+
+/** Uma linha do menu de períodos: nome, época e autores, com o selo no escolhido. */
+function ItemPeriodo({
+  titulo,
+  descricao,
+  ativo,
+  onPress,
+}: {
+  titulo: string;
+  descricao: string;
+  ativo: boolean;
+  onPress: () => void;
+}) {
+  const { cores } = useTema();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: ativo }}
+      style={({ pressed }) => [
+        styles.itemPeriodo,
+        { backgroundColor: ativo ? cores.bg.selected : pressed ? cores.bg.raised : 'transparent' },
+      ]}
+    >
+      <View style={styles.flex}>
+        <Texto estilo="Texto/Médio">{titulo}</Texto>
+        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} numberOfLines={1}>
+          {descricao}
+        </Texto>
+      </View>
+      {ativo ? <Icone nome="selo" tamanho={18} cor={cores.icon.primary} /> : null}
+    </Pressable>
   );
 }
 
@@ -767,6 +875,18 @@ const styles = StyleSheet.create({
   desfazer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[8], paddingVertical: space[8] },
   rodape: { paddingHorizontal: inset.lg, paddingTop: space[12], paddingBottom: space[8] },
   listaMensagens: { maxHeight: 460 },
+  botaoMais: { width: 32, height: 32, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
+  menuPeriodos: { padding: space[8], gap: space[2], borderRadius: radius.card, borderWidth: borderWidth.thin },
+  menuTitulo: { paddingHorizontal: space[8], paddingTop: space[4], paddingBottom: space[4] },
+  itemPeriodo: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[12],
+    paddingHorizontal: space[8],
+    paddingVertical: space[8],
+    borderRadius: radius.md,
+  },
   seletor: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[8] },
   passoPausa: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   valorPausa: { minWidth: 110, textAlign: 'center' },

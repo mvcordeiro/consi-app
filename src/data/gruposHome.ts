@@ -20,6 +20,7 @@ import type { IconeSvg } from '@/components/onboarding/assets';
 
 import { APPS_EXEMPLO, appsAgora, carregarApps, comAppsDoAparelho, pacoteDoExemplo } from './apps';
 import { gravarEstado, lerEstado } from './banco';
+import type { PeriodoFilosofico } from './frases';
 import { respostasSalvas, type CaixaDeApp } from './onboarding';
 
 // ─── Catálogo ───────────────────────────────────────────────────────────────
@@ -110,6 +111,8 @@ export type Grupo = {
   estiloTimer?: EstiloTimer;
   /** No lugar da `mensagem`, uma frase filosófica sorteada a cada pausa (ver frases.ts). */
   mensagemFilosofica?: boolean;
+  /** Com as frases filosóficas: de que período elas vêm (sem valor: de todos). */
+  periodoFilosofico?: PeriodoFilosofico | null;
 };
 
 /** Pausa personalizada: no mínimo 3 s (o menor dos prontos), no máximo 5 min. */
