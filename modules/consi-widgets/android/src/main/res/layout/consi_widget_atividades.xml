@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gerado por scripts/gerar-widgets-layouts.js (ids usados em Widgets.kt). Não edite à mão. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@android:id/background"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/consi_widget_fundo"
+  android:clipToOutline="true"
+  android:padding="16dp">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <LinearLayout android:id="@+id/atividades_topo" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+      <TextView android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_flare_semibold" android:textSize="18sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="0dp" android:layout_weight="1" android:gravity="start" android:text="Suas atividades"/>
+      <TextView android:id="@+id/atividades_total" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="12sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:gravity="center" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/a0" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="8dp" android:orientation="vertical" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/consi_widget_cartao" android:visibility="gone">
+      <TextView android:id="@+id/a0_titulo" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_medium" android:textSize="14sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="match_parent" android:gravity="start"/>
+      <TextView android:id="@+id/a0_detalhe" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="12sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="match_parent" android:layout_marginTop="4dp" android:gravity="start"/>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/a1" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="8dp" android:orientation="vertical" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/consi_widget_cartao" android:visibility="gone">
+      <TextView android:id="@+id/a1_titulo" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_medium" android:textSize="14sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="match_parent" android:gravity="start"/>
+      <TextView android:id="@+id/a1_detalhe" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="12sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="match_parent" android:layout_marginTop="4dp" android:gravity="start"/>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/a2" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="8dp" android:orientation="vertical" android:gravity="center_vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/consi_widget_cartao" android:visibility="gone">
+      <TextView android:id="@+id/a2_titulo" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_medium" android:textSize="14sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="match_parent" android:gravity="start"/>
+      <TextView android:id="@+id/a2_detalhe" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="12sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="match_parent" android:layout_marginTop="4dp" android:gravity="start"/>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/atividades_vazio" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" android:gravity="center" android:visibility="gone">
+      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="14sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:ellipsize="end" android:gravity="center" android:maxLines="2" android:text="Nenhuma atividade em andamento"/>
+      
+      <LinearLayout android:id="@+id/atividades_explorar" android:layout_width="wrap_content" android:layout_height="44dp" android:orientation="horizontal" android:gravity="center" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/consi_widget_botao_secundario" android:layout_marginTop="12dp">
+        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:layout_marginEnd="8dp" android:src="@drawable/consi_widget_icone_atividade" android:importantForAccessibility="no" />
+        <TextView android:id="@+id/atividades_explorar_rotulo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_medium" android:textSize="14sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:text="Explorar atividades"/>
+      </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+</FrameLayout>

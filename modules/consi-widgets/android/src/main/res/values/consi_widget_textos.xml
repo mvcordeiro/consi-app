@@ -6,4 +6,10 @@
   <string name="consi_widget_medio_descricao">Suas emoções de hoje e atalhos para registrar, escrever e explorar atividades.</string>
   <string name="consi_widget_grande_nome">Consi · Check-in</string>
   <string name="consi_widget_grande_descricao">Toque no balão, escolha a emoção e registre sem procurar o app.</string>
+  <string name="consi_widget_atividades_nome">Consi · Suas atividades</string>
+  <string name="consi_widget_atividades_descricao">As atividades que você está fazendo agora.</string>
+  <string name="consi_widget_frase_nome">Consi · Uma frase</string>
+  <string name="consi_widget_frase_descricao">Uma frase das pausas para pensar um pouco. Muda todo dia.</string>
+  <string name="consi_widget_sugestao_nome">Consi · Para você</string>
+  <string name="consi_widget_sugestao_descricao">Uma atividade sugerida para seus hobbies.</string>
 </resources>

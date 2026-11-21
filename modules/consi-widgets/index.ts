@@ -7,12 +7,11 @@ import { Platform } from 'react-native';
  * (WidgetPequeno, WidgetMedio, WidgetGrande) se redesenham. No iPhone, no navegador e em
  * builds sem o módulo, `ConsiWidgets` é null.
  */
+/** Os assuntos que os widgets mostram e o JSON de cada um (ver src/data/widgets.ts). */
+export type AssuntoWidget = 'dia' | 'atividades' | 'sugestao' | 'frases';
+
 type ModuloConsiWidgets = {
-  /**
-   * JSON: { dia: "AAAA-MM-DD", emocoes: string[] (ids, a central primeiro), total: number,
-   * recentes: { id, hora: "10:12" }[] (os últimos registros, do mais recente) }.
-   */
-  atualizar(json: string): void;
+  atualizar(assunto: AssuntoWidget, json: string): void;
 };
 
 export const ConsiWidgets: ModuloConsiWidgets | null =

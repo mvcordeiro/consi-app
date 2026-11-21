@@ -122,6 +122,17 @@ VectorDrawable (`node scripts/gerar-widgets-android.js`), com a textura recortad
 | Dia e atalhos | 4×2 | O mesmo aglomerado + Registrar emoção, Escrever no Diário, Explorar atividades | Home (check-in), novo momento, Hobbies |
 | Check-in | 4×4 | "Como você está?", o balão "?" grande e, embaixo, as etiquetas dos últimos 3 registros ("Alegria · às 10:12"), como na Home | Veja abaixo |
 
+| Suas atividades | 4×3 | As atividades em andamento (até 3, conforme a altura) e quantas são; sem nenhuma, "Explorar atividades" | Cada linha abre a atividade; o título abre Hobbies |
+| Uma frase | 4×2 | Uma frase filosófica das pausas por dia, com autor e obra | "Outra frase" troca sem abrir o app |
+| Para você | 4×3 | A primeira atividade sugerida (hobby, título, resumo, duração) | "Explorar" abre o detalhe; "Não agora" abre Hobbies e tira a sugestão da pilha |
+
+**Tamanhos:** todos os widgets podem ser redimensionados. Do Android 12 em diante o launcher
+informa cada tamanho em que o widget aparece e recebe um layout para cada um; antes, vale o
+tamanho em retrato. O de atalhos encolhe em passos: dia + botões com texto (4×2) → só os botões
+com texto (estreito) → dia menor + botões só com ícone (baixo) → só os três ícones (2×1). No
+check-in, as 14 emoções e o balão "?" são medidos para o tamanho real (Android 12+), então todas
+aparecem; no Android 11 e anteriores usam uma nuvem menor fixa, que cabe num 4×4.
+
 **Check-in no widget grande (adaptação do arrastar):** widgets Android não recebem gestos. O
 `RemoteViews` só entrega **toques** (e, no Android 12+, caixas de seleção e chaves); não há arrastar,
 posição livre nem animação contínua. A mecânica virou três estados:

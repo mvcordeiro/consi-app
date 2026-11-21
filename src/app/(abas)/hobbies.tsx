@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { LayoutAnimation, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -55,6 +55,17 @@ export default function Hobbies() {
       setAba(doParametro);
     }
   }
+
+  // Vindo do widget "Para você" ("Não agora"): tira aquela sugestão da pilha, uma vez.
+  const { ignorar: paraIgnorar } = useLocalSearchParams<{ ignorar?: string }>();
+  const ignorouDoWidget = useRef<string | null>(null);
+  const { carregado, item, ignorar } = h;
+  useEffect(() => {
+    if (!carregado || !paraIgnorar || ignorouDoWidget.current === paraIgnorar) return;
+    ignorouDoWidget.current = paraIgnorar;
+    const sugestao = item(paraIgnorar);
+    if (sugestao?.tipo === 'catalogo') ignorar(sugestao.a);
+  }, [carregado, paraIgnorar, item, ignorar]);
 
   // Os hobbies podem ter mudado no onboarding ou na tela de edição.
   const { sincronizarOnboarding } = h;

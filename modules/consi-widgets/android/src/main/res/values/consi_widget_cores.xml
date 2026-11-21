@@ -3,6 +3,8 @@
 <resources>
   <!-- bg/base -->
   <color name="consi_widget_fundo">#FFF7E8</color>
+  <!-- bg/raised (linhas das atividades) -->
+  <color name="consi_widget_elevado">#FEECC6</color>
   <!-- bg/selected (fundo das etiquetas de emoção, como na Home) -->
   <color name="consi_widget_selecionado">#FDDB94</color>
   <!-- border/focus (contorno do botão secundário) -->
