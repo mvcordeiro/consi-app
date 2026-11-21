@@ -34,5 +34,38 @@
         android:name="android.appwidget.provider"
         android:resource="@xml/consi_widget_grande" />
     </receiver>
+    <receiver
+      android:name=".WidgetAtividades"
+      android:exported="true"
+      android:label="@string/consi_widget_atividades_nome">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/consi_widget_atividades" />
+    </receiver>
+    <receiver
+      android:name=".WidgetFrase"
+      android:exported="true"
+      android:label="@string/consi_widget_frase_nome">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/consi_widget_frase" />
+    </receiver>
+    <receiver
+      android:name=".WidgetSugestao"
+      android:exported="true"
+      android:label="@string/consi_widget_sugestao_nome">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+      </intent-filter>
+      <meta-data
+        android:name="android.appwidget.provider"
+        android:resource="@xml/consi_widget_sugestao" />
+    </receiver>
   </application>
 </manifest>

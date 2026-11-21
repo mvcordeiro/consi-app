@@ -12,7 +12,10 @@ class ConsiWidgetsModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ConsiWidgets")
 
-    /** O resumo de hoje: { dia, emocoes, total }. Redesenha todos os widgets. */
-    Function("atualizar") { json: String -> Widgets.guardar(context, json) }
+    /**
+     * Os dados de um assunto ("dia", "atividades", "sugestao" ou "frases") em JSON.
+     * Redesenha todos os widgets.
+     */
+    Function("atualizar") { chave: String, json: String -> Widgets.guardar(context, chave, json) }
   }
 }

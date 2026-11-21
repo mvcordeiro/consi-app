@@ -27,9 +27,9 @@ const CORES = {
 
 // ─── Emoções: id, nome e círculo da máscara, lidos de src/data/emocoes.ts ───
 const fonte = fs.readFileSync(path.join(raiz, 'src/data/emocoes.ts'), 'utf8');
-const emocoes = [...fonte.matchAll(/\{ id: '([a-z]+)', nome: '([^']+)'.*?circulo: \{ cx: ([\d.]+), cy: ([\d.]+) \}/g)].map(
-  (m) => ({ id: m[1], nome: m[2], cx: Number(m[3]), cy: Number(m[4]) }),
-);
+const emocoes = [
+  ...fonte.matchAll(/\{ id: '([a-z]+)', nome: '([^']+)'.*?circulo: \{ cx: ([\d.]+), cy: ([\d.]+) \}, x: (\d+), y: (\d+) \}/g),
+].map((m) => ({ id: m[1], nome: m[2], cx: Number(m[3]), cy: Number(m[4]), x: Number(m[5]), y: Number(m[6]) }));
 if (emocoes.length !== 14) throw new Error(`Esperava 14 emoções em emocoes.ts, achei ${emocoes.length}`);
 
 // ─── SVG → elementos simples ────────────────────────────────────────────────
@@ -186,11 +186,12 @@ const kt = [
   'package expo.modules.consiwidgets',
   '',
   '/** Uma emoção da Home: o id (o mesmo do JS), o nome e o balão. */',
-  'internal data class Emocao(val id: String, val nome: String, val balao: Int)',
+  '/** x e y: a posição na Home (frame de 436 px), para espalhar as emoções como lá. */',
+  'internal data class Emocao(val id: String, val nome: String, val balao: Int, val x: Int, val y: Int)',
   '',
   '/** As 14 emoções, na ordem da Home. */',
   'internal val EMOCOES = listOf(',
-  ...emocoes.map((e) => `  Emocao("${e.id}", "${e.nome}", R.drawable.consi_emocao_${e.id}),`),
+  ...emocoes.map((e) => `  Emocao("${e.id}", "${e.nome}", R.drawable.consi_emocao_${e.id}, ${e.x}, ${e.y}),`),
   ')',
   '',
   'internal fun emocaoPorId(id: String?) = EMOCOES.firstOrNull { it.id == id }',

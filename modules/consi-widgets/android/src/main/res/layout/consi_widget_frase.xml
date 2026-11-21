@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gerado por scripts/gerar-widgets-layouts.js (ids usados em Widgets.kt). Não edite à mão. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@android:id/background"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/consi_widget_fundo"
+  android:clipToOutline="true"
+  android:padding="16dp">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <TextView android:id="@+id/frase_rotulo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="12sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:text="Para pensar um pouco"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical">
+      <TextView android:id="@+id/frase_texto" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="16sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:ellipsize="end" android:layout_width="match_parent" android:gravity="start" android:maxLines="6" android:lineSpacingExtra="4dp"/>
+      <TextView android:id="@+id/frase_autor" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_book" android:textSize="12sp" android:textColor="@color/consi_widget_texto_2" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:layout_width="match_parent" android:layout_marginTop="8dp" android:gravity="start"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="end">
+      <LinearLayout android:id="@+id/frase_outra" android:layout_width="wrap_content" android:layout_height="36dp" android:orientation="horizontal" android:gravity="center" android:paddingStart="16dp" android:paddingEnd="16dp" android:background="@drawable/consi_widget_botao_secundario" >
+        <TextView android:id="@+id/frase_outra_rotulo" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="@font/consi_widget_sans_medium" android:textSize="14sp" android:textColor="@color/consi_widget_texto" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" android:gravity="center" android:text="Outra frase"/>
+      </LinearLayout>
+    </LinearLayout>
+  </LinearLayout>
+</FrameLayout>
