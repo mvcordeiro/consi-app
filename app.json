@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.consi.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#111D4F",
         "foregroundImage": "./assets/android-icon-foreground.png",
