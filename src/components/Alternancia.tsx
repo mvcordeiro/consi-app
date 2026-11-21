@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet } from 'react-native';
 
-import { duration, easing, radius, useTema } from '@/theme';
+import { borderWidth, duration, easing, radius, useTema } from '@/theme';
 
 const nativo = Platform.OS !== 'web';
 
@@ -36,13 +36,19 @@ export function Alternancia({ ligado, onMudar, rotulo }: Props) {
       accessibilityRole="switch"
       accessibilityState={{ checked: ligado }}
       accessibilityLabel={rotulo}
-      style={[styles.trilho, { backgroundColor: ligado ? cores.action.primary.pressed : cores.bg.base }]}
+      style={[
+        styles.trilho,
+        ligado
+          ? { backgroundColor: cores.action.primary.pressed, borderColor: cores.action.primary.pressed }
+          : { backgroundColor: cores.bg.base, borderColor: cores.border.default },
+      ]}
     >
       <Animated.View
         style={[
           styles.indicador,
           {
-            backgroundColor: cores.bg.disabled,
+            // text/on-pressed é claro nos dois modos (bg/disabled do Figma fica cinza-escuro no Dark).
+            backgroundColor: ligado ? cores.text['on-pressed'] : cores.border.default,
             transform: [{ translateX: v.interpolate({ inputRange: [0, 1], outputRange: [0, 18] }) }],
           },
         ]}
@@ -52,6 +58,7 @@ export function Alternancia({ ligado, onMudar, rotulo }: Props) {
 }
 
 const styles = StyleSheet.create({
-  trilho: { width: 40, height: 24, borderRadius: radius.full, justifyContent: 'center' },
-  indicador: { position: 'absolute', left: 2, width: 18, height: 18, borderRadius: 9 },
+  trilho: { width: 40, height: 24, borderRadius: radius.full, borderWidth: borderWidth.thin, justifyContent: 'center' },
+  // left 2 menos a borda de 1 px: o indicador fica no mesmo lugar do Figma (cx 11 → 29).
+  indicador: { position: 'absolute', left: 1, width: 18, height: 18, borderRadius: 9 },
 });

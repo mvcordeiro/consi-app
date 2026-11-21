@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { HobbyId } from '@/data/catalogo';
 import { borderWidth, radius, space, useTema } from '@/theme';
@@ -9,6 +9,8 @@ import { Texto } from '../../Texto';
 import { IconeHobbies } from '../assets';
 
 export { vibrar } from '../../hobbies/Arraste';
+/** "Reduzir movimento": a escolha em Ajustes ou a do sistema. */
+export { useMovimentoReduzido } from '@/data/preferencias';
 
 /**
  * O que toda mecânica de revelar recebe. O resultado é sempre o mesmo: ao terminar a
@@ -36,23 +38,6 @@ export function useUmaVez(fn: () => void) {
     feito.current = true;
     atual.current();
   };
-}
-
-/** "Reduzir movimento" do sistema (no web vem do prefers-reduced-motion). */
-export function useMovimentoReduzido() {
-  const [reduzido, setReduzido] = useState(false);
-  useEffect(() => {
-    let vivo = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((r) => vivo && setReduzido(r))
-      .catch(() => {});
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduzido);
-    return () => {
-      vivo = false;
-      sub.remove();
-    };
-  }, []);
-  return reduzido;
 }
 
 /** Casca do card escondido: o mesmo fundo, borda e raio do card "Puxe para revelar". */

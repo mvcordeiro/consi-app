@@ -1,7 +1,7 @@
-import * as Haptics from 'expo-haptics';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 
+import { ImpactoVibracao, vibrarImpacto, vibrarSelecao, vibrarSucesso } from '@/data/haptica';
 import { borderWidth, easing, radius, space, useTema } from '@/theme';
 
 import { Icone, type NomeIcone } from '../Icone';
@@ -11,12 +11,11 @@ const curva = Easing.bezier(...easing.standard);
 
 export type Lado = 'esquerda' | 'direita';
 
-/** Vibração curta (no web não faz nada). */
+/** Vibração curta (no web ou com "Vibração" desligada em Ajustes não faz nada). */
 export function vibrar(tipo: 'toque' | 'limite' | 'sucesso' = 'toque') {
-  if (Platform.OS === 'web') return;
-  if (tipo === 'sucesso') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-  else if (tipo === 'limite') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
-  else Haptics.selectionAsync().catch(() => {});
+  if (tipo === 'sucesso') vibrarSucesso();
+  else if (tipo === 'limite') vibrarImpacto(ImpactoVibracao.Medium);
+  else vibrarSelecao();
 }
 
 /**

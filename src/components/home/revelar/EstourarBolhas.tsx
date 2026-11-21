@@ -1,7 +1,7 @@
-import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
+import { ImpactoVibracao, vibrarImpacto } from '@/data/haptica';
 import { useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
@@ -33,7 +33,7 @@ export function EstourarBolhas({ onRevelar, hobbyPrevia, movimentoReduzido }: Pr
     if (fim.current || estouradas.includes(i)) return;
     const novas = [...estouradas, i];
     setEstouradas(novas);
-    if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    vibrarImpacto(ImpactoVibracao.Light);
     if (novas.length === BOLHAS.length) {
       fim.current = true;
       vibrar('sucesso');

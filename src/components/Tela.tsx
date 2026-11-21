@@ -10,15 +10,19 @@ type Props = {
   rolavel?: boolean;
   /** Bordas que respeitam a área segura. Em telas com abas, a aba já cuida da parte de baixo. */
   bordas?: Edge[];
+  /** Trava a rolagem por um momento (ex.: enquanto a pessoa arrasta um item de uma lista). */
+  travarRolagem?: boolean;
 };
 
 /** Base das telas do app: fundo bg/base, margem inset/screen e área segura. */
-export function Tela({ children, rolavel = true, bordas = ['top', 'left', 'right'] }: Props) {
+export function Tela({ children, rolavel = true, bordas = ['top', 'left', 'right'], travarRolagem = false }: Props) {
   const { cores } = useTema();
   return (
     <SafeAreaView style={[styles.fundo, { backgroundColor: cores.bg.base }]} edges={bordas}>
       {rolavel ? (
-        <ScrollView contentContainerStyle={styles.conteudo}>{children}</ScrollView>
+        <ScrollView contentContainerStyle={styles.conteudo} scrollEnabled={!travarRolagem}>
+          {children}
+        </ScrollView>
       ) : (
         <View style={[styles.conteudo, styles.fixo]}>{children}</View>
       )}

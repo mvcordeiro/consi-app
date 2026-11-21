@@ -1,7 +1,8 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Animated, Easing, Platform, type StyleProp, type ViewStyle } from 'react-native';
 
-import { duration, easing } from '@/theme';
+import { useMovimentoReduzido } from '@/data/preferencias';
+import { easing } from '@/theme';
 
 const nativo = Platform.OS !== 'web';
 
@@ -28,19 +29,23 @@ export function Aparecer({
   duracao = 900,
   style,
 }: Props) {
-  const v = useRef(new Animated.Value(0)).current;
+  const [v] = useState(() => new Animated.Value(0));
+  // "Reduzir movimento": só um fade curto, sem subir nem crescer.
+  const reduzido = useMovimentoReduzido();
+  const subida = reduzido ? 0 : deslocamento;
+  const escala = reduzido ? 1 : escalaInicial;
 
   useEffect(() => {
     const a = Animated.timing(v, {
       toValue: 1,
-      duration: duracao,
-      delay: atraso,
+      duration: reduzido ? Math.min(duracao, 150) : duracao,
+      delay: reduzido ? 0 : atraso,
       easing: Easing.bezier(...easing.standard),
       useNativeDriver: nativo,
     });
     a.start();
     return () => a.stop();
-  }, [atraso, duracao, v]);
+  }, [atraso, duracao, reduzido, v]);
 
   return (
     <Animated.View
@@ -49,8 +54,8 @@ export function Aparecer({
         {
           opacity: v,
           transform: [
-            { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [deslocamento, 0] }) },
-            { scale: v.interpolate({ inputRange: [0, 1], outputRange: [escalaInicial, 1] }) },
+            { translateY: v.interpolate({ inputRange: [0, 1], outputRange: [subida, 0] }) },
+            { scale: v.interpolate({ inputRange: [0, 1], outputRange: [escala, 1] }) },
           ],
         },
       ]}

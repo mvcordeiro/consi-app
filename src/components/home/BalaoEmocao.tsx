@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Animated, Easing, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { useMovimentoReduzido } from '@/data/preferencias';
 import { useCoresSvg } from '@/theme';
 
 import type { IconeSvg } from '../onboarding/assets';
@@ -68,8 +69,15 @@ export function BalaoEmocao({
   const lado = LADO_SVG_BALAO * escala;
   const k = lado / LADO_SVG_BALAO;
 
+  // "Reduzir movimento": os balões ficam parados.
+  const parado = useMovimentoReduzido();
+
   useEffect(() => {
-    if (!flutuar) return;
+    if (!flutuar || parado) {
+      y.setValue(0);
+      x.setValue(0);
+      return;
+    }
     const meia = (v: Animated.Value, para: number, ms: number) =>
       Animated.timing(v, { toValue: para, duration: ms, easing: Easing.inOut(Easing.ease), useNativeDriver: nativo });
     const loops = [Animated.loop(Animated.sequence([meia(y, 1, ritmo.meiaY), meia(y, 0, ritmo.meiaY)]))];
@@ -79,7 +87,7 @@ export function BalaoEmocao({
       clearTimeout(t);
       loops.forEach((l) => l.stop());
     };
-  }, [flutuar, fase, ritmo, x, y]);
+  }, [flutuar, parado, fase, ritmo, x, y]);
 
   // a altura sorteada substitui os 8 px do Figma; a textura sobe metade disso a mais
   const sobe = (px: number) => y.interpolate({ inputRange: [0, 1], outputRange: [0, -px * (ritmo.subida / 8) * escala] });

@@ -1,7 +1,7 @@
-import * as Haptics from 'expo-haptics';
 import { useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 
+import { ImpactoVibracao, vibrarImpacto } from '@/data/haptica';
 import { radius, space, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
@@ -14,14 +14,7 @@ const ONDA = 120;
 
 /** Batida cada vez mais forte: a pessoa sente que está chegando perto. */
 function batida(n: number) {
-  if (Platform.OS === 'web') return;
-  const forca =
-    n <= 2
-      ? Haptics.ImpactFeedbackStyle.Light
-      : n <= 4
-        ? Haptics.ImpactFeedbackStyle.Medium
-        : Haptics.ImpactFeedbackStyle.Heavy;
-  Haptics.impactAsync(forca).catch(() => {});
+  vibrarImpacto(n <= 2 ? ImpactoVibracao.Light : n <= 4 ? ImpactoVibracao.Medium : ImpactoVibracao.Heavy);
 }
 
 type Onda = { id: number; x: number; y: number; v: Animated.Value };

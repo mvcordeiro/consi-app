@@ -1,123 +1,69 @@
-import { File, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
-import * as Sharing from 'expo-sharing';
-import * as Updates from 'expo-updates';
 import { useState } from 'react';
-import { DevSettings, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { Botao, Folha, Tela, Texto } from '@/components';
+import { Botao, Tela, Texto, useEspacoBarra } from '@/components';
 import { AjustesLembretesTela } from '@/components/AjustesLembretesTela';
 import { AjustesPausa } from '@/components/AjustesPausa';
-import { Filtro } from '@/components/Filtro';
-import { definirAparencia, useAparencia, type Aparencia } from '@/data/aparencia';
-import { apagarTudo, exportarTudo } from '@/data/banco';
-import { chaveDia } from '@/data/momentos';
+import { CartaoAjustes, Divisoria, LinhaLink, Personalizar, SecoesInicio, SeusDados, Sobre } from '@/components/ajustes';
 import { refazerOnboarding } from '@/data/onboarding';
-import { radius, space, useTema } from '@/theme';
+
+/** Destinos ainda sem tela abrem o marcador "Em construção" (convenção do app). */
+function emConstrucao(titulo: string) {
+  router.push({ pathname: '/em-construcao', params: { titulo } });
+}
 
 /**
- * Ajustes (provisório). "Pausa nos apps" (permissões do vigia, só no APK Android), "Seus dados"
- * (exportar e apagar tudo, LGPD) e os atalhos de teste.
- * PROVISÓRIO: ainda sem tela no Figma; layout e textos aguardam o design.
+ * Aba Ajustes (Figma: "📱 APP // Telas do app" → 10 · AJUSTES). Uma página só, em cartões, na ordem:
+ * Personalizar · Seções do Início · Pausa nos apps · Cuidado com o tempo de tela · Comunidade ·
+ * Seus dados · Sobre · Para testes (só em desenvolvimento). Documentação: docs/ajustes.md.
  */
 export default function Ajustes() {
-  const { cores } = useTema();
-  const [confirmar, setConfirmar] = useState(false);
-  const [ocupado, setOcupado] = useState(false);
-  const [aviso, setAviso] = useState<string | null>(null);
-  const aparencia = useAparencia();
-
-  const refazer = async () => {
-    await refazerOnboarding();
-    router.replace('/onboarding');
-  };
-
-  const exportar = async () => {
-    setOcupado(true);
-    setAviso(null);
-    try {
-      const dados = await exportarTudo();
-      const arquivo = new File(Paths.cache, `consi-meus-dados-${chaveDia(new Date())}.json`);
-      if (arquivo.exists) arquivo.delete();
-      arquivo.create();
-      arquivo.write(JSON.stringify(dados, null, 2));
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(arquivo.uri, { mimeType: 'application/json', dialogTitle: 'Exportar meus dados', UTI: 'public.json' });
-      } else {
-        setAviso('Não deu para abrir o compartilhamento neste aparelho.');
-      }
-    } catch {
-      setAviso('Não deu para exportar agora. Tente de novo.');
-    } finally {
-      setOcupado(false);
-    }
-  };
-
-  const apagar = async () => {
-    setOcupado(true);
-    await apagarTudo();
-    // Recomeça o app do zero (as telas guardam estado em memória).
-    try {
-      await Updates.reloadAsync();
-    } catch {
-      DevSettings.reload();
-    }
-  };
+  const espacoBarra = useEspacoBarra();
+  // Enquanto uma seção do Início é arrastada, a página não rola.
+  const [arrastando, setArrastando] = useState(false);
 
   return (
-    <Tela>
-      <Texto estilo="Títulos/Grande">Ajustes</Texto>
+    <Tela travarRolagem={arrastando}>
+      <Texto estilo="Títulos/Grande" accessibilityRole="header">
+        Ajustes
+      </Texto>
+
+      <Personalizar />
+      <SecoesInicio onArrastando={setArrastando} />
 
       <AjustesPausa />
       <AjustesLembretesTela />
 
-      <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
-        <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
-          SEUS DADOS
-        </Texto>
-        <Texto cor={cores.text.secondary}>
-          Tudo o que você guarda no Consi fica só neste celular, criptografado. Se desinstalar o app, os dados somem.
-        </Texto>
-        <Botao rotulo="Exportar meus dados" onPress={exportar} estado={ocupado ? 'desabilitado' : 'normal'} disabled={ocupado} />
-        <Botao rotulo="Apagar tudo" estilo="secundario" onPress={() => setConfirmar(true)} estado={ocupado ? 'desabilitado' : 'normal'} disabled={ocupado} />
-        {aviso ? <Texto cor={cores.text.secondary}>{aviso}</Texto> : null}
-      </View>
+      {/* Sugestões e Novidades usam o Supabase (docs/supabase.md); as telas entram quando a nuvem chegar. */}
+      <CartaoAjustes rotulo="Comunidade">
+        <LinhaLink
+          titulo="Sugerir uma ideia"
+          descricao="Envie ideias e vote nas de outras pessoas."
+          onPress={() => emConstrucao('Sugestões')}
+        />
+        <Divisoria />
+        <LinhaLink titulo="Novidades" descricao="O que mudou em cada versão." onPress={() => emConstrucao('Novidades')} />
+      </CartaoAjustes>
 
-      <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
-        <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
-          PARA TESTES
-        </Texto>
-        {/* PROVISÓRIO: trocar o modo sem mexer no tema do celular */}
-        <Texto cor={cores.text.secondary}>Aparência</Texto>
-        <View style={styles.aparencia}>
-          {(
-            [
-              ['sistema', 'Do celular'],
-              ['light', 'Claro'],
-              ['dark', 'Escuro'],
-            ] as [Aparencia, string][]
-          ).map(([a, rotulo]) => (
-            <Filtro key={a} rotulo={rotulo} ativo={aparencia === a} onPress={() => definirAparencia(a)} />
-          ))}
-        </View>
-        <Botao rotulo="Refazer onboarding" onPress={refazer} />
-        <Botao rotulo="Abrir tela de pausa" estilo="secundario" onPress={() => router.push('/pausa')} />
-      </View>
+      <SeusDados />
+      <Sobre />
 
-      <Folha
-        visivel={confirmar}
-        onFechar={() => setConfirmar(false)}
-        titulo="Apagar tudo?"
-        descricao="Seus momentos, áudios, fotos, grupos e hobbies saem deste celular e não dá para desfazer. Se quiser guardar uma cópia, exporte antes."
-      >
-        <Botao rotulo="Apagar tudo" onPress={apagar} estado={ocupado ? 'desabilitado' : 'normal'} disabled={ocupado} />
-        <Botao rotulo="Cancelar" estilo="secundario" onPress={() => setConfirmar(false)} />
-      </Folha>
+      {__DEV__ ? (
+        <CartaoAjustes rotulo="Para testes">
+          <Botao
+            rotulo="Refazer onboarding"
+            onPress={async () => {
+              await refazerOnboarding();
+              router.replace('/onboarding');
+            }}
+          />
+          <Botao rotulo="Abrir tela de pausa" estilo="secundario" onPress={() => router.push('/pausa')} />
+        </CartaoAjustes>
+      ) : null}
+
+      {/* A barra de navegação flutua sobre o fim da página. */}
+      <View style={{ height: espacoBarra }} />
     </Tela>
   );
 }
-
-const styles = StyleSheet.create({
-  cartao: { gap: space[12], padding: space[16], borderRadius: radius.card },
-  aparencia: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
-});

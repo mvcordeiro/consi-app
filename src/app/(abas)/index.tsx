@@ -15,6 +15,7 @@ import {
 import { hobbyInfo } from '@/data/catalogo';
 import type { Emocao } from '@/data/emocoes';
 import { respostasSalvas } from '@/data/onboarding';
+import { usePreferencias } from '@/data/preferencias';
 import { space } from '@/theme';
 
 const ALTURA_TOPO = 40;
@@ -42,6 +43,7 @@ export default function Inicio() {
   // Altura real da área da Home (no Android edge-to-edge pode diferir da janela).
   const [alturaTela, setAlturaTela] = useState(height);
   const { imersivo, saida } = useModoImersivo();
+  const { secoesHome } = usePreferencias();
   const rolagem = useRef<{ scrollTo: (o: { y: number; animated: boolean }) => void } | null>(null);
 
   // Ao entrar no modo imersivo, volta para o alto: as emoções ocupam a primeira tela.
@@ -95,18 +97,35 @@ export default function Inicio() {
         </View>
       </View>
       {/* Reflexões e "Padrões encontrados" voltam quando houver uso registrado suficiente para gerá-los. */}
-      <Conteudos onVerTudo={(secao) => emConstrucao(secao)} onAbrir={(c) => emConstrucao(c.titulo)} />
-      <Drops
-        margem={space[24]}
-        onArrastando={setArrastandoDrop}
-        onAceito={(s) => mostrarAviso(`Adicionada em Suas atividades · ${hobbyInfo(s.hobby).nome}`)}
-      />
-      <Grupos
-        onAbrir={(g) => router.push({ pathname: '/grupo/[id]', params: { id: g.id } })}
-        onCriar={() => router.push('/grupo/criar')}
-        onAjustes={() => router.push('/grupos-home')}
-      />
-      <SuaSemana margem={space[24]} onArrastando={setArrastandoDrop} onAviso={mostrarAviso} />
+      {/* Seções abaixo da hero: ordem e visibilidade vêm de Ajustes → Personalizar. */}
+      {secoesHome
+        .filter((s) => s.visivel)
+        .map(({ id }) => {
+          switch (id) {
+            case 'conteudos':
+              return <Conteudos key={id} onVerTudo={(secao) => emConstrucao(secao)} onAbrir={(c) => emConstrucao(c.titulo)} />;
+            case 'drops':
+              return (
+                <Drops
+                  key={id}
+                  margem={space[24]}
+                  onArrastando={setArrastandoDrop}
+                  onAceito={(s) => mostrarAviso(`Adicionada em Suas atividades · ${hobbyInfo(s.hobby).nome}`)}
+                />
+              );
+            case 'grupos':
+              return (
+                <Grupos
+                  key={id}
+                  onAbrir={(g) => router.push({ pathname: '/grupo/[id]', params: { id: g.id } })}
+                  onCriar={() => router.push('/grupo/criar')}
+                  onAjustes={() => router.push('/grupos-home')}
+                />
+              );
+            case 'semana':
+              return <SuaSemana key={id} margem={space[24]} onArrastando={setArrastandoDrop} onAviso={mostrarAviso} />;
+          }
+        })}
     </ScrollView>
     {aviso}
     </View>

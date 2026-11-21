@@ -1,5 +1,6 @@
 import { Text, type TextProps } from 'react-native';
 
+import { FATOR_TEXTO, usePreferencias } from '@/data/preferencias';
 import { tipografia, useTema, type EstiloDeTexto } from '@/theme';
 
 type Props = TextProps & {
@@ -12,5 +13,12 @@ type Props = TextProps & {
 /** Texto padrão do app: use no lugar do <Text> do React Native. */
 export function Texto({ estilo = 'Texto/Médio', cor, style, ...rest }: Props) {
   const { cores } = useTema();
-  return <Text style={[tipografia[estilo], { color: cor ?? cores.text.primary }, style]} {...rest} />;
+  // "Texto maior" em Ajustes: aumenta tamanho e entrelinha do estilo do Figma.
+  const fator = FATOR_TEXTO[usePreferencias().tamanhoTexto];
+  const base = tipografia[estilo];
+  const escala =
+    fator === 1 || base.fontSize === undefined
+      ? null
+      : { fontSize: base.fontSize * fator, lineHeight: base.lineHeight === undefined ? undefined : base.lineHeight * fator };
+  return <Text style={[base, escala, { color: cor ?? cores.text.primary }, style]} {...rest} />;
 }
