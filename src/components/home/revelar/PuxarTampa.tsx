@@ -3,8 +3,7 @@ import { Animated, Easing, PanResponder, Platform, StyleSheet, View, type Layout
 
 import { borderWidth, easing, radius, space, useTema } from '@/theme';
 
-import { Texto } from '../../Texto';
-import { Cabeca, Casca, Previa, vibrar, type PropsMecanica } from './comum';
+import { Cabeca, Casca, PAUSA_PREVIA, Previa, vibrar, type PropsMecanica } from './comum';
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
@@ -68,7 +67,7 @@ export function PuxarTampa({ onRevelar, onArrastando, hobbyPrevia, movimentoRedu
           onArrastando(false);
           vibrar('sucesso');
           Animated.timing(y, { toValue: -altura - 24, duration: 260, easing: curva, useNativeDriver: nativo }).start(() =>
-            setTimeout(onRevelar, 300),
+            setTimeout(onRevelar, PAUSA_PREVIA),
           );
         } else voltar();
       },
@@ -96,21 +95,20 @@ export function PuxarTampa({ onRevelar, onArrastando, hobbyPrevia, movimentoRedu
         ]}
       >
         <Animated.View style={[styles.conteudoTampa, { opacity: sombra }]}>
-          <Cabeca instrucao="Levante a tampa e descubra uma atividade feita para o seu momento." />
+          <Cabeca instrucao="Puxe a tampa para cima e descubra uma atividade feita para o seu momento." />
         </Animated.View>
-        {/* Aba larga na base: é só ela que pega o gesto, para não brigar com a rolagem. */}
+        {/* Faixa larga na base, só com o pegador: é ela que pega o gesto, para não brigar com a rolagem. */}
         <View
           {...pan.panHandlers}
-          hitSlop={{ top: 12, bottom: 12 }}
-          style={[styles.aba, { backgroundColor: cores.action.primary.default }]}
+          hitSlop={{ top: 16, bottom: 12 }}
+          style={styles.aba}
           accessible
           accessibilityRole="adjustable"
-          accessibilityLabel="Puxe a aba para cima para revelar"
+          accessibilityLabel="Puxe a tampa para cima para revelar"
           accessibilityActions={[{ name: 'activate', label: 'Revelar drop' }]}
           onAccessibilityAction={onRevelar}
         >
-          <View style={[styles.pegador, { backgroundColor: cores.text.primary }]} />
-          <Texto estilo="Texto/Botões e rótulos">Puxe para cima</Texto>
+          <View style={[styles.pegador, { backgroundColor: cores.border.focus }]} />
         </View>
       </Animated.View>
     </Casca>
@@ -118,7 +116,7 @@ export function PuxarTampa({ onRevelar, onArrastando, hobbyPrevia, movimentoRedu
 }
 
 const styles = StyleSheet.create({
-  casca: { minHeight: 250, justifyContent: 'center' },
+  casca: { minHeight: 236, justifyContent: 'center' },
   tampa: {
     ...StyleSheet.absoluteFill,
     borderRadius: radius.xl,
@@ -129,13 +127,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   conteudoTampa: { alignItems: 'center', gap: space[16] },
-  aba: {
-    alignSelf: 'stretch',
-    height: 54,
-    borderRadius: 27,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  pegador: { width: 32, height: 4, borderRadius: 2, opacity: 0.6 },
+  aba: { alignSelf: 'stretch', height: 48, alignItems: 'center', justifyContent: 'center' },
+  pegador: { width: 48, height: 5, borderRadius: 3 },
 });

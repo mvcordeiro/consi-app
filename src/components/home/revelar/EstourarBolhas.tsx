@@ -5,7 +5,7 @@ import { Animated, Easing, Platform, Pressable, StyleSheet, View, type LayoutCha
 import { useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
-import { Casca, Previa, vibrar, type PropsMecanica } from './comum';
+import { Casca, PAUSA_PREVIA, Previa, vibrar, type PropsMecanica } from './comum';
 
 const nativo = Platform.OS !== 'web';
 
@@ -37,7 +37,7 @@ export function EstourarBolhas({ onRevelar, hobbyPrevia, movimentoReduzido }: Pr
     if (novas.length === BOLHAS.length) {
       fim.current = true;
       vibrar('sucesso');
-      setTimeout(onRevelar, 600);
+      setTimeout(onRevelar, PAUSA_PREVIA);
     }
   };
 

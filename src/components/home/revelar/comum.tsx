@@ -135,6 +135,9 @@ export function RevelarSemGesto({ onRevelar }: { onRevelar: () => void }) {
 
 export const ICONE_DROP = 52;
 
+/** Quanto tempo a prévia (o hobby do drop, por baixo da cobertura) fica na tela antes da revelação. */
+export const PAUSA_PREVIA = 1400;
+
 const styles = StyleSheet.create({
   centro: { textAlign: 'center', alignSelf: 'stretch' },
   card: {

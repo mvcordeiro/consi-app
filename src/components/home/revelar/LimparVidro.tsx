@@ -5,7 +5,7 @@ import Svg, { Circle, Defs, G, Mask, Path, Rect } from 'react-native-svg';
 import { duration, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
-import { Casca, Previa, vibrar, type PropsMecanica } from './comum';
+import { Casca, PAUSA_PREVIA, Previa, vibrar, type PropsMecanica } from './comum';
 
 const nativo = Platform.OS !== 'web';
 
@@ -75,7 +75,7 @@ export function LimparVidro({ onRevelar, onArrastando, hobbyPrevia }: PropsMecan
       onArrastando(false);
       vibrar('sucesso');
       Animated.timing(neblina, { toValue: 0, duration: 420, useNativeDriver: nativo }).start(() =>
-        setTimeout(onRevelar, 350),
+        setTimeout(onRevelar, PAUSA_PREVIA),
       );
     };
 

@@ -13,7 +13,7 @@ import { easing, radius, space, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
 import { IconeHobbies } from '../assets';
-import { Casca, Previa, vibrar, type PropsMecanica } from './comum';
+import { Casca, PAUSA_PREVIA, Previa, vibrar, type PropsMecanica } from './comum';
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
@@ -74,7 +74,7 @@ export function VirarCarta({ onRevelar, onArrastando, hobbyPrevia }: PropsMecani
           onArrastando(false);
           vibrar('sucesso');
           Animated.timing(giro, { toValue: g.dx < 0 ? -1 : 1, duration: 240, easing: curva, useNativeDriver: nativo }).start(() =>
-            setTimeout(onRevelar, 450),
+            setTimeout(onRevelar, PAUSA_PREVIA),
           );
         } else voltar();
       },
@@ -110,7 +110,7 @@ export function VirarCarta({ onRevelar, onArrastando, hobbyPrevia }: PropsMecani
       <Animated.View style={{ opacity: opFrente, transform: [{ perspective: 900 }, { rotateY: frente }] }}>
         <Casca style={[styles.altura, { backgroundColor: cores.action.primary.default, borderColor: cores.action.primary.pressed }]}>
           <View style={[styles.moldura, { borderColor: cores.text.primary }]} pointerEvents="none" />
-          <View style={[styles.selo, { backgroundColor: cores.action.primary.pressed }]}>
+          <View style={[styles.selo, { backgroundColor: cores.bg.base }]}>
             <IconeHobbies width={28} height={28} corTraco={cores.text.primary} />
           </View>
           <Texto estilo="Títulos/Médio" style={styles.centro}>
