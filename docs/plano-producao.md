@@ -163,6 +163,18 @@ Android 13+, apps instalados fora da loja não conseguem ligar a Acessibilidade 
   compromisso. Ajustes ganhou "Pausa nos apps",
   com as três permissões (Acesso de uso, Sobrepor, Notificações), o que deixa de funcionar sem cada uma
   e o liga/desliga. Explicações no tom do Consi e a tela dedicada a Sobrepor são da fase 4.
+- **Timer no app** (`Bolha.kt`, design no Figma 736:13664): com um app de "Apenas pausar" (depois de
+  escolher o tempo) ou "Cuidar tempo" na frente, há sempre uma contagem visível. Ou o timer flutuante
+  (pílula, faixa ou bolha, escolhido no grupo; arrastável, encosta na borda; soltar no X embaixo esconde
+  até sair do app), ou o cronômetro na notificação fixa do Consi (que volta se a pessoa a arrastar
+  para o lado). A notificação usa o símbolo monocromático do Consi.
+- **Configurações restritas:** no Android 13+ um APK de fora da loja não consegue ligar o Acesso de uso
+  sem antes liberar em Informações do app → ⋮ → "Permitir configurações restritas". O Consi detecta isso
+  (operação `access_restricted_settings`) e o onboarding e Ajustes mostram esse passo antes. A Play Store
+  (teste interno) acaba com esse passo e com os avisos de "app nocivo" ao instalar.
+- **Atualizar sem reinstalar:** mudanças só de JS/telas vão por EAS Update (canal `preview`) e chegam na
+  segunda abertura do app. Um APK novo (mudança nativa) instala por cima do antigo, sem desinstalar, desde
+  que o `versionCode` seja maior (a chave de assinatura é a mesma).
 - **Tempo de uso:** `ConsiPausa.usoPorApp(inicio, fim)` já devolve os minutos por app (eventos de uso),
   pronto para "Sua semana". Mostrar na Home ainda pede design.
 - Navegador e iPhone seguem como antes: apps de exemplo e a pausa aberta só por dentro do Consi.
