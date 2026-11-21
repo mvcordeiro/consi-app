@@ -1,2 +1,5 @@
 # Native files keep LF on every machine: CRLF changes the Expo fingerprint and blocks OTA updates.
 modules/** text eol=lf
+# Binaries inside modules/ must never be converted (fonts and PNGs were getting CRLF→LF and broke).
+modules/**/*.png binary
+modules/**/*.ttf binary
