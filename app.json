@@ -77,6 +77,10 @@
       "versaoNativa": {
         "url": "https://PREENCHER-ENDERECO-DO-ARQUIVO/consi-versao.json"
       },
+      "supabase": {
+        "url": "https://PREENCHER-PROJETO.supabase.co",
+        "anonKey": "PREENCHER-CHAVE-PUBLICA"
+      },
       "router": {
         "asyncRoutes": {
           "web": true
