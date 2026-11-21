@@ -150,13 +150,17 @@ Android 13+, apps instalados fora da loja não conseguem ligar a Acessibilidade 
 - **Regras:** `src/data/vigia.ts` manda os grupos para o Android (SharedPreferences) sempre que mudam, e
   liga o vigia quando há Acesso de uso (a não ser que a pessoa tenha desligado em Ajustes).
 - **Apps de verdade** (`src/data/apps.ts`): a lista do menu de apps com nome e ícone reais. O onboarding
-  mostra até 9: primeiro os conhecidos que estão instalados (Instagram, TikTok, YouTube…), depois os das
-  categorias social, vídeo, jogo, áudio, notícias e imagem. Os apps postos em "Me perco no tempo" e "Abro
+  mostra até 9: primeiro os **mais usados nas últimas duas semanas** (estatística de uso do Android, sem
+  telas iniciais e utilitários como Ajustes, telefone e câmera), completando com os conhecidos que estão
+  instalados (Instagram, TikTok, YouTube…) e os das categorias social, vídeo, jogo, áudio, notícias e
+  imagem. Por isso a tela de permissões vem **antes** da de arrastar apps. Os apps postos em "Me perco no tempo" e "Abro
   no automático" viram **acompanhados** e entram no Livre (que pausa); os de "Não me incomoda" e o resto
   do celular ficam de fora. Pôr um app num grupo também o torna acompanhado. Grupos antigos com os ids de
   exemplo ("instagram") passam para o pacote instalado sozinhos.
-- **Permissões:** o Continuar da tela F1 do onboarding abre o Acesso de uso do Android e segue sozinho
-  quando a pessoa volta com ele ligado (um segundo toque segue sem). Ajustes ganhou "Pausa nos apps",
+- **Permissões:** a tela F1 do onboarding segue o caminho real: um cartão por permissão (Acesso de uso,
+  Sobrepor, Notificações) com a tela do sistema que vai abrir; o botão abre a próxima que falta e o cartão
+  vira "Ligado" ao voltar; "Agora não" pula. Ordem do onboarding: … → hobbies → permissões → apps →
+  compromisso. Ajustes ganhou "Pausa nos apps",
   com as três permissões (Acesso de uso, Sobrepor, Notificações), o que deixa de funcionar sem cada uma
   e o liga/desliga. Explicações no tom do Consi e a tela dedicada a Sobrepor são da fase 4.
 - **Tempo de uso:** `ConsiPausa.usoPorApp(inicio, fim)` já devolve os minutos por app (eventos de uso),
