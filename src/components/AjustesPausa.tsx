@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import {
+  abrirInfoDoApp,
   ligarVigia,
   pedirAcessoUso,
   pedirNotificacoes,
@@ -38,6 +39,15 @@ export function AjustesPausa() {
         O Consi abre uma pausa antes dos apps dos seus grupos. Para isso, o Android pede algumas permissões.
       </Texto>
 
+      {permissoes.restritas && !permissoes.acessoUso ? (
+        <View style={styles.permissao}>
+          <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
+            O Android bloqueia o Acesso de uso em apps instalados fora da loja. Em Informações do app, toque no ⋮ e em
+            Permitir configurações restritas.
+          </Texto>
+          <Botao rotulo="Abrir informações do Consi" estilo="secundario" onPress={abrirInfoDoApp} />
+        </View>
+      ) : null}
       <Permissao
         titulo="Acesso de uso"
         ligada={permissoes.acessoUso}

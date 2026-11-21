@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Botao, Icone, Texto } from '@/components';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { PontoNotificacao, SetaVoltar, SwitchLigado } from '@/components/onboarding/assets';
 import {
+  abrirInfoDoApp,
   pedirAcessoUso,
   pedirNotificacoes,
   pedirSobrepor,
@@ -25,6 +26,11 @@ import { borderWidth, gap, radius, space, useCoresSvg, useTema } from '@/theme';
  * Com tudo resolvido, o botão vira Continuar e segue para os apps (que já usam o Acesso de uso
  * para mostrar os mais usados).
  * No navegador e no iPhone não há permissões reais: os cartões só ilustram e o botão segue.
+ *
+ * Configurações restritas (Android 13+, APK de fora da loja): o Android bloqueia o Acesso de uso
+ * até a pessoa liberar em Informações do app → ⋮ → "Permitir configurações restritas". Quando
+ * o Consi percebe o bloqueio, o primeiro passo vira esse; e sempre há o atalho "O Android
+ * bloqueou?" no cartão do Acesso de uso.
  */
 type Chave = 'acessoUso' | 'sobrepor' | 'notificacoes';
 
@@ -69,6 +75,9 @@ export default function F1Permissoes() {
   // A próxima permissão a pedir: a primeira que não está ligada nem foi pulada.
   const vez = temPausaDeVerdade ? PERMISSOES.find((p) => !ligada(p.chave) && !puladas.includes(p.chave)) : undefined;
 
+  // Acesso de uso bloqueado pelas configurações restritas: antes, liberar em Informações do app.
+  const bloqueada = vez?.chave === 'acessoUso' && permissoes.restritas;
+
   const seguir = () => transicao.sair(() => router.push('/onboarding/aplicativos'));
   const pedir = async (c: Chave) => {
     if (c === 'acessoUso') pedirAcessoUso();
@@ -88,7 +97,11 @@ export default function F1Permissoes() {
       rodape={
         vez ? (
           <View style={styles.rodape}>
-            <BotaoContinuar rotulo={vez.botao} onPress={() => pedir(vez.chave)} />
+            {bloqueada ? (
+              <BotaoContinuar rotulo="Abrir informações do Consi" onPress={abrirInfoDoApp} />
+            ) : (
+              <BotaoContinuar rotulo={vez.botao} onPress={() => pedir(vez.chave)} />
+            )}
             <Botao
               rotulo="Agora não"
               estilo="secundario"
@@ -123,12 +136,17 @@ export default function F1Permissoes() {
                     : 'espera'
             }
           >
-            {p.chave === 'acessoUso' ? (
-              <TelaDoSistema
-                lista="Acesso de uso"
-                opcao="Permitir acesso de uso"
-                nota="Alguns celulares abrem direto na tela do Consi."
-              />
+            {p.chave === 'acessoUso' && bloqueada ? (
+              <Restritas />
+            ) : p.chave === 'acessoUso' ? (
+              <>
+                <TelaDoSistema
+                  lista="Acesso de uso"
+                  opcao="Permitir acesso de uso"
+                  nota="Alguns celulares abrem direto na tela do Consi."
+                />
+                <LinkBloqueio />
+              </>
             ) : p.chave === 'sobrepor' ? (
               <TelaDoSistema
                 lista="Sobrepor a outros apps"
@@ -230,6 +248,59 @@ function TelaDoSistema({ lista, opcao, nota }: { lista: string; opcao: string; n
   );
 }
 
+/**
+ * Android 13+ com APK de fora da loja: o Acesso de uso aparece cinza ("configuração restrita").
+ * Libera em Informações do app → ⋮ (canto de cima) → "Permitir configurações restritas".
+ */
+function Restritas() {
+  const { cores } = useTema();
+  const coresSvg = useCoresSvg();
+  return (
+    <>
+      <Texto estilo="Texto/Pequeno">
+        Antes, o Android pede para liberar as configurações restritas, porque o Consi não veio da loja.
+      </Texto>
+      <View style={styles.linha}>
+        <View style={styles.seta}>
+          <SetaVoltar {...coresSvg} />
+        </View>
+        <Texto estilo="Texto/Médio" style={styles.flex}>
+          Informações do app
+        </Texto>
+        <View style={styles.comPonto}>
+          <Texto estilo="Títulos/Pequeno">⋮</Texto>
+          <View style={styles.ponto}>
+            <PontoNotificacao {...coresSvg} />
+          </View>
+        </View>
+      </View>
+      <View style={[styles.alternar, { borderColor: cores.border.focus }]}>
+        <Texto estilo="Texto/Botões e rótulos" style={styles.flex}>
+          Permitir configurações restritas
+        </Texto>
+      </View>
+      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+        Toque no ⋮ no canto de cima, depois em Permitir configurações restritas e confirme. Depois, use o voltar
+        do celular e abra o Acesso de uso.
+      </Texto>
+    </>
+  );
+}
+
+/** Atalho para quando o Android mostra o Acesso de uso bloqueado e o Consi não percebeu. */
+function LinkBloqueio() {
+  const { cores } = useTema();
+  if (!temPausaDeVerdade) return null;
+  return (
+    <Pressable onPress={abrirInfoDoApp} accessibilityRole="link" hitSlop={8}>
+      <Texto estilo="Legenda/Pequena" cor={cores.text.link} style={styles.sublinhado}>
+        O Android disse que é uma configuração restrita? Abra as informações do Consi, toque no ⋮ e em Permitir
+        configurações restritas.
+      </Texto>
+    </Pressable>
+  );
+}
+
 /** O aviso do próprio Android (Android 13+) para notificações. */
 function AvisoDoSistema() {
   const { cores } = useTema();
@@ -260,6 +331,7 @@ function Voltar({ rotulo }: { rotulo: string }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  sublinhado: { textDecorationLine: 'underline' },
   cabecalho: { gap: gap.default },
   passos: { marginTop: gap.section, gap: gap.section },
   passo: { gap: space[8] },

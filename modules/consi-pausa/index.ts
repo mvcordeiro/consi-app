@@ -28,6 +28,10 @@ type ModuloConsiPausa = {
   abrirAjustesAcessoUso(): void;
   abrirAjustesSobrepor(): void;
   abrirAjustesNotificacoes(): void;
+  /** Android 13+, APK de fora da loja: as configurações restritas ainda estão bloqueadas. */
+  configuracoesRestritas(): boolean;
+  /** Informações do app (⋮ → "Permitir configurações restritas"). */
+  abrirInfoDoApp(): void;
   /** Milissegundos na frente por pacote nos últimos `dias` (precisa de Acesso de uso; senão, vazio). */
   usoRecente(dias: number): Promise<Record<string, number>>;
   listarApps(lado: number): Promise<AppDoAparelho[]>;

@@ -42,6 +42,20 @@ class ConsiPausaModule : Module() {
 
     Function("abrirAjustesSobrepor") { abrirAjuste(Settings.ACTION_MANAGE_OVERLAY_PERMISSION) }
 
+    /**
+     * Android 13+ com APK instalado fora da loja: as "configurações restritas" ficam bloqueadas
+     * até a pessoa liberar em Informações do app → ⋮ → "Permitir configurações restritas".
+     * true = ainda bloqueadas (ou não dá para saber com certeza e é um APK de fora da loja).
+     */
+    Function("configuracoesRestritas") { restritas() }
+
+    /** Informações do app (onde fica o ⋮ → "Permitir configurações restritas"). */
+    Function("abrirInfoDoApp") {
+      val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
+      val atividade = appContext.currentActivity
+      if (atividade != null) atividade.startActivity(intent) else context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
     /** Notificações recusadas de vez (o Android não mostra mais o aviso): a página do Consi. */
     Function("abrirAjustesNotificacoes") {
       val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -93,6 +107,18 @@ class ConsiPausaModule : Module() {
         prefs.liberadoNaSessao = pacote
       }
       Notificacoes.cancelarPausa(context)
+    }
+  }
+
+  private fun restritas(): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return false
+    return try {
+      val ops = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
+      // Operação escondida do Android 13+; MODE_ALLOWED depois que a pessoa libera.
+      ops.unsafeCheckOpNoThrow("android:access_restricted_settings", android.os.Process.myUid(), context.packageName) !=
+        android.app.AppOpsManager.MODE_ALLOWED
+    } catch (_: Exception) {
+      false
     }
   }
 
