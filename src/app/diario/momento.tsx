@@ -19,6 +19,7 @@ import { space, useTema } from '@/theme';
 function origemDoMomento(m: Momento) {
   if (m.origem === 'pausa') return 'Registrado numa pausa';
   if (m.origem === 'home') return 'Registrado no Início';
+  if (m.origem === 'hobby') return 'Ao finalizar uma atividade';
   return 'Escrito no Diário';
 }
 
@@ -86,12 +87,16 @@ export default function EntradaMomento() {
           {momento.pergunta ? (
             <View
               style={[styles.pergunta, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}
-              accessibilityLabel={`Você respondeu à pergunta: ${momento.pergunta}`}
+              accessibilityLabel={
+                momento.origem === 'hobby'
+                  ? `Atividade concluída: ${momento.pergunta}`
+                  : `Você respondeu à pergunta: ${momento.pergunta}`
+              }
             >
               <View style={styles.perguntaTopo}>
                 <Icone nome="aspas" tamanho={16} cor={cores.text.accent} />
                 <Texto estilo="Legenda/Pequena" cor={cores.text.accent}>
-                  Você respondeu
+                  {momento.origem === 'hobby' ? 'Atividade concluída' : 'Você respondeu'}
                 </Texto>
               </View>
               <Texto estilo="Títulos/Pequeno">{momento.pergunta}</Texto>

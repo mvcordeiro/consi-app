@@ -154,7 +154,7 @@ export type MomentoGravado = {
   destaques?: { inicio: number; fim: number }[];
   marcadores?: string[];
   anexos?: AnexoGravado[];
-  origem?: 'home' | 'pausa' | 'diario';
+  origem?: 'home' | 'pausa' | 'diario' | 'hobby';
   editadoEm?: number;
   /** A pergunta ("prompt") da Página de hoje que a pessoa respondeu. */
   pergunta?: string;

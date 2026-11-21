@@ -1,6 +1,7 @@
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { sentimentos, type AtividadeMinha } from '@/data/catalogo';
+import { emocaoPorId } from '@/data/emocoes';
 import { dataCurta } from '@/data/hobbiesEstado';
 import { radius, space, useTema } from '@/theme';
 
@@ -102,7 +103,11 @@ export function CardAtividade({
             tom="sucesso"
             iconeNode={<Icone nome="rosto-positivo" tamanho={16} cor={cores.text.primary} />}
           />
-          {atividade.sentimento ? <Etiqueta rotulo={sentimentos[atividade.sentimento].rotulo} tom="info" /> : null}
+          {atividade.emocao ? (
+            <Etiqueta rotulo={emocaoPorId(atividade.emocao)?.nome ?? ''} tom="info" />
+          ) : atividade.sentimento ? (
+            <Etiqueta rotulo={sentimentos[atividade.sentimento].rotulo} tom="info" />
+          ) : null}
         </View>
       ) : (
         <View style={styles.acoes}>

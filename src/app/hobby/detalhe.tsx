@@ -8,6 +8,7 @@ import { Blocos } from '@/components/blocos';
 import { ChevronDireita } from '@/components/home/assets';
 import { IconeHobby, irPara, useAcoesAtividade } from '@/components/hobbies';
 import { hobbyInfo, sentimentos } from '@/data/catalogo';
+import { emocaoPorId } from '@/data/emocoes';
 import { dataCurta, useHobbies } from '@/data/hobbiesEstado';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
 
@@ -112,7 +113,11 @@ export default function Detalhe() {
             <Texto estilo="Títulos/Pequeno">
               {minha.concluidaEm ? `Você concluiu em ${dataCurta(minha.concluidaEm)}` : 'Você concluiu'}
             </Texto>
-            {minha.sentimento ? (
+            {minha.emocao ? (
+              <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
+                {`Sentiu: ${emocaoPorId(minha.emocao)?.nome ?? ''}`}
+              </Texto>
+            ) : minha.sentimento ? (
               <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
                 {`Sentiu: ${sentimentos[minha.sentimento].rotulo}`}
               </Texto>

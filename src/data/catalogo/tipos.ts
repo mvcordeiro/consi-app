@@ -126,7 +126,12 @@ export type AtividadeMinha = Omit<Atividade, 'quando'> & {
   novidade: boolean;
   criadaEm: number;
   concluidaEm?: number;
+  /** Versões antigas: Leveza, Calma, Cansaço ou Distração. As novas guardam `emocao`. */
   sentimento?: Sentimento;
+  /** Emoção do Diário escolhida ao finalizar (ver data/emocoes.ts). */
+  emocao?: string;
+  /** O momento do Diário criado ao finalizar (o instante `em`). */
+  momentoEm?: number;
   nota?: string;
   lembrete?: Lembrete;
 };

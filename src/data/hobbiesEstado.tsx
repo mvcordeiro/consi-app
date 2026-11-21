@@ -13,7 +13,6 @@ import {
   type Lembrete,
   type Permissoes,
   type ReacaoId,
-  type Sentimento,
   type Visibilidade,
 } from './catalogo';
 import { gravarEstado, lerEstado } from './banco';
@@ -94,7 +93,8 @@ type Contexto = {
   atualizar: (id: string, d: DadosAtividade) => void;
   apagar: (id: string) => void;
   desfazerApagar: () => void;
-  finalizar: (id: string, sentimento: Sentimento | null, nota: string) => void;
+  /** Conclui a atividade com a emoção do Diário, a nota e o momento criado no Diário (se houver). */
+  finalizar: (id: string, dados: { emocao: string | null; nota: string; momentoEm?: number }) => void;
   alternarTarefa: (id: string, blocoId: string) => void;
   agendar: (id: string, lembrete: Lembrete | null) => void;
   comentar: (id: string, c: { texto?: string; imagem?: string; paiId?: string }) => void;
@@ -330,12 +330,13 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
   );
 
   const finalizar = useCallback(
-    (id: string, sentimento: Sentimento | null, nota: string) =>
+    (id: string, { emocao, nota, momentoEm }: { emocao: string | null; nota: string; momentoEm?: number }) =>
       mudar(id, (x) => ({
         ...x,
         status: 'concluida',
         concluidaEm: Date.now(),
-        sentimento: sentimento ?? undefined,
+        emocao: emocao ?? undefined,
+        momentoEm,
         nota: nota.trim() || undefined,
         lembrete: undefined,
       })),
