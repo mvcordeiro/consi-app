@@ -106,7 +106,11 @@ internal object Notificacoes {
 
   fun atualizarFixa(context: Context, contagem: Contagem?) = publicar(context, ID_FIXA, fixa(context, contagem))
 
-  fun lembrete(context: Context, regra: Regra, pacote: String, minutos: Int) =
+  /**
+   * Lembrete do "Cuidar tempo". `calado`: o timer flutuante já avisou (pulsou e vibrou), então
+   * a notificação entra na gaveta sem som, sem vibrar e sem aparecer por cima.
+   */
+  fun lembrete(context: Context, regra: Regra, pacote: String, minutos: Int, calado: Boolean = false) =
     publicar(
       context,
       ID_LEMBRETE,
@@ -115,6 +119,7 @@ internal object Notificacoes {
         .setContentTitle("Você está há $minutos min no ${regra.nome}")
         .setContentText("Que tal uma pausa para ver como você está?")
         .setAutoCancel(true)
+        .setSilent(calado)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setContentIntent(abrirPausa(context, pacote, regra.grupo, 2))

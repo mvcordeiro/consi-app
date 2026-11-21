@@ -132,6 +132,57 @@ internal class Bolha(private val context: Context, private val aoDescartar: () -
     runCatching { wm.updateViewLayout(v, p) }
   }
 
+  /**
+   * O timer chegou ao fim sem abrir a pausa ("Só reiniciar o timer"): a bolha pulsa três
+   * vezes, com a borda em laranja (action/secondary), e o celular dá uma vibração curta e leve.
+   */
+  fun concluir() {
+    val v = vista ?: return
+    val fundo = v.background as? GradientDrawable
+    fundo?.setStroke(dpi(2f), Color.parseColor("#FAAA27"))
+    v.animate().cancel()
+    val pulso = ValueAnimator.ofFloat(0f, 1f).apply {
+      duration = 1_200
+      addUpdateListener {
+        val t = it.animatedFraction
+        // três pulsos de 1 → 1,12 → 1, cada um em 400 ms
+        val s = 1f + 0.12f * abs(kotlin.math.sin(t * 3 * Math.PI)).toFloat()
+        v.scaleX = s
+        v.scaleY = s
+      }
+      addListener(object : android.animation.AnimatorListenerAdapter() {
+        override fun onAnimationEnd(animation: android.animation.Animator) {
+          v.scaleX = 1f
+          v.scaleY = 1f
+          fundo?.setStroke(dpi(1f), Color.parseColor("#6A82EA"))
+        }
+      })
+    }
+    pulso.start()
+    vibrarDeLeve()
+  }
+
+  private fun vibrarDeLeve() {
+    try {
+      val vibrador = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager).defaultVibrator
+      } else {
+        @Suppress("DEPRECATION")
+        context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+      }
+      if (!vibrador.hasVibrator()) return
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // dois toques curtos e fracos (amplitude ~25 %)
+        vibrador.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 35, 90, 35), intArrayOf(0, 64, 0, 64), -1))
+      } else {
+        @Suppress("DEPRECATION")
+        vibrador.vibrate(longArrayOf(0, 35, 90, 35), -1)
+      }
+    } catch (_: Exception) {
+      // sem vibração: fica só a animação
+    }
+  }
+
   fun esconder() {
     handler.removeCallbacks(relogio)
     vista?.let { runCatching { wm.removeView(it) } }

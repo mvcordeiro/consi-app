@@ -10,6 +10,8 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
   <!-- Lembretes do "Cuidar tempo" e a notificação fixa do vigia. -->
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <!-- Vibração curta do timer flutuante quando o "Cuidar tempo" termina. -->
+  <uses-permission android:name="android.permission.VIBRATE" />
   <!-- Voltar a vigiar depois de reiniciar o celular. -->
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 

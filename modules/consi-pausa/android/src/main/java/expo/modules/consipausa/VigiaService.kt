@@ -20,8 +20,8 @@ import androidx.core.content.ContextCompat
  * - Apenas pausar: abre a pausa do Consi por cima do app, a não ser que ele esteja liberado
  *   (a pessoa escolheu um tempo no "Quanto tempo você precisa?"). Quando o tempo acaba com o
  *   app ainda aberto, a pausa volta.
- * - Cuidar tempo: a cada X minutos seguidos no app, um lembrete. Se o grupo diz que ignorar
- *   leva à pausa, a pausa abre 1 minuto depois do lembrete se a pessoa continuar no app.
+ * - Cuidar tempo: a cada X minutos seguidos no app, um lembrete. Com "Levar para a pausa",
+ *   no fim do timer a pausa abre direto por cima do app, no lugar do lembrete.
  * Com um app desses na frente há sempre uma contagem visível: o timer flutuante (Bolha.kt) ou,
  * se o grupo não quer o flutuante ou a pessoa o arrastou para o X, a notificação fixa.
  * Abrir uma tela por cima de outro app exige a permissão de sobrepor; sem ela, a pausa vira
@@ -39,7 +39,6 @@ class VigiaService : Service() {
   private var naFrente: String? = null
   private var desdeNaFrente = 0L
   private var proximoLembrete = 0L
-  private var pausaDepoisDoLembrete = 0L
   private var ultimaPausa: Pair<String, Long>? = null
   private var inicios: Set<String> = emptySet()
   /** A pessoa arrastou o timer para o X neste uso do app: só a notificação conta. */
@@ -153,7 +152,6 @@ class VigiaService : Service() {
       // A liberação "até sair do app" e o X do timer valem só para o uso anterior.
       if (ultimoApp != null && ultimoApp == prefs.liberadoNaSessao) prefs.liberadoNaSessao = null
       bolhaDescartadaPara = null
-      pausaDepoisDoLembrete = 0L
       desdeNaFrente = agora
     }
     ultimoApp = app
@@ -177,21 +175,31 @@ class VigiaService : Service() {
 
   private fun liberado(app: String, agora: Long) = prefs.liberadoAte(app) > agora || prefs.liberadoNaSessao == app
 
+  /**
+   * O timer do "Cuidar tempo" chegou ao fim:
+   * - "Levar para a pausa": a pausa abre na hora, por cima do app (sem notificação antes).
+   *   A notificação só aparece quando a pausa não pode abrir sozinha (sem a permissão de
+   *   sobrepor, ou o Android recusou abrir a tela) e aí é ela que leva à pausa.
+   *   Antes, o lembrete saía primeiro e a pausa só abria 1 minuto depois, se a pessoa
+   *   continuasse no app: era o atraso entre a notificação e a pausa.
+   * - "Só reiniciar o timer": o lembrete e, se o timer flutuante estiver na tela, ele pulsa e
+   *   vibra de leve (aí a notificação entra calada, para não vibrar duas vezes).
+   */
   private fun cuidarTempo(app: String, regra: Regra, agora: Long) {
     val intervalo = regra.intervaloMin * 60_000L
     if (proximoLembrete == 0L) proximoLembrete = agora + intervalo
-    if (agora >= proximoLembrete) {
-      val minutos = ((agora - desdeNaFrente) / 60_000L).toInt().coerceAtLeast(1)
-      Notificacoes.lembrete(this, regra, app, minutos)
-      // "Só reiniciar o timer": a contagem recomeça daqui.
-      proximoLembrete = agora + intervalo
-      prefs.guardarCiclo(app, proximoLembrete, agora)
-      if (regra.aoIgnorar == "pausa") pausaDepoisDoLembrete = agora + IGNORAR_LEMBRETE_MS
+    if (agora < proximoLembrete) return
+    // A contagem recomeça daqui, nos dois casos.
+    proximoLembrete = agora + intervalo
+    prefs.guardarCiclo(app, proximoLembrete, agora)
+    if (regra.aoIgnorar == "pausa" && !liberado(app, agora)) {
+      abrirPausa(app, regra, agora)
+      return
     }
-    if (pausaDepoisDoLembrete in 1..agora) {
-      pausaDepoisDoLembrete = 0L
-      if (!liberado(app, agora)) abrirPausa(app, regra, agora)
-    }
+    val minutos = ((agora - desdeNaFrente) / 60_000L).toInt().coerceAtLeast(1)
+    val comBolha = bolha.visivel
+    Notificacoes.lembrete(this, regra, app, minutos, calado = comBolha)
+    if (comBolha) bolha.concluir()
   }
 
   /**
@@ -261,7 +269,6 @@ class VigiaService : Service() {
     private const val INTERVALO_TELA_APAGADA_MS = 3_000L
     private const val JANELA_MS = 30_000L
     private const val REABRIR_PAUSA_MS = 4_000L
-    private const val IGNORAR_LEMBRETE_MS = 60_000L
     /** Longe do app por mais que isso (tela apagada, outro app…) = um uso novo ao voltar. */
     private const val LONGE_MS = 10 * 60_000L
 
