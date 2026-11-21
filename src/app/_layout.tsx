@@ -2,9 +2,10 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 
 import { AvisoNovaVersao } from '@/components/AvisoNovaVersao';
+import { useAparencia } from '@/data/aparencia';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
 import { useVigia } from '@/data/vigia';
 import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
@@ -26,12 +27,18 @@ export default function RootLayout() {
   if (!carregou && !erro) return null;
 
   return (
-    <ModoDeCor>
+    <ComAparencia>
       <HobbiesProvider>
         <Pilha />
       </HobbiesProvider>
-    </ModoDeCor>
+    </ComAparencia>
   );
+}
+
+/** O modo de cor: o do celular, ou o escolhido em Ajustes (Claro / Escuro, provisório). */
+function ComAparencia({ children }: { children: ReactNode }) {
+  const aparencia = useAparencia();
+  return <ModoDeCor modo={aparencia === 'sistema' ? undefined : aparencia}>{children}</ModoDeCor>;
 }
 
 function Pilha() {

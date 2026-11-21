@@ -7,6 +7,8 @@ import { DevSettings, StyleSheet, View } from 'react-native';
 
 import { Botao, Folha, Tela, Texto } from '@/components';
 import { AjustesPausa } from '@/components/AjustesPausa';
+import { Filtro } from '@/components/Filtro';
+import { definirAparencia, useAparencia, type Aparencia } from '@/data/aparencia';
 import { apagarTudo, exportarTudo } from '@/data/banco';
 import { chaveDia } from '@/data/momentos';
 import { refazerOnboarding } from '@/data/onboarding';
@@ -22,6 +24,7 @@ export default function Ajustes() {
   const [confirmar, setConfirmar] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  const aparencia = useAparencia();
 
   const refazer = async () => {
     await refazerOnboarding();
@@ -82,6 +85,19 @@ export default function Ajustes() {
         <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
           PARA TESTES
         </Texto>
+        {/* PROVISÓRIO: trocar o modo sem mexer no tema do celular */}
+        <Texto cor={cores.text.secondary}>Aparência</Texto>
+        <View style={styles.aparencia}>
+          {(
+            [
+              ['sistema', 'Do celular'],
+              ['light', 'Claro'],
+              ['dark', 'Escuro'],
+            ] as [Aparencia, string][]
+          ).map(([a, rotulo]) => (
+            <Filtro key={a} rotulo={rotulo} ativo={aparencia === a} onPress={() => definirAparencia(a)} />
+          ))}
+        </View>
         <Botao rotulo="Refazer onboarding" onPress={refazer} />
         <Botao rotulo="Abrir tela de pausa" estilo="secundario" onPress={() => router.push('/pausa')} />
       </View>
@@ -101,4 +117,5 @@ export default function Ajustes() {
 
 const styles = StyleSheet.create({
   cartao: { gap: space[12], padding: space[16], borderRadius: radius.card },
+  aparencia: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
 });
