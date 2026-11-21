@@ -113,4 +113,7 @@ delete from auth.users u
 Testado localmente (Postgres em memória) com dois anônimos e um admin: B não vê a pendente de A; o cliente não
 consegue se publicar nem mudar o placar; a 4ª sugestão no dia falha; voto duplo vira troca; ninguém mexe no
 voto do outro; 3 denúncias escondem; versões em rascunho não aparecem; `mesclar_sugestoes` só para admin.
-Depois de criar o projeto, vale repetir o essencial pelo app: enviar como A, aprovar como admin e votar como B.
+No projeto Consi (2026-11-21), com supabase-js e um anônimo descartável (apagado depois): login anônimo, não é admin,
+o envio vira `pendente` com placar zerado, a pendente fica fora do ranking e não recebe voto, edição ou denúncia;
+depois de publicada aparece no ranking, voto +1 → -1 → removido atualiza o placar, denúncia repetida dá `23505`,
+denúncias não são legíveis, a publicada não pode ser apagada pelo autor e a 4ª sugestão do dia é barrada.
