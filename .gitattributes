@@ -1,0 +1,2 @@
+# Native files keep LF on every machine: CRLF changes the Expo fingerprint and blocks OTA updates.
+modules/** text eol=lf
