@@ -21,7 +21,8 @@ export type CategoriaId =
   | 'maos'
   | 'corpo'
   | 'pessoas'
-  | 'natureza';
+  | 'natureza'
+  | 'meus';
 
 export type Categoria = { id: CategoriaId; nome: string; descricao: string };
 

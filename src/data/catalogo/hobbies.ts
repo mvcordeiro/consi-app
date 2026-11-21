@@ -15,6 +15,7 @@ export const categorias: Categoria[] = [
   { id: 'corpo', nome: 'Corpo e movimento', descricao: 'Mexer o corpo e respirar melhor.' },
   { id: 'pessoas', nome: 'Com outras pessoas', descricao: 'Encontros, palco e ajuda.' },
   { id: 'natureza', nome: 'Natureza e descobertas', descricao: 'Sair, observar e cuidar.' },
+  { id: 'meus', nome: 'Criados por você', descricao: 'Hobbies que você adicionou.' },
 ];
 
 /**
@@ -98,9 +99,22 @@ export const catalogoHobbies: HobbyInfo[] = [
 
 const porId = new Map(catalogoHobbies.map((h) => [h.id, h]));
 
-/** Hobby do catálogo; um id desconhecido (removido do servidor) vira um hobby genérico. */
+/** Um hobby criado pela pessoa entra no catálogo (ver hobbiesPersonalizados.ts). */
+export function registrarHobby(h: HobbyInfo) {
+  if (porId.has(h.id)) return;
+  catalogoHobbies.push(h);
+  porId.set(h.id, h);
+}
+
+/**
+ * Hobby do catálogo. Um hobby criado (`meu:Nome`) ainda não carregado mostra o nome do id;
+ * um id desconhecido (removido do servidor) vira um hobby genérico.
+ */
 export function hobbyInfo(id: HobbyId): HobbyInfo {
-  return porId.get(id) ?? { id, nome: id, categoria: 'maos', icone: 'lampada', iconeProvisorio: true };
+  const h = porId.get(id);
+  if (h) return h;
+  if (id.startsWith('meu:')) return { id, nome: id.slice(4), categoria: 'meus', icone: 'lampada' };
+  return { id, nome: id, categoria: 'maos', icone: 'lampada', iconeProvisorio: true };
 }
 
 export function hobbiesDaCategoria(c: CategoriaId) {

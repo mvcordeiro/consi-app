@@ -5,8 +5,9 @@ import { StyleSheet, View } from 'react-native';
 import { Texto } from '@/components';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { CanvasHobbies } from '@/components/hobbies';
+import { BuscaHobbies } from '@/components/hobbies/BuscaHobbies';
 import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
-import { HOBBIES_ORIGINAIS } from '@/data/catalogo';
+import { buscarHobbies, HOBBIES_ORIGINAIS } from '@/data/catalogo';
 import { MAX_HOBBIES } from '@/data/hobbies';
 import { useOnboarding, type Hobby } from '@/data/onboarding';
 import { gap, space, useTema } from '@/theme';
@@ -28,6 +29,8 @@ export default function D4Hobbies() {
   const { cores } = useTema();
   const { respostas, atualizar } = useOnboarding();
   const [escolhidos, setEscolhidos] = useState<Hobby[]>(respostas.hobbies);
+  const [consulta, setConsulta] = useState('');
+  const busca = consulta.trim() ? buscarHobbies(consulta).map((x) => x.id) : null;
   const transicao = useTransicao();
 
   const alternar = (id: Hobby) =>
@@ -52,14 +55,27 @@ export default function D4Hobbies() {
         {/* o contador ficava ao lado do progresso; sem ele, vira uma legenda */}
         <Aparecer atraso={T_BOLHAS}>
           <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
-            {`${escolhidos.length} de ${MAX_HOBBIES} · arraste para ver mais`}
+            {`${escolhidos.length} de ${MAX_HOBBIES} · arraste e use dois dedos para aproximar`}
           </Texto>
+        </Aparecer>
+        {/* Busca + "+" para criar um hobby que não está na lista */}
+        <Aparecer atraso={T_BOLHAS}>
+          <BuscaHobbies
+            consulta={consulta}
+            onConsulta={setConsulta}
+            semResultado={!!busca && !busca.length}
+            onCriado={(h) =>
+              setEscolhidos((atual) =>
+                atual.includes(h.id) ? atual : atual.length < MAX_HOBBIES ? [...atual, h.id] : atual,
+              )
+            }
+          />
         </Aparecer>
       </View>
 
       {/* O canvas usa a largura toda da tela (sangra a margem do onboarding) */}
       <Aparecer atraso={T_BOLHAS} deslocamento={0} style={styles.canvas}>
-        <CanvasHobbies selecionados={escolhidos} onAlternar={alternar} destaques={HOBBIES_ORIGINAIS} />
+        <CanvasHobbies selecionados={escolhidos} onAlternar={alternar} destaques={HOBBIES_ORIGINAIS} busca={busca} />
       </Aparecer>
     </TelaOnboarding>
   );

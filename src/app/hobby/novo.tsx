@@ -3,15 +3,16 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Botao, CabecalhoVoltar, CampoTexto, Texto } from '@/components';
+import { Botao, CabecalhoVoltar, Texto } from '@/components';
 import { Aparecer, TextoAnimado, fimDoTexto } from '@/components/animacao';
 import { CanvasHobbies } from '@/components/hobbies';
+import { BuscaHobbies } from '@/components/hobbies/BuscaHobbies';
 import { buscarHobbies, hobbyInfo, type HobbyId } from '@/data/catalogo';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { inset, space, useTema } from '@/theme';
 
 const TITULO = 'O que vamos explorar dessa vez?';
-const SUB = 'Arraste para os lados para ver mais. Toque nos que despertam curiosidade.';
+const SUB = 'Arraste para ver mais e use dois dedos para aproximar. Toque nos que despertam curiosidade.';
 const T_SUB = fimDoTexto(TITULO, 150);
 const T_CANVAS = fimDoTexto(SUB, T_SUB);
 
@@ -46,20 +47,16 @@ export default function NovoHobby() {
         <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />
         <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.secondary} atraso={T_SUB} />
         <Aparecer atraso={T_SUB}>
-          <CampoTexto
-            acessibilidade="Buscar hobby"
-            placeholder="Buscar: fotografia, xadrez, dança…"
-            value={consulta}
-            onChangeText={setConsulta}
-            returnKeyType="search"
-            autoCorrect={false}
+          {/* Busca + "+" para criar um hobby que não está no catálogo */}
+          <BuscaHobbies
+            consulta={consulta}
+            onConsulta={setConsulta}
+            semResultado={!!busca && !busca.length}
+            onCriado={(novo) =>
+              setEscolhidos((atual) => (atual.includes(novo.id) || h.hobbies.includes(novo.id) ? atual : [...atual, novo.id]))
+            }
           />
         </Aparecer>
-        {busca && !busca.length ? (
-          <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
-            Nenhum hobby com esse nome ainda.
-          </Texto>
-        ) : null}
       </View>
 
       <Aparecer atraso={T_CANVAS} deslocamento={0} style={styles.flex}>

@@ -7,6 +7,7 @@ import { useEffect, type ReactNode } from 'react';
 import { AvisoNovaVersao } from '@/components/AvisoNovaVersao';
 import { useAparencia } from '@/data/aparencia';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
+import { carregarHobbiesPersonalizados } from '@/data/hobbiesPersonalizados';
 import { useVigia } from '@/data/vigia';
 import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
 
@@ -23,6 +24,11 @@ export default function RootLayout() {
   useEffect(() => {
     if (carregou || erro) SplashScreen.hideAsync();
   }, [carregou, erro]);
+
+  // Hobbies criados pela pessoa entram no catálogo antes das telas de hobbies usarem.
+  useEffect(() => {
+    void carregarHobbiesPersonalizados();
+  }, []);
 
   if (!carregou && !erro) return null;
 
