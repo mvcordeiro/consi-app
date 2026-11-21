@@ -29,6 +29,7 @@ import { CampoTexto } from '../CampoTexto';
 import { fundoDoTom } from '../Etiqueta';
 import { Filtro } from '../Filtro';
 import { Folha } from '../Folha';
+import { OpcoesTimer } from './OpcoesTimer';
 import { IconeApp } from '../home/Grupos';
 import { Icone } from '../Icone';
 import { Texto } from '../Texto';
@@ -188,6 +189,21 @@ export function EditorGrupo({ inicial, novo }: Props) {
                 </Pressable>
               </Secao>
               <PreviaPausa grupo={g} />
+            </Aparecer>
+          ) : null}
+
+          {g.modo !== 'nao-interromper' ? (
+            <Aparecer key="timer" style={styles.blocos}>
+              <Secao
+                titulo="Timer no app"
+                descricao={
+                  g.modo === 'cuidar-tempo'
+                    ? 'Mostra quanto falta para o próximo lembrete enquanto você usa o app.'
+                    : 'Mostra quanto falta do tempo que você escolheu depois da pausa.'
+                }
+              >
+                <OpcoesTimer grupo={g} onMudar={mudar} />
+              </Secao>
             </Aparecer>
           ) : null}
 

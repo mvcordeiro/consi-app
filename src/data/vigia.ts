@@ -22,7 +22,18 @@ const CHAVE_DESLIGADA = 'consi:vigia:desligada';
 
 /** O JSON que o VigiaService lê (Preferencias.kt): uma regra por pacote. */
 function regrasParaOAndroid(grupos: Grupo[]) {
-  const apps: Record<string, { modo: string; grupo: string; nome: string; intervaloMin: number; aoIgnorar: string }> = {};
+  const apps: Record<
+    string,
+    {
+      modo: string;
+      grupo: string;
+      nome: string;
+      intervaloMin: number;
+      aoIgnorar: string;
+      flutuante: boolean;
+      estiloTimer: string;
+    }
+  > = {};
   for (const g of grupos) {
     if (g.modo === 'nao-interromper') continue;
     for (const id of g.apps) {
@@ -32,6 +43,8 @@ function regrasParaOAndroid(grupos: Grupo[]) {
         nome: appPorId(id)?.nome ?? id,
         intervaloMin: g.intervaloMin,
         aoIgnorar: g.aoIgnorar,
+        flutuante: g.timerFlutuante !== false,
+        estiloTimer: g.estiloTimer ?? 'pilula',
       };
     }
   }
@@ -46,9 +59,14 @@ export type Permissoes = {
   notificacoes: boolean;
   /** O vigia está ligado. */
   ligada: boolean;
+  /**
+   * Android 13+ com APK de fora da loja: as "configurações restritas" ainda bloqueiam o
+   * Acesso de uso. A pessoa libera em Informações do app → ⋮ → Permitir configurações restritas.
+   */
+  restritas: boolean;
 };
 
-const semModulo: Permissoes = { acessoUso: false, sobrepor: false, notificacoes: false, ligada: false };
+const semModulo: Permissoes = { acessoUso: false, sobrepor: false, notificacoes: false, ligada: false, restritas: false };
 
 export function lerPermissoes(): Permissoes {
   if (!ConsiPausa) return semModulo;
@@ -58,6 +76,7 @@ export function lerPermissoes(): Permissoes {
       sobrepor: ConsiPausa.podeSobrepor(),
       notificacoes: ConsiPausa.podeNotificar(),
       ligada: ConsiPausa.vigiaAtiva(),
+      restritas: ConsiPausa.configuracoesRestritas(),
     };
   } catch {
     return semModulo;
@@ -79,6 +98,8 @@ export function usePermissoes() {
 
 export const pedirAcessoUso = () => ConsiPausa?.abrirAjustesAcessoUso();
 export const pedirSobrepor = () => ConsiPausa?.abrirAjustesSobrepor();
+/** Informações do app, onde fica o ⋮ → "Permitir configurações restritas". */
+export const abrirInfoDoApp = () => ConsiPausa?.abrirInfoDoApp();
 
 /**
  * Notificações (lembretes do "Cuidar tempo"). No Android 13+ o próprio aviso do sistema pede;

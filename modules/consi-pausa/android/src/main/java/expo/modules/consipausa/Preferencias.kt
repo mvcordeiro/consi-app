@@ -10,6 +10,10 @@ internal data class Regra(
   val nome: String,
   val intervaloMin: Int,
   val aoIgnorar: String,
+  /** Timer flutuante por cima do app; sem ele, a contagem fica na notificação. */
+  val flutuante: Boolean,
+  /** pilula | faixa | bolha (ver Bolha.kt). */
+  val estiloTimer: String,
 )
 
 /**
@@ -50,6 +54,8 @@ internal class Preferencias(context: Context) {
           nome = r.optString("nome", pacote),
           intervaloMin = r.optInt("intervaloMin", 15).coerceAtLeast(1),
           aoIgnorar = r.optString("aoIgnorar", "resetar"),
+          flutuante = r.optBoolean("flutuante", true),
+          estiloTimer = r.optString("estiloTimer", "pilula"),
         )
       }
     } catch (_: Exception) {

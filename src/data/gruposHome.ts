@@ -59,6 +59,14 @@ export const TEMPOS_NO_APP = [1, 3, 5, 10, 15, 30];
 
 export type AoIgnorar = 'resetar' | 'pausa';
 
+/** Estilos do timer flutuante (desenhados em modules/consi-pausa/.../Bolha.kt). */
+export type EstiloTimer = 'pilula' | 'faixa' | 'bolha';
+export const ESTILOS_TIMER: { id: EstiloTimer; nome: string }[] = [
+  { id: 'pilula', nome: 'Pílula' },
+  { id: 'faixa', nome: 'Faixa' },
+  { id: 'bolha', nome: 'Bolha' },
+];
+
 export const MENSAGENS_PRONTAS = [
   'Você queria mesmo abrir agora?',
   'Respira. O que você veio fazer aqui?',
@@ -96,6 +104,10 @@ export type Grupo = {
   apps: string[];
   /** Escondido da Home pela engrenagem. */
   oculto?: boolean;
+  /** Timer flutuante por cima do app (padrão: ligado). Desligado, o tempo fica na notificação. */
+  timerFlutuante?: boolean;
+  /** Estilo do timer flutuante (padrão: pílula, a do Figma). */
+  estiloTimer?: EstiloTimer;
 };
 
 export const ID_LIVRE = 'livre';

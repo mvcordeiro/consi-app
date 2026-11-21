@@ -11,20 +11,28 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
-/** Notificações do vigia: a fixa (serviço em primeiro plano), os lembretes e a pausa sem sobreposição. */
+/** Notificações do vigia: a fixa (serviço em primeiro plano, com a contagem), os lembretes e a pausa sem sobreposição. */
 internal object Notificacoes {
-  const val CANAL_VIGIA = "consi-vigia"
+  /** Canal da fixa. "-2": a primeira versão usava importância mínima, que esconde a notificação. */
+  const val CANAL_VIGIA = "consi-vigia-2"
+  private const val CANAL_VIGIA_ANTIGO = "consi-vigia"
   const val CANAL_LEMBRETES = "consi-lembretes"
   const val ID_FIXA = 4201
   const val ID_LEMBRETE = 4202
   const val ID_PAUSA = 4203
+  /** A pessoa arrastou a fixa para o lado (Android 14+ deixa): o serviço publica de novo. */
+  const val ACAO_REPOR = "expo.modules.consipausa.REPOR_NOTIFICACAO"
+
+  /** O que a notificação fixa mostra quando há um app com timer na frente. */
+  data class Contagem(val nome: String, val ate: Long, val paraCima: Boolean, val modo: String)
 
   fun criarCanais(context: Context) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val nm = context.getSystemService(NotificationManager::class.java)
+    nm.deleteNotificationChannel(CANAL_VIGIA_ANTIGO)
     nm.createNotificationChannel(
-      NotificationChannel(CANAL_VIGIA, "Pausa nos apps", NotificationManager.IMPORTANCE_MIN).apply {
-        description = "Fica ligada enquanto o Consi cuida das pausas antes dos seus apps."
+      NotificationChannel(CANAL_VIGIA, "Pausa nos apps", NotificationManager.IMPORTANCE_LOW).apply {
+        description = "Fica sempre no topo enquanto o Consi cuida das pausas e mostra o tempo no app."
         setShowBadge(false)
       },
     )
@@ -52,20 +60,51 @@ internal object Notificacoes {
       PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
-  fun fixa(context: Context): Notification =
-    NotificationCompat.Builder(context, CANAL_VIGIA)
+  /**
+   * A notificação fixa. Sem contagem: "Cuidando das pausas". Com contagem (app com timer na
+   * frente e sem o flutuante): o nome do app e um cronômetro do próprio Android.
+   */
+  fun fixa(context: Context, contagem: Contagem? = null): Notification {
+    val b = NotificationCompat.Builder(context, CANAL_VIGIA)
       .setSmallIcon(R.drawable.consi_notificacao)
-      .setContentTitle("Consi")
-      .setContentText("Cuidando das pausas antes dos seus apps.")
       .setOngoing(true)
-      .setPriority(NotificationCompat.PRIORITY_MIN)
+      .setOnlyAlertOnce(true)
+      .setSilent(true)
+      .setPriority(NotificationCompat.PRIORITY_LOW)
       .setCategory(NotificationCompat.CATEGORY_SERVICE)
+      .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
       .setContentIntent(
         context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
           PendingIntent.getActivity(context, 0, it, PendingIntent.FLAG_IMMUTABLE)
         },
       )
-      .build()
+      .setDeleteIntent(
+        PendingIntent.getService(
+          context,
+          1,
+          Intent(context, VigiaService::class.java).setAction(ACAO_REPOR),
+          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        ),
+      )
+    if (contagem == null) {
+      b.setContentTitle("Consi").setContentText("Cuidando das pausas antes dos seus apps.").setShowWhen(false)
+    } else {
+      val texto = when {
+        contagem.paraCima -> "Tempo no app"
+        contagem.modo == "cuidar-tempo" -> "Até o próximo lembrete"
+        else -> "Tempo que você escolheu"
+      }
+      b.setContentTitle(contagem.nome)
+        .setContentText(texto)
+        .setWhen(contagem.ate)
+        .setShowWhen(true)
+        .setUsesChronometer(true)
+        .setChronometerCountDown(!contagem.paraCima)
+    }
+    return b.build().apply { flags = flags or Notification.FLAG_NO_CLEAR or Notification.FLAG_ONGOING_EVENT }
+  }
+
+  fun atualizarFixa(context: Context, contagem: Contagem?) = publicar(context, ID_FIXA, fixa(context, contagem))
 
   fun lembrete(context: Context, regra: Regra, pacote: String, minutos: Int) =
     publicar(
