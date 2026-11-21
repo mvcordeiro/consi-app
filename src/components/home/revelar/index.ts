@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react';
 
+import type { IdMecanica } from '@/data/rodizioDrops';
+
 import { Arrastar } from './Arrastar';
 import type { PropsMecanica } from './comum';
 import { EstourarBolhas } from './EstourarBolhas';
@@ -9,8 +11,6 @@ import { Segurar } from './Segurar';
 import { Toques } from './Toques';
 import { VirarCarta } from './VirarCarta';
 
-export type IdMecanica = 'arrastar' | 'vidro' | 'segurar' | 'toques' | 'tampa' | 'carta' | 'bolhas';
-
 export type Mecanica = {
   id: IdMecanica;
   nome: string;
@@ -19,7 +19,7 @@ export type Mecanica = {
 
 /**
  * As formas de revelar um drop. O resultado é sempre o mesmo (a sugestão aparece);
- * só muda a interação. Em preview, a Home deixa escolher qualquer uma para comparar.
+ * só muda a interação. A Home usa uma por drop, em rodízio (ver src/data/rodizioDrops.ts).
  */
 export const MECANICAS: readonly Mecanica[] = [
   { id: 'arrastar', nome: 'Arrastar', Componente: Arrastar },
@@ -31,4 +31,6 @@ export const MECANICAS: readonly Mecanica[] = [
   { id: 'bolhas', nome: 'Estourar bolhas', Componente: EstourarBolhas },
 ];
 
+export { Revelacao } from './Revelacao';
+export type { IdMecanica };
 export { RevelarSemGesto, useMovimentoReduzido, type PropsMecanica } from './comum';

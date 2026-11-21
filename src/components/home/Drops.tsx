@@ -1,20 +1,20 @@
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import type { Atividade } from '@/data/catalogo';
 import { emocaoPorId } from '@/data/emocoes';
 import { useHobbies } from '@/data/hobbiesEstado';
+import { avancarMecanica, mecanicaAtual, type IdMecanica } from '@/data/rodizioDrops';
 import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
 import { Botao } from '../Botao';
 import { CabecalhoSecao } from '../CabecalhoSecao';
-import { Filtro } from '../Filtro';
 import { irPara, PilhaSugestoes, type Decisao } from '../hobbies';
 import { Texto } from '../Texto';
 import { BalaoEmocao } from './BalaoEmocao';
-import { MECANICAS, RevelarSemGesto, useMovimentoReduzido, type IdMecanica } from './revelar';
+import { MECANICAS, Revelacao, RevelarSemGesto, useMovimentoReduzido } from './revelar';
 
 type Props = {
   /** Margem lateral da página: a pilha "sangra" até a borda para as abas de feedback. */
@@ -31,22 +31,34 @@ type Props = {
  * direita aceita e vira atividade). Quando não há mais sugestões nos hobbies da pessoa,
  * aparece a conclusão (no estilo da de "Isso faz sentido para você?").
  *
- * PREVIEW: há 7 formas de revelar (ver ./revelar). Por enquanto a Home mostra um seletor
- * para comparar todas; nenhuma é a padrão ainda.
+ * A interação muda a cada drop: 7 mecânicas (ver ./revelar) em rodízio embaralhado
+ * (ver src/data/rodizioDrops.ts). Depois da interação, a mesma animação de revelação
+ * para todas, e então o card da atividade.
  */
 export function Drops({ margem, onArrastando, onAceito }: Props) {
   const { cores } = useTema();
   const h = useHobbies();
   const movimentoReduzido = useMovimentoReduzido();
-  const [etapa, setEtapa] = useState<'escondido' | 'drop'>('escondido');
+  const [etapa, setEtapa] = useState<'escondido' | 'revelando' | 'drop'>('escondido');
   const [drop, setDrop] = useState<Atividade | null>(null);
-  const [mecanica, setMecanica] = useState<IdMecanica>('arrastar');
-  // Muda a cada troca de mecânica ou volta ao card escondido: remonta a mecânica do zero.
+  // Mecânica do próximo drop; null enquanto lê o rodízio no banco.
+  const [mecanica, setMecanica] = useState<IdMecanica | null>(null);
+  // Muda a cada volta ao card escondido: remonta a mecânica do zero.
   const [rodada, setRodada] = useState(0);
   // O que a pessoa fez com os drops desde que abriu a Home (para a conclusão).
   const [feitos, setFeitos] = useState({ aceitos: 0, ignorados: 0 });
   // Cada drop sai de um hobby diferente, em rodízio.
   const [vez, setVez] = useState(0);
+
+  useEffect(() => {
+    let vivo = true;
+    mecanicaAtual()
+      .then((m) => vivo && setMecanica(m))
+      .catch(() => vivo && setMecanica('arrastar'));
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   const proximo = () => {
     const n = h.hobbies.length;
@@ -66,7 +78,11 @@ export function Drops({ margem, onArrastando, onAceito }: Props) {
     setVez((vez + p.i + 1) % h.hobbies.length);
     onArrastando(false);
     setDrop(p.s);
-    setEtapa('drop');
+    setEtapa('revelando');
+    // A mecânica usada sai da fila; a próxima já fica pronta para o próximo drop.
+    avancarMecanica()
+      .then(setMecanica)
+      .catch(() => {});
   };
 
   const decidir = (s: Atividade, d: Decisao) => {
@@ -87,21 +103,15 @@ export function Drops({ margem, onArrastando, onAceito }: Props) {
     setFeitos({ aceitos: 0, ignorados: 0 });
   };
 
-  const escolher = useCallback((id: IdMecanica) => {
-    setMecanica(id);
-    setDrop(null);
-    setEtapa('escondido');
-    setRodada((r) => r + 1);
-  }, []);
-
-  const Mecanica = MECANICAS.find((m) => m.id === mecanica)!.Componente;
+  const Mecanica = mecanica ? MECANICAS.find((m) => m.id === mecanica)?.Componente : undefined;
 
   return (
     <View style={styles.secao}>
       <CabecalhoSecao titulo="Drops para você" subtitulo="Convites para fazer espaço para o que importa." espacado />
-      <SeletorPreview margem={margem} atual={mecanica} onEscolher={escolher} />
-      {etapa === 'drop' && drop ? (
-        <Aparecer key={drop.id} deslocamento={0} escalaInicial={0.97} duracao={400}>
+      {etapa === 'revelando' && drop ? (
+        <Revelacao hobby={drop.hobby} movimentoReduzido={movimentoReduzido} onFim={() => setEtapa('drop')} />
+      ) : etapa === 'drop' && drop ? (
+        <Aparecer key={drop.id} deslocamento={0} escalaInicial={0.94} duracao={500}>
           <PilhaSugestoes
             sugestoes={[drop]}
             margem={margem}
@@ -124,7 +134,7 @@ export function Drops({ margem, onArrastando, onAceito }: Props) {
             onRever={reverIgnorados}
           />
         </Aparecer>
-      ) : (
+      ) : Mecanica ? (
         <Aparecer key={`escondido-${rodada}`} deslocamento={0} escalaInicial={0.97} duracao={400}>
           <View style={styles.escondido}>
             <Mecanica
@@ -136,40 +146,7 @@ export function Drops({ margem, onArrastando, onAceito }: Props) {
             <RevelarSemGesto onRevelar={revelar} />
           </View>
         </Aparecer>
-      )}
-    </View>
-  );
-}
-
-/**
- * Só no preview: escolhe qual das 7 mecânicas de revelar aparece, para comparar.
- * Sai daqui quando a rotação entrar na branch principal.
- */
-function SeletorPreview({
-  margem,
-  atual,
-  onEscolher,
-}: {
-  margem: number;
-  atual: IdMecanica;
-  onEscolher: (id: IdMecanica) => void;
-}) {
-  const { cores } = useTema();
-  return (
-    <View style={styles.seletor}>
-      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-        PREVIEW · COMO REVELAR
-      </Texto>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginHorizontal: -margem }}
-        contentContainerStyle={[styles.chips, { paddingHorizontal: margem }]}
-      >
-        {MECANICAS.map((m, i) => (
-          <Filtro key={m.id} rotulo={`${i + 1} · ${m.nome}`} ativo={m.id === atual} onPress={() => onEscolher(m.id)} />
-        ))}
-      </ScrollView>
+      ) : null}
     </View>
   );
 }
@@ -220,8 +197,6 @@ const styles = StyleSheet.create({
   centro: { textAlign: 'center', alignSelf: 'stretch' },
   dica: { marginTop: space[24] },
   escondido: { gap: space[8] },
-  seletor: { gap: space[8], marginTop: -space[8] },
-  chips: { gap: space[8] },
   conclusao: {
     alignItems: 'center',
     gap: space[20],
