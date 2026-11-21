@@ -168,10 +168,11 @@ export function LimparVidro({ onRevelar, onArrastando, hobbyPrevia }: PropsMecan
               </Mask>
             </Defs>
             <G mask={`url(#${idMascara})`}>
-              <Rect x={0} y={0} width={tam.w} height={tam.h} fill={cores.bg.raised} opacity={0.97} />
-              <Rect x={0} y={0} width={tam.w} height={tam.h} fill={cores.border.focus} opacity={0.12} />
+              {/* Névoa em bg/sunken: contrasta com o card limpo (bg/raised) nos dois modos. */}
+              <Rect x={0} y={0} width={tam.w} height={tam.h} fill={cores.bg.sunken} />
+              <Rect x={0} y={0} width={tam.w} height={tam.h} fill={cores.text.primary} opacity={0.05} />
               {gotas.map(([x, y, raio], i) => (
-                <Circle key={i} cx={x * tam.w} cy={y * tam.h} r={raio} fill={cores.text.primary} opacity={0.08} />
+                <Circle key={i} cx={x * tam.w} cy={y * tam.h} r={raio} fill={cores.border.focus} opacity={0.22} />
               ))}
             </G>
           </Svg>

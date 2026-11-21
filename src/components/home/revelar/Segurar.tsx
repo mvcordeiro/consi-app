@@ -8,8 +8,6 @@ import { Texto } from '../../Texto';
 import { IconeHobbies } from '../assets';
 import { Cabeca, Casca, vibrar, type PropsMecanica } from './comum';
 
-const CirculoAnimado = Animated.createAnimatedComponent(Circle);
-
 /** Tempo segurando até revelar: curto o bastante para não cansar. */
 const TEMPO = 1500;
 const TAM = 88;
@@ -25,6 +23,8 @@ export function Segurar({ onRevelar }: PropsMecanica) {
   const { cores } = useTema();
   const [p] = useState(() => new Animated.Value(0));
   const [segurando, setSegurando] = useState(false);
+  // O anel lê o progresso do listener (um Circle animado direto avisa "collapsable" no web).
+  const [progresso, setProgresso] = useState(0);
   const animacao = useRef<Animated.CompositeAnimation | null>(null);
   const valor = useRef(0);
   const quarto = useRef(0);
@@ -33,6 +33,7 @@ export function Segurar({ onRevelar }: PropsMecanica) {
   useEffect(() => {
     const id = p.addListener(({ value }) => {
       valor.current = value;
+      setProgresso(value);
       const q = Math.floor(value * 4);
       if (q > quarto.current && q < 4) vibrar();
       quarto.current = q;
@@ -92,7 +93,7 @@ export function Segurar({ onRevelar }: PropsMecanica) {
           <Animated.View style={[styles.botao, { transform: [{ scale: escala }] }]}>
             <Svg width={TAM} height={TAM} style={StyleSheet.absoluteFill}>
               <Circle cx={TAM / 2} cy={TAM / 2} r={RAIO} stroke={cores.action.primary.pressed} strokeWidth={TRACO} fill={cores.action.primary.default} />
-              <CirculoAnimado
+              <Circle
                 cx={TAM / 2}
                 cy={TAM / 2}
                 r={RAIO}
@@ -101,11 +102,14 @@ export function Segurar({ onRevelar }: PropsMecanica) {
                 strokeLinecap="round"
                 fill="none"
                 strokeDasharray={`${VOLTA} ${VOLTA}`}
-                strokeDashoffset={p.interpolate({ inputRange: [0, 1], outputRange: [VOLTA, 0] })}
+                strokeDashoffset={VOLTA * (1 - progresso)}
                 transform={`rotate(-90 ${TAM / 2} ${TAM / 2})`}
               />
             </Svg>
-            <IconeHobbies width={28} height={28} corTraco={cores.text.primary} />
+            {/* Acima do SVG (que é absoluto e, no web, pintaria por cima). */}
+            <View style={styles.icone}>
+              <IconeHobbies width={28} height={28} corTraco={cores.text.primary} />
+            </View>
           </Animated.View>
         </Pressable>
         <Texto estilo="Texto/Botões e rótulos" cor={cores.text.secondary}>
@@ -119,5 +123,6 @@ export function Segurar({ onRevelar }: PropsMecanica) {
 const styles = StyleSheet.create({
   area: { alignItems: 'center', gap: 12 },
   botao: { width: TAM, height: TAM, alignItems: 'center', justifyContent: 'center' },
+  icone: { position: 'relative', zIndex: 1 },
 });
 
