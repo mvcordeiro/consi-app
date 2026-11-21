@@ -320,7 +320,7 @@ export function apagarGrupo(id: string) {
 
 /** Engrenagem da seção: quais grupos aparecem na Home. */
 export function definirOcultos(ids: string[]) {
-  gravar(estado.map((g) => ({ ...g, oculto: g.id !== ID_LIVRE && ids.includes(g.id) })));
+  gravar(estado.map((g) => ({ ...g, oculto: ids.includes(g.id) })));
 }
 
 /** O rótulo da etiqueta do card: a regra do grupo. */

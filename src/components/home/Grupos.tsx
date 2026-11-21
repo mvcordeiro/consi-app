@@ -16,16 +16,17 @@ type Props = {
 };
 
 /**
- * V3 - Grade de grupos — um grupo de apps por hobby da pessoa, mais o "Sem hobbies" fixado.
- * A grade se adapta à quantidade (ver `linhasDaGrade`): 1 ou 2 grupos ficam numa coluna só,
- * em cards inteiros (1fr); quantidades pares vão em pares de meios (0.5fr); nas ímpares,
- * o "Sem hobbies" ocupa a primeira linha inteira. "Criar grupo" fica sempre por último.
+ * V3 - Grade de grupos — os grupos de apps da pessoa, mais o "Livre" (os apps acompanhados
+ * sem grupo), que só aparece quando tem algum app. A grade se adapta à quantidade (ver
+ * `linhasDaGrade`): 1 ou 2 grupos ficam numa coluna só, em cards inteiros (1fr); quantidades
+ * pares vão em pares de meios (0.5fr); nas ímpares, o primeiro ocupa a linha inteira.
+ * "Criar grupo" fica sempre por último.
  */
 export function Grupos({ onAbrir, onCriar, onAjustes }: Props) {
   const { cores } = useTema();
-  const grupos = useGrupos().filter((g) => !g.oculto);
+  // O "Livre" só aparece quando tem apps (os acompanhados que não estão em nenhum grupo).
+  const grupos = useGrupos().filter((g) => !g.oculto && !(g.id === ID_LIVRE && !g.apps.length));
   const linhas = linhasDaGrade(grupos);
-
 
   return (
     <View style={styles.secao}>
@@ -93,7 +94,7 @@ function rotuloApps(n: number) {
 }
 
 function descricao(g: GrupoHome) {
-  return `${g.nome}${g.id === ID_LIVRE ? ', fixado' : ''}, ${rotuloApps(g.apps.length)}, ${limiteDoGrupo(g).rotulo}`;
+  return `${g.nome}, ${rotuloApps(g.apps.length)}, ${limiteDoGrupo(g).rotulo}`;
 }
 
 /** Círculo de 30 px com o ícone do grupo, na cor da regra. */
@@ -107,12 +108,12 @@ function Marcador({ grupo }: { grupo: GrupoHome }) {
   );
 }
 
-/** Quantidade de apps, com "Fixado" no grupo fixado. */
+/** Quantidade de apps. */
 function Contagem({ grupo }: { grupo: GrupoHome }) {
   const { cores } = useTema();
   return (
     <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} numberOfLines={1}>
-      {grupo.id === ID_LIVRE ? `${rotuloApps(grupo.apps.length)} · Fixado` : rotuloApps(grupo.apps.length)}
+      {rotuloApps(grupo.apps.length)}
     </Texto>
   );
 }

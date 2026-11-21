@@ -11,11 +11,13 @@ import { inset, radius, space, useTema } from '@/theme';
 /**
  * Grupos na Home (engrenagem de "Aplicativos e hobbies"; sem design no Figma).
  * Liga e desliga quais grupos aparecem na Home, com o "Controle / Alternância" do DS.
- * "Livre" é fixo: sempre aparece.
+ * O "Livre" (apps acompanhados sem grupo) só entra na lista quando tem algum app.
  */
 export default function GruposHome() {
   const { cores } = useTema();
   const grupos = useGrupos();
+  // O "Livre" vazio não aparece (nem na Home).
+  const visiveis = grupos.filter((g) => g.id !== ID_LIVRE || g.apps.length > 0);
   const [ocultos, setOcultos] = useState(() => grupos.filter((g) => g.oculto).map((g) => g.id));
 
   const salvar = () => {
@@ -33,12 +35,12 @@ export default function GruposHome() {
           <Texto estilo="Títulos/Grande">Grupos na Home</Texto>
           <Texto estilo="Texto/Médio" cor={cores.text.secondary}>
             Escolha quais grupos aparecem em Aplicativos e hobbies. As regras continuam valendo para os grupos
-            escondidos. O grupo Livre fica sempre fixado.
+            escondidos. O grupo Livre aparece quando houver apps fora dos seus grupos.
           </Texto>
         </Aparecer>
         <View style={styles.lista}>
-          {grupos.map((g, i) => {
-            const fixo = g.id === ID_LIVRE;
+          {visiveis.map((g, i) => {
+            const livre = g.id === ID_LIVRE;
             const ligado = !ocultos.includes(g.id);
             return (
               <Aparecer key={g.id} atraso={100 + i * 60}>
@@ -49,18 +51,14 @@ export default function GruposHome() {
                   <View style={styles.flex}>
                     <Texto estilo="Texto/Médio">{g.nome}</Texto>
                     <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-                      {fixo ? `Fixado · ${MODOS[g.modo].nome}` : MODOS[g.modo].nome}
+                      {livre ? `Apps fora dos grupos · ${MODOS[g.modo].nome}` : MODOS[g.modo].nome}
                     </Texto>
                   </View>
-                  {fixo ? (
-                    <Icone nome="cadeado" tamanho={20} cor={cores.text.tertiary} />
-                  ) : (
-                    <Alternancia
-                      ligado={ligado}
-                      rotulo={g.nome}
-                      onMudar={(v) => setOcultos((o) => (v ? o.filter((x) => x !== g.id) : [...o, g.id]))}
-                    />
-                  )}
+                  <Alternancia
+                    ligado={ligado}
+                    rotulo={g.nome}
+                    onMudar={(v) => setOcultos((o) => (v ? o.filter((x) => x !== g.id) : [...o, g.id]))}
+                  />
                 </View>
               </Aparecer>
             );
