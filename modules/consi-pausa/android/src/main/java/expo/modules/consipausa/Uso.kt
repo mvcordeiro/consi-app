@@ -47,6 +47,16 @@ internal object Uso {
     return ultimo
   }
 
+  /** Milissegundos na frente, por app, nos últimos `dias` (os mais usados para o onboarding). */
+  fun recente(context: Context, dias: Int): Map<String, Double> {
+    val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+    val fim = System.currentTimeMillis()
+    val inicio = fim - dias * 24L * 60L * 60L * 1000L
+    return usm.queryAndAggregateUsageStats(inicio, fim)
+      .filterValues { it.totalTimeInForeground > 0 }
+      .mapValues { it.value.totalTimeInForeground.toDouble() }
+  }
+
   /** Milissegundos na frente, por app, entre `inicio` e `fim`. */
   fun porApp(context: Context, inicio: Long, fim: Long): Map<String, Double> {
     val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager

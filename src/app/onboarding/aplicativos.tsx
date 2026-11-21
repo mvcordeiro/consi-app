@@ -16,7 +16,7 @@ import {
   type IconeSvg,
 } from '@/components/onboarding/assets';
 import { IconeApp } from '@/components/IconeApp';
-import { appsParaOnboarding, comAppsDoAparelho, useApps, type AppInfo } from '@/data/apps';
+import { appsParaOnboarding, comAppsDoAparelho, lerUsoRecente, useApps, type AppInfo } from '@/data/apps';
 import { appsQueIncomodam, definirAcompanhados } from '@/data/gruposHome';
 import { useOnboarding, type CaixaDeApp } from '@/data/onboarding';
 import { easing, gap, primitivas, radius, space, useCoresSvg, useTema } from '@/theme';
@@ -28,15 +28,18 @@ import { easing, gap, primitivas, radius, space, useCoresSvg, useTema } from '@/
  * Combinado:
  *  - os apps ficam espalhados pela área livre (não amontoados);
  *  - as caixas começam lá embaixo e sobem quando o Continuar aparece (≥ 3 apps).
- * Apps de exemplo até termos a lista real do aparelho.
+ * No APK Android, os apps são os que a pessoa mais usou nas últimas duas semanas (Acesso de uso,
+ * pedido na tela anterior), completados pelos que costumam prender. No navegador, os de exemplo.
  */
 const MINIMO_APPS = 3;
 const nativo = Platform.OS !== 'web';
 const TITULO = 'Quais apps mais te incomodam?';
 // combinado: a antiga legenda entra no subtítulo (só título + subtítulo)
-const SUB =
-  'Pegamos apenas os essenciais, arraste eles para as caixinhas de acordo com seu comportamento. ' +
-  'Arraste pelo menos 3 aplicativos. Você pode editar isso depois.';
+const SUB = comAppsDoAparelho
+  ? 'Separamos os apps que você mais usou nas últimas semanas. Arraste cada um para a caixinha que ' +
+    'combina com seu comportamento. Arraste pelo menos 3 aplicativos. Você pode editar isso depois.'
+  : 'Pegamos apenas os essenciais, arraste eles para as caixinhas de acordo com seu comportamento. ' +
+    'Arraste pelo menos 3 aplicativos. Você pode editar isso depois.';
 const T_SUB = fimDoTexto(TITULO, 150);
 const T_APPS = fimDoTexto(SUB, T_SUB) + 200;
 
@@ -126,11 +129,17 @@ export default function E1Aplicativos() {
   const { atualizar } = useOnboarding();
 
   const todos = useApps();
+  // Tempo de uso das últimas duas semanas (vazio sem Acesso de uso ou fora do Android).
+  const [uso, setUso] = useState<Record<string, number> | null>(comAppsDoAparelho ? null : {});
+  useEffect(() => {
+    if (comAppsDoAparelho) void lerUsoRecente().then(setUso);
+  }, []);
+  const carregou = !comAppsDoAparelho || (todos.length > 0 && uso !== null);
   const APPS = useMemo<App[]>(
-    () => appsParaOnboarding(todos, POSICOES.length).map((a, i) => ({ ...a, ...POSICOES[i] })),
-    [todos],
+    () =>
+      carregou ? appsParaOnboarding(todos, POSICOES.length, uso ?? {}).map((a, i) => ({ ...a, ...POSICOES[i] })) : [],
+    [todos, uso, carregou],
   );
-  const carregou = !comAppsDoAparelho || todos.length > 0;
   const [soltos, setSoltos] = useState<string[]>([]);
   const [sobre, setSobre] = useState<CaixaDeApp | null>(null);
   const [areaApps, setAreaApps] = useState({ w: 0, h: 0 });
@@ -183,7 +192,7 @@ export default function E1Aplicativos() {
     atualizar({ apps: { ...classificacao.current } });
     // Os apps que incomodam passam a ser acompanhados (entram no Livre, que pausa).
     definirAcompanhados(appsQueIncomodam(classificacao.current));
-    transicao.sair(() => router.push('/onboarding/permissoes'));
+    transicao.sair(() => router.push('/onboarding/compromisso'));
   };
 
   const lado = Math.min(LADO_APP * s, areaApps.h / 3.2 || LADO_APP);

@@ -74,7 +74,7 @@ export default function D5HobbiesResumo() {
     <TelaOnboarding
       transicao={transicao}
       atrasoRodape={tCirculos + 600}
-      rodape={<BotaoContinuar onPress={() => transicao.sair(() => router.push('/onboarding/aplicativos'))} />}
+      rodape={<BotaoContinuar onPress={() => transicao.sair(() => router.push('/onboarding/permissoes'))} />}
     >
       <View style={styles.cabecalho}>
         <TextoAnimado texto={titulo} estilo="Títulos/Grande" atraso={100} />

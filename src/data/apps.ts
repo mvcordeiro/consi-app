@@ -17,6 +17,8 @@ export type AppInfo = {
   icone?: string;
   /** ApplicationInfo.category do Android (-1 sem categoria). */
   categoria?: number;
+  /** Tela inicial (launcher): nunca entra no onboarding. */
+  inicio?: boolean;
 };
 
 /** Há lista real de apps (APK Android com o módulo nativo). */
@@ -73,7 +75,13 @@ export function carregarApps(): Promise<AppInfo[]> {
   if (!ConsiPausa) return Promise.resolve(apps);
   carregando ??= ConsiPausa.listarApps(LADO_ICONE)
     .then((lista) => {
-      apps = lista.map((a) => ({ id: a.id, nome: a.nome, icone: a.icone || undefined, categoria: a.categoria }));
+      apps = lista.map((a) => ({
+        id: a.id,
+        nome: a.nome,
+        icone: a.icone || undefined,
+        categoria: a.categoria,
+        inicio: a.inicio,
+      }));
       ouvintes.forEach((f) => f());
       return apps;
     })
@@ -107,16 +115,63 @@ export function appPorId(id: string): AppInfo | undefined {
   return apps.find((a) => exemplo.pacotes.includes(a.id)) ?? exemplo;
 }
 
+// ─── Mais usados (Acesso de uso) ────────────────────────────────────────────
+/** Dias olhados para achar os apps mais usados. */
+export const DIAS_USO = 14;
+/** Apps que nunca entram no onboarding, mesmo muito usados (ajustes, discador, câmera…). */
+const FORA_DO_ONBOARDING = [
+  'com.android.settings',
+  'com.android.dialer',
+  'com.google.android.dialer',
+  'com.samsung.android.dialer',
+  'com.android.camera',
+  'com.android.camera2',
+  'com.google.android.GoogleCamera',
+  'com.sec.android.app.camera',
+  'com.android.vending',
+  'com.google.android.apps.messaging',
+  'com.samsung.android.messaging',
+  'com.android.contacts',
+  'com.google.android.contacts',
+  'com.android.deskclock',
+  'com.google.android.deskclock',
+  'com.android.calculator2',
+  'com.google.android.calculator',
+];
+/** Uso mínimo para um app contar como "usado" (2 min em duas semanas). */
+const USO_MINIMO_MS = 2 * 60 * 1000;
+
 /**
- * Até `quantos` apps para o "Quais apps mais te incomodam?": primeiro os conhecidos que estão
- * instalados, depois os das categorias que costumam prender. Sem lista real, os de exemplo.
+ * Lê o tempo de uso dos últimos 14 dias (precisa de Acesso de uso). Sem permissão ou fora do
+ * Android, devolve vazio e o onboarding cai nos apps conhecidos.
  */
-export function appsParaOnboarding(lista: AppInfo[], quantos: number): AppInfo[] {
+export async function lerUsoRecente(): Promise<Record<string, number>> {
+  if (!ConsiPausa) return {};
+  try {
+    if (!ConsiPausa.temAcessoUso()) return {};
+    return await ConsiPausa.usoRecente(DIAS_USO);
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Até `quantos` apps para o "Quais apps mais te incomodam?":
+ * 1. os que a pessoa mais usou nas últimas duas semanas (com Acesso de uso), fora telas iniciais
+ *    e utilitários do sistema;
+ * 2. completando, os conhecidos que estão instalados e os das categorias que costumam prender.
+ * Sem lista real, os de exemplo.
+ */
+export function appsParaOnboarding(lista: AppInfo[], quantos: number, uso: Record<string, number> = {}): AppInfo[] {
   if (!comAppsDoAparelho) return lista.slice(0, quantos);
   const escolhidos: AppInfo[] = [];
   const usar = (a: AppInfo | undefined) => {
-    if (a && escolhidos.length < quantos && !escolhidos.includes(a)) escolhidos.push(a);
+    if (a && !a.inicio && escolhidos.length < quantos && !escolhidos.includes(a)) escolhidos.push(a);
   };
+  lista
+    .filter((a) => (uso[a.id] ?? 0) >= USO_MINIMO_MS && !FORA_DO_ONBOARDING.includes(a.id))
+    .sort((a, b) => (uso[b.id] ?? 0) - (uso[a.id] ?? 0))
+    .forEach(usar);
   PACOTES_CONHECIDOS.forEach((p) => usar(lista.find((a) => a.id === p)));
   CATEGORIAS_ONBOARDING.forEach((c) => lista.filter((a) => a.categoria === c).forEach(usar));
   return escolhidos;

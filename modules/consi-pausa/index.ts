@@ -15,6 +15,8 @@ export type AppDoAparelho = {
   categoria: number;
   /** App que veio de fábrica e nunca foi atualizado. */
   sistema: boolean;
+  /** É uma tela inicial (launcher). */
+  inicio: boolean;
   /** PNG em data URI (vazio se não deu para ler o ícone). */
   icone: string;
 };
@@ -25,6 +27,9 @@ type ModuloConsiPausa = {
   podeNotificar(): boolean;
   abrirAjustesAcessoUso(): void;
   abrirAjustesSobrepor(): void;
+  abrirAjustesNotificacoes(): void;
+  /** Milissegundos na frente por pacote nos últimos `dias` (precisa de Acesso de uso; senão, vazio). */
+  usoRecente(dias: number): Promise<Record<string, number>>;
   listarApps(lado: number): Promise<AppDoAparelho[]>;
   /** Milissegundos na frente por pacote entre `inicio` e `fim` (epoch ms). */
   usoPorApp(inicio: number, fim: number): Promise<Record<string, number>>;

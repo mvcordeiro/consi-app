@@ -42,6 +42,22 @@ class ConsiPausaModule : Module() {
 
     Function("abrirAjustesSobrepor") { abrirAjuste(Settings.ACTION_MANAGE_OVERLAY_PERMISSION) }
 
+    /** Notificações recusadas de vez (o Android não mostra mais o aviso): a página do Consi. */
+    Function("abrirAjustesNotificacoes") {
+      val intent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+      } else {
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${context.packageName}"))
+      }
+      val atividade = appContext.currentActivity
+      if (atividade != null) atividade.startActivity(intent) else context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    /** Milissegundos na frente por app nos últimos `dias` (estatística agregada do Android). */
+    AsyncFunction("usoRecente") { dias: Int ->
+      if (!Uso.temAcesso(context)) emptyMap<String, Double>() else Uso.recente(context, dias.coerceIn(1, 30))
+    }
+
     // ─── Apps e uso ─────────────────────────────────────────────────────────
     AsyncFunction("listarApps") { lado: Int -> listarApps(lado.coerceIn(24, 192)) }
 
@@ -111,6 +127,15 @@ class ConsiPausaModule : Module() {
       @Suppress("DEPRECATION")
       pm.queryIntentActivities(intent, 0)
     }
+    val inicio = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+    val telasIniciais = (
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        pm.queryIntentActivities(inicio, PackageManager.ResolveInfoFlags.of(0))
+      } else {
+        @Suppress("DEPRECATION")
+        pm.queryIntentActivities(inicio, 0)
+      }
+      ).map { it.activityInfo.packageName }.toSet()
     return lista
       .map { it.activityInfo.applicationInfo }
       .distinctBy { it.packageName }
@@ -120,6 +145,7 @@ class ConsiPausaModule : Module() {
           "id" to info.packageName,
           "nome" to pm.getApplicationLabel(info).toString(),
           "categoria" to categoria(info),
+          "inicio" to (info.packageName in telasIniciais),
           "sistema" to ((info.flags and ApplicationInfo.FLAG_SYSTEM) != 0 &&
             (info.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0),
           "icone" to icone(pm, info, lado),
