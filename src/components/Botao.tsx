@@ -176,8 +176,9 @@ function corDoRotulo(c: Cores, estilo: EstiloBotao, estado: EstadoVisual, corRot
   // Secundário pressionado: no componente o rótulo vira text/on-neutral, que some sobre o
   // fundo escuro (só a borda muda); mantemos text/primary para continuar legível.
   if (estilo === 'secundario') return c.text.primary;
-  if (estado === 'ativo') return c.text['on-neutral'];
-  return estado === 'normal' ? c.text['on-neutral'] : c.text['on-primary'];
+  // Primário: sempre text/on-primary. O text/on-neutral do componente ficava quase preto sobre
+  // o azul (Dark) e branco sobre o laranja (Light), sem contraste (ex.: "Guardar momento").
+  return c.text['on-primary'];
 }
 
 const styles = StyleSheet.create({
