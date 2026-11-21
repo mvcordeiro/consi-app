@@ -2,8 +2,9 @@
  * Moderação (só admin). A RLS é quem garante: um anônimo que chamar isto recebe lista vazia
  * ou `ErroNuvem('sem-permissao')`.
  *
- * Login do admin: e-mail + código de 6 dígitos (OTP do Supabase), só para uma conta já criada no
- * painel e listada em `admins` (ver docs/supabase.md). A sessão do admin substitui a anônima
+ * Login do admin: e-mail + senha, só para uma conta criada no painel do Supabase e listada em
+ * `admins` (ver docs/supabase.md). Sem código por e-mail: o modelo padrão do Supabase só manda
+ * link e não pode ser editado sem SMTP próprio. A sessão do admin substitui a anônima
  * neste aparelho; `sairDaNuvem()` volta ao anônimo na próxima vez.
  */
 import { consultar, ErroNuvem, garantirSessao, nuvem, paraErroNuvem } from './cliente';
@@ -39,20 +40,20 @@ export async function souAdmin(): Promise<boolean> {
   }
 }
 
-/** Envia o código por e-mail. Não cria conta nova (só e-mails já cadastrados no projeto). */
-export async function entrarAdmin(email: string): Promise<void> {
+/**
+ * Entra com e-mail e senha (conta criada no painel do Supabase; nunca cria conta pelo app).
+ * Devolve `true` se a conta é admin; se não for, sai e devolve `false`.
+ * Lança `ErroNuvem('sem-permissao')` com e-mail ou senha errados e `'offline'` sem rede.
+ */
+export async function entrarAdmin(email: string, senha: string): Promise<boolean> {
   const { error } = await nuvem()
-    .auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: false } })
+    .auth.signInWithPassword({ email: email.trim().toLowerCase(), password: senha })
     .catch((e: unknown) => ({ error: e }));
-  if (error) throw paraErroNuvem(error);
-}
-
-/** Confere o código. Devolve `true` se a conta é admin; senão sai e devolve `false`. */
-export async function confirmarCodigo(email: string, codigo: string): Promise<boolean> {
-  const { error } = await nuvem()
-    .auth.verifyOtp({ email: email.trim().toLowerCase(), token: codigo.trim(), type: 'email' })
-    .catch((e: unknown) => ({ error: e }));
-  if (error) throw paraErroNuvem(error);
+  if (error) {
+    const erro = paraErroNuvem(error);
+    if (erro.tipo === 'sem-permissao') throw new ErroNuvem('sem-permissao', 'E-mail ou senha incorretos.', error);
+    throw erro;
+  }
   if (await souAdmin()) return true;
   await nuvem().auth.signOut({ scope: 'local' }).catch(() => {});
   return false;

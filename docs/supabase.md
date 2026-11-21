@@ -3,7 +3,7 @@
 O Supabase guarda só as sugestões públicas, os votos, as denúncias e o changelog. O diário, os hobbies,
 a pausa e as preferências continuam só no aparelho. Cada pessoa entra com **login anônimo**, criado na
 primeira vez que abre Sugestões ou Novidades (nunca na abertura do app). Você entra como **admin** com
-e-mail e código.
+e-mail e senha.
 
 Arquivos:
 - `supabase/migrations/0001_sugestoes.sql`: tabelas, triggers, RLS, view `sugestoes_ranking`, RPC `mesclar_sugestoes`
@@ -68,14 +68,18 @@ cadeado de RLS ligado, e a view `sugestoes_ranking`.
 
 ## 4. Virar admin
 
-1. **Authentication → Users → Add user → Send invitation** (ou *Create new user*) com o seu e-mail.
-2. Para o app receber um **código** (e não só um link), em **Authentication → Emails → Templates → Magic Link**
-   inclua o código no corpo, por exemplo: `Seu código do Consi: {{ .Token }}`.
-3. Copie o **User UID** da sua conta na lista de usuários e rode no SQL Editor:
+1. **Authentication → Users → Add user → Create new user** com o seu e-mail, uma senha só sua e **Auto confirm user** marcado.
+2. Copie o **User UID** da conta na lista de usuários e rode no SQL Editor:
    ```sql
    insert into public.admins (user_id) values ('COLE-O-UID-AQUI');
    ```
-4. No app: Ajustes → tocar 7× na versão → e-mail → código. A sessão de admin fica no aparelho.
+3. No app: Ajustes → tocar 7× na versão → e-mail e senha. A sessão de admin fica no aparelho.
+
+Por que senha e não código: o e-mail padrão do Supabase só manda um link, e os modelos de e-mail só podem ser
+editados depois de configurar um SMTP próprio. Esqueceu a senha? Como o app não tem página de redefinição, o
+caminho simples é apagar a conta no painel, criar de novo e trocar o UID em `admins`.
+
+No projeto Consi o admin é `valinhocm@gmail.com`.
 
 Uma conta anônima nunca vira admin, mesmo que o UID dela entre em `admins`: `is_admin()` confere
 o claim `is_anonymous` do token.
