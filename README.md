@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/img/banner.svg" alt="Consi: você consigo, no seu ritmo" width="100%">
+<img src="docs/img/banner.webp" alt="Consi: você consigo, no seu ritmo" width="100%">
 
 <br>
 
