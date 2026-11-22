@@ -1,6 +1,6 @@
 /**
  * Ícone do app = a última emoção registrada (só no APK Android; ver docs/icone-emocao.md).
- * Opt-in: fica desligado até a pessoa ligar em Ajustes → Personalizar, porque a emoção
+ * Vem ligado por padrão no Android; a pessoa pode desligar em Ajustes → Personalizar, porque a emoção
  * aparece na tela inicial do celular. Desligado, o ícone volta ao normal.
  */
 import { useEffect, useState } from 'react';

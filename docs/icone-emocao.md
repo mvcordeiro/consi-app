@@ -1,7 +1,6 @@
 # Ícone do app = última emoção (Android)
 
-O ícone do Consi na tela inicial do celular pode mostrar o balão da última emoção registrada. É
-**opt-in**: vem desligado e a pessoa liga em Ajustes → Personalizar → "Ícone com a sua emoção". O
+O ícone do Consi na tela inicial do celular pode mostrar o balão da última emoção registrada. Vem **ligado por padrão** no Android e a pessoa pode desligar em Ajustes → Personalizar → "Ícone com a sua emoção". O
 texto do ajuste avisa que quem vir a tela do celular vai ver como ela se sente.
 
 Figma: os ícones são o componente PrEmo (nó 827:8693 do arquivo "Consi - Design de Interação"):

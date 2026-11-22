@@ -25,7 +25,7 @@ export type Preferencias = {
   vibracao: boolean;
   tamanhoTexto: TamanhoTexto;
   abaInicial: AbaInicial;
-  /** Android: o ícone do app mostra a última emoção registrada (desligado por padrão). */
+  /** Android: o ícone do app mostra a última emoção registrada (ligado por padrão). */
   iconePorEmocao: boolean;
   /** Ordem = posição na Home, abaixo da hero (topo e hero ficam sempre). */
   secoesHome: { id: SecaoHome; visivel: boolean }[];
@@ -46,7 +46,7 @@ const PADRAO: Preferencias = {
   vibracao: true,
   tamanhoTexto: 'normal',
   abaInicial: 'index',
-  iconePorEmocao: false,
+  iconePorEmocao: true,
   secoesHome: SECOES.map((id) => ({ id, visivel: true })),
 };
 
@@ -68,7 +68,7 @@ function normalizar(dado: unknown): Preferencias {
   const vibracao = typeof d.vibracao === 'boolean' ? d.vibracao : true;
   const tamanhoTexto = d.tamanhoTexto === 'grande' ? 'grande' : 'normal';
   const abaInicial = d.abaInicial === 'hobbies' || d.abaInicial === 'diario' ? d.abaInicial : 'index';
-  const iconePorEmocao = d.iconePorEmocao === true;
+  const iconePorEmocao = d.iconePorEmocao !== false;
   const vistas = new Set<SecaoHome>();
   const secoesHome: Preferencias['secoesHome'] = [];
   for (const s of Array.isArray(d.secoesHome) ? d.secoesHome : []) {
