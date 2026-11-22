@@ -17,12 +17,6 @@ import IconeRelogio from '../../../assets/home/icone-relogio.svg';
 import IconeRepetir from '../../../assets/home/icone-repetir.svg';
 import IconeSocial from '../../../assets/home/icone-social.svg';
 import LogoHome from '../../../assets/home/logo.svg';
-import MarcadorManha08 from '../../../assets/home/marcador-manha-08.svg';
-import MarcadorManha09 from '../../../assets/home/marcador-manha-09.svg';
-import MarcadorManha11 from '../../../assets/home/marcador-manha-11.svg';
-import MarcadorNoite20 from '../../../assets/home/marcador-noite-20.svg';
-import MarcadorNoite21 from '../../../assets/home/marcador-noite-21.svg';
-import MarcadorNoite22 from '../../../assets/home/marcador-noite-22.svg';
 import RostoBocaFechada from '../../../assets/home/rosto-boca-fechada.svg';
 import RostoCorado from '../../../assets/home/rosto-corado.svg';
 import RostoPositivo16 from '../../../assets/home/rosto-positivo-16.svg';
@@ -62,12 +56,6 @@ export {
   IconeRepetir,
   IconeSocial,
   LogoHome,
-  MarcadorManha08,
-  MarcadorManha09,
-  MarcadorManha11,
-  MarcadorNoite20,
-  MarcadorNoite21,
-  MarcadorNoite22,
   RostoBocaFechada,
   RostoCorado,
   RostoPositivo,

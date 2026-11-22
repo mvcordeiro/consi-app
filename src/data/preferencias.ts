@@ -11,7 +11,7 @@ import { apagarEstado, gravarEstado, lerEstado } from './banco';
 
 export type Aparencia = 'sistema' | Modo;
 export type Movimento = 'sistema' | 'reduzido' | 'normal';
-export type SecaoHome = 'conteudos' | 'drops' | 'grupos' | 'semana';
+export type SecaoHome = 'drops' | 'grupos' | 'semana';
 export type TamanhoTexto = 'normal' | 'grande';
 /** Aba em que o app abre (nomes das rotas de src/app/(abas)). */
 export type AbaInicial = 'index' | 'hobbies' | 'diario';
@@ -32,13 +32,12 @@ export type Preferencias = {
 };
 
 export const NOMES_SECOES: Record<SecaoHome, string> = {
-  conteudos: 'Conteúdos',
   drops: 'Drops',
   grupos: 'Aplicativos e hobbies',
   semana: 'Sua semana',
 };
 
-const SECOES: SecaoHome[] = ['conteudos', 'drops', 'grupos', 'semana'];
+const SECOES: SecaoHome[] = ['drops', 'grupos', 'semana'];
 
 const PADRAO: Preferencias = {
   aparencia: 'sistema',

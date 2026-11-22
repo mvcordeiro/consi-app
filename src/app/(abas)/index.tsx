@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAviso, useEspacoBarra, useModoImersivo } from '@/components';
 import {
-  Conteudos,
   Drops,
   Grupos,
   HeroEmocoes,
@@ -20,11 +19,6 @@ import { space } from '@/theme';
 
 const ALTURA_TOPO = 40;
 const ESPACO_SECAO = space[64];
-
-/** Telas ainda sem design abrem o marcador "Em construção". */
-function emConstrucao(titulo: string) {
-  router.push({ pathname: '/em-construcao', params: { titulo } });
-}
 
 /**
  * Home (Figma: seção "// HOME", frames Dark 488:1726 e Light 574:3865).
@@ -96,14 +90,11 @@ export default function Inicio() {
           />
         </View>
       </View>
-      {/* Reflexões e "Padrões encontrados" voltam quando houver uso registrado suficiente para gerá-los. */}
       {/* Seções abaixo da hero: ordem e visibilidade vêm de Ajustes → Personalizar. */}
       {secoesHome
         .filter((s) => s.visivel)
         .map(({ id }) => {
           switch (id) {
-            case 'conteudos':
-              return <Conteudos key={id} onVerTudo={(secao) => emConstrucao(secao)} onAbrir={(c) => emConstrucao(c.titulo)} />;
             case 'drops':
               return (
                 <Drops
