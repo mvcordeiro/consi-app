@@ -79,7 +79,7 @@ Por que senha e não código: o e-mail padrão do Supabase só manda um link, e 
 editados depois de configurar um SMTP próprio. Esqueceu a senha? Como o app não tem página de redefinição, o
 caminho simples é apagar a conta no painel, criar de novo e trocar o UID em `admins`.
 
-No projeto Consi o admin é `valinhocm@gmail.com`.
+No projeto Consi o admin é a conta criada pelo mantenedor no painel do Supabase.
 
 Uma conta anônima nunca vira admin, mesmo que o UID dela entre em `admins`: `is_admin()` confere
 o claim `is_anonymous` do token.
