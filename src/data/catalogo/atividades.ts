@@ -4,8 +4,6 @@
  * sentido para ela — umas têm passo a passo, outras só um texto, uma citação ou uma lista.
  * Só "Explore um novo gênero musical…" está no Figma; o resto é conteúdo provisório.
  */
-import { fotoPerfil } from '@/components/home/assets';
-
 import type { Atividade, AtividadeMinha, Autor, Bloco, Permissoes, TipoBloco } from './tipos';
 
 // ─── Ajudantes para escrever blocos ─────────────────────────────────────────
@@ -36,19 +34,17 @@ export function novoIdBloco() {
   return `b${Date.now().toString(36)}${(++seq).toString(36)}`;
 }
 
-const joana: Autor = { id: 'u-joana', usuario: '@joanadasilva', iniciais: 'JS', foto: fotoPerfil };
-const a = (usuario: string, iniciais: string): Autor => ({ id: `u-${usuario.slice(1)}`, usuario, iniciais });
+/** Sugestões do catálogo são escritas pelo Consi (não há comunidade ainda). */
+const CONSI: Autor = { id: 'consi', usuario: 'Consi', iniciais: 'C' };
 const aberta: Permissoes = { comentarios: true, remix: true, mostrarAutor: true };
 const semRemix: Permissoes = { comentarios: true, remix: false, mostrarAutor: true };
 
 // ─── Para você ──────────────────────────────────────────────────────────────
-export const atividadesCatalogo: Atividade[] = [
+const catalogo: Omit<Atividade, 'autor' | 'totalComentarios'>[] = [
   // Música
   {
     id: 's-genero-musical',
     hobby: 'musica',
-    autor: joana,
-    quando: '3d atrás',
     titulo: 'Explore um novo gênero musical e monte uma playlist',
     resumo: 'Que tal explorar o que nunca ouviu e transformar isso em playlist?',
     conteudo: conteudo(
@@ -66,13 +62,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 40,
     permissoes: aberta,
-    totalComentarios: 51,
   },
   {
     id: 's-tocar-de-ouvido',
     hobby: 'musica',
-    autor: a('@rafa.toca', 'RT'),
-    quando: '1d atrás',
     titulo: 'Tente tocar uma música de ouvido, nem que seja só o refrão',
     resumo: 'Com um instrumento ou só a voz, procure as notas.',
     conteudo: conteudo(
@@ -82,13 +75,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 25,
     permissoes: aberta,
-    totalComentarios: 18,
   },
   {
     id: 's-disco-inteiro',
     hobby: 'musica',
-    autor: a('@lu.martins', 'LM'),
-    quando: '5h atrás',
     titulo: 'Ouça um disco inteiro sem fazer mais nada ao mesmo tempo',
     resumo: 'Feche os olhos e deixe o álbum tocar na ordem certa.',
     conteudo: conteudo(
@@ -102,14 +92,11 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 45,
     permissoes: semRemix,
-    totalComentarios: 33,
   },
   // Cinema
   {
     id: 's-filme-outro-pais',
     hobby: 'cinema',
-    autor: a('@cine.ana', 'CA'),
-    quando: '2d atrás',
     titulo: 'Assista a um filme de um país que você nunca visitou',
     resumo: 'Escolha um lugar no mapa e veja como se conta histórias lá.',
     conteudo: conteudo(
@@ -122,13 +109,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 120,
     permissoes: aberta,
-    totalComentarios: 27,
   },
   {
     id: 's-filme-infancia',
     hobby: 'cinema',
-    autor: a('@pedroh', 'PH'),
-    quando: '4d atrás',
     titulo: 'Reveja um filme da sua infância e repare no que mudou',
     resumo: 'O filme é o mesmo, mas quem assiste mudou.',
     conteudo: conteudo(
@@ -139,13 +123,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 100,
     permissoes: aberta,
-    totalComentarios: 40,
   },
   {
     id: 's-sessao-curtas',
     hobby: 'cinema',
-    autor: a('@marinafilma', 'MF'),
-    quando: '6h atrás',
     titulo: 'Faça uma sessão de curtas-metragens com alguém',
     resumo: 'Três curtas, pipoca e uma conversa no fim.',
     conteudo: conteudo(
@@ -155,14 +136,11 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 60,
     permissoes: aberta,
-    totalComentarios: 9,
   },
   // Leitura
   {
     id: 's-ler-fora',
     hobby: 'leitura',
-    autor: a('@livrosdaju', 'LJ'),
-    quando: '1d atrás',
     titulo: 'Leia 20 páginas num lugar diferente da sua casa',
     resumo: 'Uma praça, um café ou o ônibus: mude o cenário.',
     conteudo: conteudo(
@@ -171,13 +149,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 30,
     permissoes: aberta,
-    totalComentarios: 22,
   },
   {
     id: 's-livro-abandonado',
     hobby: 'leitura',
-    autor: a('@caio.le', 'CL'),
-    quando: '3d atrás',
     titulo: 'Volte para um livro que você abandonou na metade',
     resumo: 'Às vezes o problema não era o livro, era o momento.',
     conteudo: conteudo(
@@ -187,13 +162,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 15,
     permissoes: aberta,
-    totalComentarios: 15,
   },
   {
     id: 's-troca-livro',
     hobby: 'leitura',
-    autor: joana,
-    quando: '5d atrás',
     titulo: 'Troque um livro com um amigo e conversem sobre ele',
     resumo: 'Empreste o seu preferido e receba o de alguém.',
     conteudo: conteudo(
@@ -201,14 +173,11 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 30,
     permissoes: aberta,
-    totalComentarios: 31,
   },
   // Escrita
   {
     id: 's-carta-futuro',
     hobby: 'escrita',
-    autor: a('@diariodalu', 'DL'),
-    quando: '2d atrás',
     titulo: 'Escreva uma carta para quem você vai ser daqui a um ano',
     resumo: 'Conte como está agora e o que espera. Depois, guarde.',
     conteudo: conteudo(
@@ -219,13 +188,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 20,
     permissoes: semRemix,
-    totalComentarios: 44,
   },
   {
     id: 's-caminho-diario',
     hobby: 'escrita',
-    autor: a('@tom.escreve', 'TE'),
-    quando: '1d atrás',
     titulo: 'Descreva em dez linhas o caminho que você faz todo dia',
     resumo: 'Cheiros, sons, pessoas: o trajeto esconde detalhes.',
     conteudo: conteudo(
@@ -234,14 +200,11 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 15,
     permissoes: aberta,
-    totalComentarios: 8,
   },
   // Jogos
   {
     id: 's-tabuleiro',
     hobby: 'jogos',
-    autor: a('@mesadejogo', 'MJ'),
-    quando: '2d atrás',
     titulo: 'Jogue um jogo de tabuleiro novo com quem mora com você',
     resumo: 'Aprender as regras juntos já é metade da diversão.',
     conteudo: conteudo(
@@ -249,13 +212,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 60,
     permissoes: aberta,
-    totalComentarios: 13,
   },
   {
     id: 's-quebra-cabeca',
     hobby: 'jogos',
-    autor: a('@cris.pecas', 'CP'),
-    quando: '4d atrás',
     titulo: 'Monte um quebra-cabeça de 500 peças ao longo da semana',
     resumo: 'Troque alguns minutos de tela por algumas peças por dia.',
     conteudo: conteudo(
@@ -264,14 +224,11 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 20,
     permissoes: aberta,
-    totalComentarios: 6,
   },
   // Atividade física
   {
     id: 's-caminhada-sem-fone',
     hobby: 'atividade',
-    autor: a('@andarleve', 'AL'),
-    quando: '1d atrás',
     titulo: 'Faça uma caminhada de 20 minutos sem fones de ouvido',
     resumo: 'Só você, o ritmo dos passos e os sons da rua.',
     conteudo: conteudo(
@@ -279,13 +236,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 20,
     permissoes: aberta,
-    totalComentarios: 37,
   },
   {
     id: 's-aula-danca',
     hobby: 'atividade',
-    autor: a('@dancacomigo', 'DC'),
-    quando: '3d atrás',
     titulo: 'Experimente uma aula de dança, mesmo que seja online',
     resumo: 'Não precisa saber dançar: só escolher um ritmo.',
     conteudo: conteudo(
@@ -293,14 +247,11 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 30,
     permissoes: aberta,
-    totalComentarios: 21,
   },
   // Hobbies novos do catálogo
   {
     id: 's-desenho-cego',
     hobby: 'desenho',
-    autor: a('@traco.solto', 'TS'),
-    quando: '2d atrás',
     titulo: 'Desenhe um objeto sem olhar para o papel',
     resumo: 'Olhos no objeto, mão no papel. O resultado é o de menos.',
     conteudo: conteudo(
@@ -310,13 +261,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 10,
     permissoes: aberta,
-    totalComentarios: 12,
   },
   {
     id: 's-foto-uma-cor',
     hobby: 'fotografia',
-    autor: a('@luz.de.tarde', 'LT'),
-    quando: '1d atrás',
     titulo: 'Fotografe dez coisas da mesma cor pelo bairro',
     resumo: 'Escolha uma cor e saia caçando. Só vale foto pensada.',
     conteudo: conteudo(
@@ -325,13 +273,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 40,
     permissoes: aberta,
-    totalComentarios: 19,
   },
   {
     id: 's-receita-familia',
     hobby: 'culinaria',
-    autor: a('@vovo.cozinha', 'VC'),
-    quando: '3d atrás',
     titulo: 'Cozinhe uma receita de família e pergunte a história dela',
     resumo: 'Toda receita de família tem uma história. Descubra a sua.',
     conteudo: conteudo(
@@ -342,13 +287,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 90,
     permissoes: aberta,
-    totalComentarios: 58,
   },
   {
     id: 's-muda-cozinha',
     hobby: 'jardinagem',
-    autor: a('@hortinha', 'HT'),
-    quando: '5d atrás',
     titulo: 'Plante temperos numa garrafa na janela da cozinha',
     resumo: 'Manjericão, salsinha ou cebolinha: comece por um.',
     conteudo: conteudo(
@@ -357,13 +299,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 30,
     permissoes: aberta,
-    totalComentarios: 24,
   },
   {
     id: 's-xadrez-final',
     hobby: 'xadrez',
-    autor: a('@peao.rei', 'PR'),
-    quando: '2d atrás',
     titulo: 'Resolva três problemas de xadrez antes de jogar uma partida',
     resumo: 'Aquecer o raciocínio antes muda o jeito de jogar.',
     conteudo: conteudo(
@@ -371,13 +310,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 30,
     permissoes: aberta,
-    totalComentarios: 7,
   },
   {
     id: 's-meditacao-som',
     hobby: 'meditacao',
-    autor: a('@respira.fundo', 'RF'),
-    quando: '8h atrás',
     titulo: 'Medite por cinco minutos prestando atenção só nos sons',
     resumo: 'Feche os olhos e conte quantos sons diferentes você ouve.',
     conteudo: conteudo(
@@ -386,13 +322,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 5,
     permissoes: aberta,
-    totalComentarios: 29,
   },
   {
     id: 's-idioma-musica',
     hobby: 'idiomas',
-    autor: a('@poliglota.lenta', 'PL'),
-    quando: '1d atrás',
     titulo: 'Aprenda a letra de uma música no idioma que você estuda',
     resumo: 'Cantar é o jeito mais divertido de pegar sotaque.',
     conteudo: conteudo(
@@ -400,13 +333,10 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 30,
     permissoes: aberta,
-    totalComentarios: 16,
   },
   {
     id: 's-voluntariado-hora',
     hobby: 'voluntariado',
-    autor: a('@maos.dadas', 'MD'),
-    quando: '4d atrás',
     titulo: 'Doe uma hora da semana para uma causa perto de casa',
     resumo: 'Bibliotecas, abrigos e hortas comunitárias precisam de gente.',
     conteudo: conteudo(
@@ -414,21 +344,19 @@ export const atividadesCatalogo: Atividade[] = [
     ),
     minutos: 60,
     permissoes: aberta,
-    totalComentarios: 11,
   },
   {
     id: 's-podcast-caminhando',
     hobby: 'podcasts',
-    autor: a('@ouvidos.atentos', 'OA'),
-    quando: '6h atrás',
     titulo: 'Troque um rolar de feed por um episódio de podcast',
     resumo: 'Da próxima vez que pegar o celular sem motivo, dê play.',
     conteudo: conteudo(b.texto('Deixe três episódios baixados. Quando pegar o celular no automático, troque o feed por um deles.')),
     minutos: 30,
     permissoes: aberta,
-    totalComentarios: 5,
   },
 ];
+
+export const atividadesCatalogo: Atividade[] = catalogo.map((x) => ({ ...x, autor: CONSI, totalComentarios: 0 }));
 
 // ─── Suas atividades (estado inicial) ───────────────────────────────────────
 type Base = Pick<AtividadeMinha, 'id' | 'hobby' | 'titulo' | 'resumo' | 'conteudo' | 'minutos'> &
@@ -457,9 +385,7 @@ export const atividadesIniciais: AtividadeMinha[] = [
       b.tarefas('Separar dez músicas tranquilas', 'Ordenar da mais calma para a mais animada', 'Ouvir no próximo domingo'),
     ),
     minutos: 30,
-    autor: a('@lu.martins', 'LM'),
     novidade: true,
-    totalComentarios: 4,
   }),
   minha({
     id: 'a-acordes',
@@ -471,8 +397,6 @@ export const atividadesIniciais: AtividadeMinha[] = [
       b.dica('Toque junto com a gravação original: ajuda a pegar o ritmo.'),
     ),
     minutos: 30,
-    autor: a('@rafa.toca', 'RT'),
-    totalComentarios: 2,
   }),
   minha({
     id: 'a-album-nascimento',
@@ -494,8 +418,6 @@ export const atividadesIniciais: AtividadeMinha[] = [
       b.texto('Assista sem o celular por perto e leia uma crítica depois.'),
     ),
     minutos: 110,
-    autor: a('@cine.ana', 'CA'),
-    totalComentarios: 6,
   }),
   minha({
     id: 'a-tres-cenas',
@@ -514,7 +436,6 @@ export const atividadesIniciais: AtividadeMinha[] = [
     conteudo: conteudo(b.texto('Deixe o livro ao lado da cama e leia dez páginas por noite, no lugar do celular.')),
     minutos: 15,
     criadaPorMim: true,
-    totalComentarios: 3,
   }),
   minha({
     id: 'a-tres-linhas',

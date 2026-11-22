@@ -15,7 +15,6 @@
  *   PUT  /comentarios/:id/reacao              → reagir (null remove)
  */
 import { atividadesCatalogo } from './atividades';
-import { comentariosDeExemplo } from './comentarios';
 import { catalogoHobbies, categorias } from './hobbies';
 import type { Atividade, Categoria, Comentario, HobbyId, HobbyInfo, ReacaoId } from './tipos';
 
@@ -54,8 +53,8 @@ export const fonteLocal: FonteCatalogo = {
   async publicarAtividade(a) {
     return a;
   },
-  async listarComentarios(itemId, hobby) {
-    return comentariosDeExemplo(itemId, hobby);
+  async listarComentarios() {
+    return [];
   },
   async comentar(c) {
     return c;

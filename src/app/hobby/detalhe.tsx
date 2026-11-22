@@ -96,7 +96,7 @@ export default function Detalhe() {
               <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.flex}>
                 {minha?.remixDe
                   ? `Remix seu de ${minha.remixDe.usuario}`
-                  : item.tipo === 'catalogo'
+                  : item.tipo === 'catalogo' && item.a.quando
                     ? `Sugerido por ${autor.usuario} · ${item.a.quando}`
                     : `Sugerido por ${autor.usuario}`}
               </Texto>

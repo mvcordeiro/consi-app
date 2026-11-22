@@ -104,8 +104,8 @@ export type Atividade = {
   icone?: NomeIcone;
   capa?: string | ImageSourcePropType;
   autor: Autor;
-  /** Há quanto tempo foi publicada, já formatado ("3d atrás"); o servidor mandaria a data. */
-  quando: string;
+  /** Há quanto tempo foi publicada, já formatado ("3d atrás"). As sugestões do Consi não têm. */
+  quando?: string;
   permissoes: Permissoes;
   totalComentarios: number;
 };
@@ -146,7 +146,7 @@ export type Comentario = {
   /** Comentário respondido; ausente na raiz da conversa. */
   paiId?: string;
   autor: Autor;
-  quando: string;
+  quando?: string;
   texto?: string;
   imagem?: string;
   reacoes: Partial<Record<ReacaoId, number>>;

@@ -3,7 +3,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import {
   atividadesCatalogo,
   atividadesIniciais,
-  comentariosDeExemplo,
   fonte,
   type Atividade,
   type AtividadeMinha,
@@ -203,15 +202,13 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
       const chave = chaveConversa(id);
       const i = item(id);
       if (!i || !i.a.permissoes.comentarios) return [];
-      // Atividades criadas do zero começam sem conversa; as do catálogo trazem a da comunidade.
-      const criadaDoZero = i.tipo === 'minha' && i.a.criadaPorMim && !i.a.origemId;
-      const daComunidade = criadaDoZero || minhasPublicadas.has(chave) ? [] : comentariosDeExemplo(chave, i.a.hobby);
-      return [...daComunidade, ...estado.meusComentarios.filter((c) => c.itemId === chave)].map((c) => {
+      // Ainda não há comunidade: a conversa tem só os comentários da própria pessoa.
+      return estado.meusComentarios.filter((c) => c.itemId === chave).map((c) => {
         const r = estado.minhasReacoes[c.id];
         return r ? { ...c, reacoes: { ...c.reacoes, [r]: (c.reacoes[r] ?? 0) + 1 } } : c;
       });
     },
-    [chaveConversa, item, minhasPublicadas, estado.meusComentarios, estado.minhasReacoes],
+    [chaveConversa, item, estado.meusComentarios, estado.minhasReacoes],
   );
 
   const totalComentarios = useCallback(

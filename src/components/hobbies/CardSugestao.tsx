@@ -40,8 +40,7 @@ export function CardSugestao({ sugestao, totalComentarios, onIgnorar, onConversa
             <Texto estilo="Texto/Pequeno" numberOfLines={1} style={styles.encolher}>
               {autor.usuario}
             </Texto>
-            <Texto estilo="Texto/Pequeno">·</Texto>
-            <Texto estilo="Texto/Pequeno">{sugestao.quando}</Texto>
+            {sugestao.quando ? <Texto estilo="Texto/Pequeno">{`· ${sugestao.quando}`}</Texto> : null}
           </View>
           <View style={styles.icone}>
             <IconeHobby hobby={sugestao.hobby} icone={sugestao.icone} caixa={24} />
