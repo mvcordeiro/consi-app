@@ -50,8 +50,6 @@ O Consi é um app de bem-estar digital, feito em português, que troca o "abrir 
 - **Só duas coisas vão para a nuvem** ([Supabase](https://supabase.com)): as sugestões públicas da Comunidade e eventos de uso anônimos do piloto. Os eventos têm um interruptor para desligar em Ajustes.
 - Desinstalar o app apaga os dados locais. Exporte antes se quiser guardá-los.
 
-Detalhes técnicos em [`docs/supabase.md`](docs/supabase.md).
-
 ## Instalar (Android)
 
 1. Abra a página de [**Releases**](https://github.com/mvcordeiro/consi-app/releases/latest) no celular e baixe o arquivo `.apk` mais recente.
@@ -92,7 +90,7 @@ npx expo lint
 
 ### Serviços
 
-O app traz em `app.json` o endereço e a chave **pública** (publishable) do projeto Supabase do piloto, protegido por RLS. Para usar o seu próprio, siga [`docs/supabase.md`](docs/supabase.md) e rode as migrations em [`supabase/`](supabase). Nunca coloque uma chave `service_role` no app.
+O app traz em `app.json` o endereço e a chave **pública** (publishable) do projeto Supabase do piloto, protegido por RLS. Para usar o seu próprio, crie um projeto no Supabase, rode as migrations em [`supabase/migrations`](supabase/migrations) e troque o endereço e a chave em `app.json`. Nunca coloque uma chave `service_role` no app.
 
 ## Estrutura
 
