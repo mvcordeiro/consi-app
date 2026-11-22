@@ -22,6 +22,8 @@ internal object Notificacoes {
   const val ID_PAUSA = 4203
   const val ID_CUIDADO_TELA = 4204
   const val CANAL_CUIDADO_TELA = "consi-cuidado-tela"
+  const val ID_CONVITE = 4205
+  const val CANAL_CONVITE = "consi-piloto"
   /** A pessoa arrastou a fixa para o lado (Android 14+ deixa): o serviço publica de novo. */
   const val ACAO_REPOR = "expo.modules.consipausa.REPOR_NOTIFICACAO"
 
@@ -47,6 +49,32 @@ internal object Notificacoes {
       NotificationChannel(CANAL_CUIDADO_TELA, "Cuidado com o tempo de tela", NotificationManager.IMPORTANCE_DEFAULT).apply {
         description = "Uma sugestão de pausa depois de muito tempo seguido no celular."
       },
+    )
+    nm.createNotificationChannel(
+      NotificationChannel(CANAL_CONVITE, "Piloto de teste", NotificationManager.IMPORTANCE_DEFAULT).apply {
+        description = "O convite para contar como foi a semana de teste do Consi."
+      },
+    )
+  }
+
+  /** Convite do piloto (dia 7). Tocar abre o Consi, onde a folha leva ao formulário. */
+  fun convitePiloto(context: Context, titulo: String, texto: String) {
+    criarCanais(context)
+    publicar(
+      context,
+      ID_CONVITE,
+      NotificationCompat.Builder(context, CANAL_CONVITE)
+        .setSmallIcon(R.drawable.consi_notificacao)
+        .setContentTitle(titulo)
+        .setContentText(texto)
+        .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
+        .setAutoCancel(true)
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        .setContentIntent(
+          abrirApp(context)?.let { PendingIntent.getActivity(context, 7, it, PendingIntent.FLAG_IMMUTABLE) },
+        )
+        .build(),
     )
   }
 

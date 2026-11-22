@@ -9,6 +9,8 @@ class InicioReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (intent.action != Intent.ACTION_BOOT_COMPLETED && intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
     val prefs = Preferencias(context)
+    // Os alarmes somem ao reiniciar: o convite do piloto volta a ser agendado.
+    if (prefs.conviteEm > System.currentTimeMillis()) ConvitePiloto.agendar(context, prefs.conviteEm)
     if ((prefs.ativa && Uso.temAcesso(context)) || prefs.lembretesTela) VigiaService.iniciar(context)
   }
 }

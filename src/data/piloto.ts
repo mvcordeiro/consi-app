@@ -14,6 +14,7 @@ import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
 import { AppState, Platform } from 'react-native';
 
+import { ConsiPausa } from '../../modules/consi-pausa';
 import { gravarEstado, lerEstado } from './banco';
 import { configDaNuvem } from './nuvem/cliente';
 
@@ -164,19 +165,56 @@ export function registrar(evento: string, props?: Record<string, string | number
   })();
 }
 
+// ─── Notificação do dia 7 (Android, APK versionCode 9 ou mais novo) ─────────
+const TITULO_CONVITE = 'Como foi sua semana com o Consi?';
+const TEXTO_CONVITE = 'Faz 7 dias de teste. Leva uns 6 minutos e as respostas são anônimas.';
+
+/** Quando a notificação toca: 7 dias depois da primeira abertura, em horário razoável (9h às 21h). */
+function momentoDoConvite(d: Dados) {
+  const alvo = new Date(d.inicio + DIAS_DO_PILOTO * DIA);
+  if (alvo.getHours() < 9) alvo.setHours(9, 0, 0, 0);
+  else if (alvo.getHours() >= 21) {
+    alvo.setDate(alvo.getDate() + 1);
+    alvo.setHours(9, 0, 0, 0);
+  }
+  return alvo.getTime();
+}
+
+/** Agenda (ou cancela, se já respondeu) a notificação. Sem o módulo novo, não faz nada. */
+function sincronizarNotificacao(d: Dados) {
+  try {
+    if (!ConsiPausa?.agendarConvitePiloto || !ConsiPausa.cancelarConvitePiloto) return;
+    if (d.respondeu || !formularioConfigurado()) {
+      ConsiPausa.cancelarConvitePiloto();
+      return;
+    }
+    const quando = momentoDoConvite(d);
+    // Passou da hora: a folha ao abrir o app faz o convite; a notificação não vem atrasada.
+    if (quando > Date.now()) ConsiPausa.agendarConvitePiloto(quando, TITULO_CONVITE, TEXTO_CONVITE);
+  } catch {
+    // o convite continua pela folha
+  }
+}
+
 let iniciado = false;
 
-/** Chamado uma vez no layout raiz: registra a abertura e envia a fila ao ir para segundo plano. */
+/** Chamado uma vez no layout raiz: registra a abertura, agenda o convite e envia a fila ao ir para segundo plano. */
 export function iniciarPiloto() {
   if (iniciado) return;
   iniciado = true;
   void pilotoCarregado()
-    .then((d) => registrar('app_aberto', { dia: diaDoPiloto(d) }))
+    .then((d) => {
+      registrar('app_aberto', { dia: diaDoPiloto(d) });
+      sincronizarNotificacao(d);
+    })
     .catch(() => {});
   AppState.addEventListener('change', (estado) => {
     if (estado === 'active') {
       void pilotoCarregado()
-        .then((d) => registrar('app_aberto', { dia: diaDoPiloto(d) }))
+        .then((d) => {
+          registrar('app_aberto', { dia: diaDoPiloto(d) });
+          sincronizarNotificacao(d);
+        })
         .catch(() => {});
     } else {
       void enviar();
@@ -199,6 +237,7 @@ export async function marcarRespondeu() {
   const d = await pilotoCarregado();
   d.respondeu = true;
   await gravarDados();
+  sincronizarNotificacao(d);
 }
 
 /** "Lembrar depois": o convite some por `dias` dias. */

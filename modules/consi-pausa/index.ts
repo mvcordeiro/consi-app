@@ -46,6 +46,9 @@ type ModuloConsiPausa = {
   lembretesTelaLigados(): boolean;
   lembretesTelaMinutos(): number;
   definirLembretesTela(ligados: boolean, minutos: number): void;
+  /** Convite do piloto: notificação em `emMs` (epoch ms). Só existe a partir do APK versionCode 9. */
+  agendarConvitePiloto?(emMs: number, titulo: string, texto: string): void;
+  cancelarConvitePiloto?(): void;
 };
 
 export const ConsiPausa: ModuloConsiPausa | null =

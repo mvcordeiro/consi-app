@@ -110,6 +110,17 @@ class ConsiPausaModule : Module() {
       reiniciarOuParar()
     }
 
+    // ─── Convite do piloto: notificação no dia 7 ────────────────────────────
+    Function("agendarConvitePiloto") { emMs: Double, titulo: String, texto: String ->
+      val p = prefs
+      p.conviteEm = emMs.toLong()
+      p.conviteTitulo = titulo
+      p.conviteTexto = texto
+      ConvitePiloto.agendar(context, emMs.toLong())
+    }
+
+    Function("cancelarConvitePiloto") { ConvitePiloto.cancelar(context) }
+
     /** Depois da pausa: libera o app por `minutos` (0 = até a pessoa sair dele). */
     Function("liberar") { pacote: String, minutos: Double ->
       if (minutos > 0) {

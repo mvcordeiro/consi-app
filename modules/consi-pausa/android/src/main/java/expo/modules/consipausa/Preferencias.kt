@@ -49,6 +49,19 @@ internal class Preferencias(context: Context) {
   /** O vigia precisa rodar: pausa nos apps ligada ou lembretes de tela ligados. */
   val precisaDoVigia get() = ativa || lembretesTela
 
+  /** Convite do piloto: quando o alarme toca (epoch ms; 0 = nada agendado) e o texto que o JS mandou. */
+  var conviteEm: Long
+    get() = prefs.getLong("convite-em", 0L)
+    set(valor) = prefs.edit().putLong("convite-em", valor).apply()
+
+  var conviteTitulo: String
+    get() = prefs.getString("convite-titulo", "Como foi sua semana com o Consi?") ?: "Como foi sua semana com o Consi?"
+    set(valor) = prefs.edit().putString("convite-titulo", valor).apply()
+
+  var conviteTexto: String
+    get() = prefs.getString("convite-texto", "Conta como foi. Leva uns 6 minutos.") ?: "Conta como foi. Leva uns 6 minutos."
+    set(valor) = prefs.edit().putString("convite-texto", valor).apply()
+
   /** Índice da próxima sugestão do lembrete de tela (uma diferente a cada vez). */
   fun proximaSugestao(total: Int): Int {
     val i = prefs.getInt("sugestao-tela", 0).mod(total)
