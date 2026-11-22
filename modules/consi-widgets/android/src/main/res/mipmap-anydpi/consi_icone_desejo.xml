@@ -8,6 +8,6 @@
     </shape>
   </item>
   <item>
-    <inset android:drawable="@drawable/consi_emocao_desejo" android:inset="21%" />
+    <inset android:drawable="@drawable/consi_emocao_desejo" android:inset="28%" />
   </item>
 </layer-list>

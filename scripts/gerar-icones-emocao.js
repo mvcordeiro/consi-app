@@ -20,8 +20,8 @@ const ids = [...fonte.matchAll(/\{ id: '([a-z]+)', nome:/g)].map((m) => m[1]);
 if (ids.length !== 14) throw new Error(`Esperava 14 emoções em emocoes.ts, achei ${ids.length}`);
 
 const AVISO = '<!-- Gerado por scripts/gerar-icones-emocao.js. Não edite à mão. -->';
-// Zona segura do ícone adaptativo: o balão ocupa ~58% dos 108 dp.
-const RECUO = '21%';
+// Zona segura do ícone adaptativo: o balão ocupa ~44% dos 108 dp (era 58%, ficou grande demais).
+const RECUO = '28%';
 
 const adaptativo = (id) => `<?xml version="1.0" encoding="utf-8"?>
 ${AVISO}

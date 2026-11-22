@@ -3,6 +3,6 @@
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
   <background android:drawable="@color/consi_icone_fundo" />
   <foreground>
-    <inset android:drawable="@drawable/consi_emocao_raiva" android:inset="21%" />
+    <inset android:drawable="@drawable/consi_emocao_raiva" android:inset="28%" />
   </foreground>
 </adaptive-icon>
