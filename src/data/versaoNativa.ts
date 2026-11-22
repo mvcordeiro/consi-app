@@ -5,19 +5,24 @@ import { Platform } from 'react-native';
 /**
  * Confere se existe um APK mais novo do que o instalado (mudança nativa, que não chega por EAS Update).
  *
- * O endereço fica em app.json → expo.extra.versaoNativa.url e deve devolver um JSON assim:
- *   { "versionCode": 2, "versao": "1.1.0", "link": "https://expo.dev/artifacts/eas/....apk" }
+ * O arquivo é o consi-versao.json da raiz do repositório (público), lido pelo raw do GitHub:
+ *   { "versionCode": 10, "versao": "1.0.0", "link": "https://expo.dev/artifacts/eas/....apk" }
  * `versionCode` é comparado com o android.versionCode do APK instalado; `link` é o que abre ao tocar
- * em "Baixar". Como o endereço vem da config, dá para trocá-lo por EAS Update sem APK novo.
+ * em "Baixar". A cada APK novo: atualizar o arquivo e dar push em main.
+ *
+ * O endereço fica no código (não no app.json) de propósito: o app.json entra no fingerprint do
+ * runtime, e mudar o endereço lá impediria o EAS Update de chegar aos APKs já instalados.
+ * app.json → expo.extra.versaoNativa.url ainda pode sobrescrever (se for um https:// de verdade).
  */
 export type VersaoNativa = { versionCode: number; versao?: string; link: string };
 
 const TEMPO_LIMITE = 8000;
+const URL_PADRAO = 'https://raw.githubusercontent.com/mvcordeiro/consi-app/main/consi-versao.json';
 
-function urlConfigurada(): string | null {
+function urlConfigurada(): string {
   const extra = Constants.expoConfig?.extra as { versaoNativa?: { url?: string } } | undefined;
   const url = extra?.versaoNativa?.url;
-  if (!url || !url.startsWith('https://') || url.includes('PREENCHER')) return null;
+  if (!url || !url.startsWith('https://') || url.includes('PREENCHER')) return URL_PADRAO;
   return url;
 }
 
@@ -35,7 +40,7 @@ export async function buscarVersaoNova(): Promise<VersaoNativa | null> {
   if (Platform.OS !== 'android' || __DEV__) return null;
   const url = urlConfigurada();
   const instalada = Number(Application.nativeBuildVersion);
-  if (!url || !Number.isFinite(instalada)) return null;
+  if (!Number.isFinite(instalada)) return null;
 
   const controle = new AbortController();
   const timer = setTimeout(() => controle.abort(), TEMPO_LIMITE);
