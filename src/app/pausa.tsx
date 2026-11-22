@@ -35,6 +35,7 @@ import {
   regraDaPausa,
   registrarResistencia,
 } from '@/data/pausa';
+import { registrar } from '@/data/piloto';
 import { seguirParaOApp } from '@/data/vigia';
 import { duration, easing, space, useTema } from '@/theme';
 
@@ -138,6 +139,7 @@ export default function Pausa() {
   // ─── Saídas ───────────────────────────────────────────────────────────────
   // Pausa do vigia: libera o app e volta para ele, deixando o Consi na Home por trás.
   const irParaOApp = (minutos: number) => {
+    registrar('pausa_seguiu', { via: doVigia ? 'vigia' : 'manual', minutos });
     if (doVigia && seguirParaOApp(params.app, minutos)) {
       marcarLiberacao(params.app, minutos);
       router.dismissTo('/');
@@ -159,6 +161,7 @@ export default function Pausa() {
   };
   // Explorar um hobby no lugar do app também é não abrir: vira "não abriu … e explorou Música".
   const explorarHobby = () => {
+    registrar('pausa_hobby', { via: doVigia ? 'vigia' : 'manual' });
     registrarResistencia({
       grupo: grupo.id,
       app: params.app,
@@ -169,6 +172,7 @@ export default function Pausa() {
     router.dismissTo({ pathname: '/hobbies', params: { hobby: hobbyRoda } });
   };
   const naoAbro = () => {
+    registrar('pausa_nao_abri', { via: doVigia ? 'vigia' : 'manual' });
     // Um check-in já feito nesta pausa entra junto; um feito depois é ligado em `soltar`.
     resistenciaEm.current = registrarResistencia({
       grupo: grupo.id,

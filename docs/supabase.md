@@ -117,3 +117,18 @@ No projeto Consi (2026-11-21), com supabase-js e um anônimo descartável (apaga
 o envio vira `pendente` com placar zerado, a pendente fica fora do ranking e não recebe voto, edição ou denúncia;
 depois de publicada aparece no ranking, voto +1 → -1 → removido atualiza o placar, denúncia repetida dá `23505`,
 denúncias não são legíveis, a publicada não pode ser apagada pelo autor e a 4ª sugestão do dia é barrada.
+
+## Eventos do piloto (anônimos)
+
+Migration `0003_eventos.sql`: tabela `eventos` (só insert pelo app, com a chave pública e sem login; leitura só
+admin ou SQL Editor) e a view `piloto_por_pessoa` (dias ativos e as 4 tarefas por código). O app grava uma fila no
+aparelho (`src/data/piloto.ts`) e envia em lotes quando há rede. Nunca vai texto da pessoa: só o nome do evento e
+propriedades fixas. A pessoa desliga em Ajustes → Privacidade e dados.
+
+Eventos: `app_aberto {dia}`, `tela {rota}` (segmentos da rota, sem ids), `pausa_seguiu`, `pausa_nao_abri`,
+`pausa_hobby`, `atividade_aceita`, `atividade_criada`, `grupo_salvo {novo}`, `momento_criado {origem, escrito}`,
+`convite_visto`, `convite_aberto`.
+
+Formulário: `app.json → expo.extra.piloto` (`formulario` = link do Google Forms; `campoCodigo` = número do
+`entry.NNNN` do campo "Código do piloto", do "Obter link pré-preenchido"). Depois de 7 dias o app convida a responder.
+Resumo para o relatório: `select * from piloto_por_pessoa;`

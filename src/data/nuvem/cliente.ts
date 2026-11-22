@@ -122,6 +122,9 @@ function lerConfig(): Config | null {
   return { url, anonKey };
 }
 
+/** URL e chave pública da nuvem, ou null sem configuração (usado pelos eventos do piloto, sem login). */
+export const configDaNuvem = lerConfig;
+
 /** `false` enquanto app.json → expo.extra.supabase estiver com os valores de exemplo. */
 export function nuvemConfigurada() {
   return lerConfig() !== null;

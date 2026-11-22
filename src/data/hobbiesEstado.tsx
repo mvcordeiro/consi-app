@@ -17,6 +17,7 @@ import {
 } from './catalogo';
 import { gravarEstado, lerEstado } from './banco';
 import { respostasSalvas } from './onboarding';
+import { registrar } from './piloto';
 
 /**
  * Estado da aba Hobbies, compartilhado com as telas secundárias e gravado no aparelho.
@@ -226,6 +227,7 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
   const minhaReacao = useCallback((cid: string) => estado.minhasReacoes[cid], [estado.minhasReacoes]);
 
   const aceitar = useCallback((s: Atividade) => {
+    registrar('atividade_aceita');
     const { quando: _quando, ...resto } = s;
     const nova: AtividadeMinha = {
       ...resto,
@@ -261,6 +263,7 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
   );
 
   const criar = useCallback((d: DadosAtividade) => {
+    registrar('atividade_criada');
     const id = `c${Date.now().toString(36)}`;
     const publicar = d.visibilidade === 'comunidade';
     const nova: AtividadeMinha = {

@@ -9,6 +9,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { gravarEstado, lerEstado, lerMomentos, sincronizarMomentos } from './banco';
+import { registrar } from './piloto';
 
 export type Anexo =
   | { tipo: 'audio'; uri: string; /** segundos */ duracao: number }
@@ -137,6 +138,7 @@ export async function adicionarMomento(m: Omit<Momento, 'em'> & { em?: number })
   let em = m.em ?? Date.now();
   while (lista.some((x) => x.em === em)) em += 1;
   const novo: Momento = { ...m, em };
+  registrar('momento_criado', { origem: m.origem ?? 'diario', escrito: !!m.texto?.trim() });
   await mudar((l) => [novo, ...l]);
   return novo;
 }

@@ -22,6 +22,7 @@ import { APPS_EXEMPLO, appsAgora, carregarApps, comAppsDoAparelho, pacoteDoExemp
 import { gravarEstado, lerEstado } from './banco';
 import type { PeriodoFilosofico } from './frases';
 import { respostasSalvas, type CaixaDeApp } from './onboarding';
+import { registrar } from './piloto';
 
 // ─── Catálogo ───────────────────────────────────────────────────────────────
 // Os apps vêm de ./apps (do aparelho no APK Android; de exemplo no navegador).
@@ -308,6 +309,7 @@ export function salvarGrupo(g: Grupo) {
     .filter((x) => x.id !== g.id)
     .map((x) => ({ ...x, apps: x.apps.filter((a) => !apps.includes(a)) }));
   const existe = estado.some((x) => x.id === g.id);
+  registrar('grupo_salvo', { novo: !existe });
   const salvo = { ...g, apps };
   gravar(existe ? estado.map((x) => (x.id === g.id ? salvo : outros.find((o) => o.id === x.id)!)) : [...outros, salvo]);
 }
