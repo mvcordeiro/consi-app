@@ -81,6 +81,10 @@
         "repositorio": "https://github.com/mvcordeiro/consi-app",
         "licenca": "MIT"
       },
+      "piloto": {
+        "formulario": "https://docs.google.com/forms/d/e/1FAIpQLSeHnQlF08s3gLX79otICOQE-sh-Ni8dyouAGYJfmrOq5tdLYQ/viewform",
+        "campoCodigo": "325901576"
+      },
       "supabase": {
         "url": "https://qxrxvosvavtlqhzzhhfg.supabase.co",
         "anonKey": "sb_publishable_MVNK1FvjdTFjTBuo-WTRaw__KaKsgbF"

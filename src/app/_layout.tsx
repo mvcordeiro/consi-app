@@ -1,10 +1,12 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, type ReactNode } from 'react';
 
 import { AvisoNovaVersao } from '@/components/AvisoNovaVersao';
+import { AvisoPiloto } from '@/components/AvisoPiloto';
+import { iniciarPiloto, registrar } from '@/data/piloto';
 import { useAparencia } from '@/data/aparencia';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
 import { carregarHobbiesPersonalizados } from '@/data/hobbiesPersonalizados';
@@ -54,6 +56,14 @@ function Pilha() {
   useVigia();
   // APK Android: as emoções de hoje para os widgets da tela inicial.
   useWidgets();
+  // Piloto: eventos de uso anônimos (qual tela abriu, sem conteúdo) e o convite do dia 7.
+  useEffect(() => {
+    iniciarPiloto();
+  }, []);
+  const segmentos = useSegments().join('/');
+  useEffect(() => {
+    if (segmentos) registrar('tela', { rota: segmentos });
+  }, [segmentos]);
   return (
     <>
       <StatusBar style={modo === 'dark' ? 'light' : 'dark'} />
@@ -77,6 +87,7 @@ function Pilha() {
       </Stack>
       {/* APK fora da loja: avisa quando há um build nativo mais novo (o JS chega pelo expo-updates). */}
       <AvisoNovaVersao />
+      <AvisoPiloto />
     </>
   );
 }

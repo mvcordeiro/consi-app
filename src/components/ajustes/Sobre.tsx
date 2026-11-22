@@ -1,8 +1,9 @@
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { codigoDoPiloto, enderecoDoFormulario, marcarRespondeu, pilotoCarregado } from '@/data/piloto';
 import { space, useTema } from '@/theme';
 
 import { Botao } from '../Botao';
@@ -29,6 +30,17 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
   const toques = useRef({ n: 0, ultimo: 0 });
   const info = ((Constants.expoConfig?.extra as { sobre?: InfoSobre } | undefined)?.sobre ?? {}) as InfoSobre;
   const licenca = info.licenca ?? 'MIT';
+  // Piloto: código anônimo e o formulário final (só aparece com o formulário configurado).
+  const [piloto, setPiloto] = useState<{ codigo: string; formulario: string | null } | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    pilotoCarregado()
+      .then((d) => vivo && setPiloto({ codigo: codigoDoPiloto(d), formulario: enderecoDoFormulario(d) }))
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, []);
 
   const tocar = () => {
     if (!onAdmin) return;
@@ -64,8 +76,27 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
       <Divisoria />
       <Ajuste
         titulo="O que sai do celular"
-        descricao="Só o que você escreve em Sugestões e os seus votos, sem seu nome nem e-mail. As Novidades só são baixadas."
+        descricao="O que você escreve em Sugestões e os seus votos, sem seu nome nem e-mail. No piloto, também quais telas e recursos você usa (nunca o que você escreve), ligado a um código aleatório. Dá para desligar em Privacidade e dados."
       />
+
+      {piloto?.formulario ? (
+        <>
+          <Divisoria />
+          <Ajuste
+            titulo="Piloto de teste"
+            descricao={`Seu código do piloto é ${piloto.codigo}. Ele não identifica você; só liga suas respostas ao uso do app.`}
+          >
+            <Botao
+              rotulo="Avaliar o piloto"
+              estilo="secundario"
+              onPress={() => {
+                Linking.openURL(piloto.formulario!).catch(() => {});
+              }}
+            />
+            <Botao rotulo="Já respondi" estilo="secundario" onPress={() => void marcarRespondeu()} />
+          </Ajuste>
+        </>
+      ) : null}
 
       <Divisoria />
       <Ajuste
