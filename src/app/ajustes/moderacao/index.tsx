@@ -2,10 +2,11 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 
-import { Botao, Etiqueta, Filtro, Texto, useAviso } from '@/components';
+import { Botao, Filtro, Texto, useAviso } from '@/components';
 import {
   Carregando,
   CardSugestao,
+  Chip,
   dataLonga,
   estilosLista,
   FalhaNuvem,
@@ -157,7 +158,7 @@ function LinhaVersao({ versao }: { versao: Versao }) {
           {`${dataLonga(versao.data)} · ${versao.itens.length} ${versao.itens.length === 1 ? 'item' : 'itens'}`}
         </Texto>
       </View>
-      <Etiqueta rotulo={versao.publicada ? 'Publicada' : 'Rascunho'} tom={versao.publicada ? 'sucesso' : 'neutro'} linhaUnica />
+      <Chip rotulo={versao.publicada ? 'Publicada' : 'Rascunho'} cor={versao.publicada ? cores.feedback.success : cores.icon.secondary} />
     </Pressable>
   );
 }

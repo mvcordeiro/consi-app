@@ -5,7 +5,7 @@ import Svg, { Path } from 'react-native-svg';
 import { vibrarSelecao } from '@/data/haptica';
 import { votar } from '@/data/nuvem/sugestoes';
 import type { Placar, ValorVoto } from '@/data/nuvem/tipos';
-import { borderWidth, radius, size, space, useTema } from '@/theme';
+import { size, space, useTema } from '@/theme';
 
 import { Texto } from '../Texto';
 import { mensagemErro } from './rotulos';
@@ -19,26 +19,52 @@ function placarOtimista(s: Votavel, novo: ValorVoto): Placar {
   return { votosPos: pos, votosNeg: neg, pontos: pos - neg };
 }
 
+/** 950 → "950", 1234 → "1,2 mil", 4000 → "4 mil". */
+export function pontosCurtos(n: number): string {
+  const abs = Math.abs(n);
+  if (abs < 1000) return String(n);
+  const mil = n / 1000;
+  return `${mil.toLocaleString('pt-BR', { maximumFractionDigits: abs < 10000 ? 1 : 0 })} mil`;
+}
+
+/** Seta cheia (estilo "upvote"): para cima ou para baixo. */
+function Seta({ cima, cor }: { cima: boolean; cor: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 20 20">
+      <Path
+        d={cima ? 'M10 2 L18 11 H13 V18 H7 V11 H2 Z' : 'M10 18 L2 9 H7 V2 H13 V9 H18 Z'}
+        fill={cor}
+        stroke={cor}
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /**
- * ▲ placar ▼. Tocar no voto que já é seu tira o voto. Atualiza na hora (otimista) e acerta com o
- * placar do servidor; se falhar, volta ao que era e chama `onErro` com a frase para o aviso.
- * Desligado para a própria sugestão e para as que ainda não foram publicadas.
+ * ↑ placar ↓ numa linha, sem caixas. Neutro: setas e número em cinza. Votou a favor: seta de
+ * cima e número na cor de ação; contra: seta de baixo e número em vermelho. Tocar no voto que já é
+ * seu tira o voto. Atualiza na hora (otimista) e acerta com o servidor; se falhar, volta ao que era
+ * e chama `onErro`. Desligado (sem toque, mais apagado) na própria sugestão e nas não publicadas.
  */
 export function BotoesVoto({
   sugestao,
   onMudar,
   onErro,
   desligado = false,
-  horizontal = false,
 }: {
   sugestao: Votavel;
   onMudar: (s: Placar & { meuVoto: ValorVoto }) => void;
   onErro: (mensagem: string) => void;
   desligado?: boolean;
-  horizontal?: boolean;
 }) {
   const { cores } = useTema();
   const [ocupado, setOcupado] = useState(false);
+  const corA = cores.action.primary.default;
+  const corContra = cores.feedback.error;
+  const neutro = desligado ? cores.text.disabled : cores.icon.secondary;
+  const corNumero = sugestao.meuVoto === 1 ? corA : sugestao.meuVoto === -1 ? corContra : desligado ? cores.text.disabled : cores.text.secondary;
 
   const tocar = async (valor: 1 | -1) => {
     if (ocupado || desligado) return;
@@ -58,69 +84,41 @@ export function BotoesVoto({
     }
   };
 
-  const seta = (valor: 1 | -1) => {
+  const botao = (valor: 1 | -1) => {
     const ativo = sugestao.meuVoto === valor;
-    const cor = desligado ? cores.text.disabled : ativo ? cores.text['on-pressed'] : cores.icon.primary;
     return (
       <Pressable
         onPress={() => tocar(valor)}
         disabled={desligado}
-        hitSlop={4}
+        hitSlop={6}
         accessibilityRole="button"
         accessibilityLabel={valor === 1 ? 'Votar a favor' : 'Votar contra'}
         accessibilityState={{ selected: ativo, disabled: desligado }}
-        style={({ pressed }) => [
-          styles.botao,
-          {
-            borderColor: ativo ? cores.action.primary.pressed : cores.border.default,
-            backgroundColor: ativo ? cores.action.primary.pressed : pressed ? cores.bg.selected : 'transparent',
-            opacity: desligado ? 0.6 : 1,
-          },
-        ]}
+        style={({ pressed }) => [styles.botao, pressed && { opacity: 0.6 }]}
       >
-        <Svg width={14} height={14} viewBox="0 0 14 14">
-          <Path
-            d={valor === 1 ? 'M3 9 L7 5 L11 9' : 'M3 5 L7 9 L11 5'}
-            stroke={cor}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            fill="none"
-          />
-        </Svg>
+        <Seta cima={valor === 1} cor={ativo ? (valor === 1 ? corA : corContra) : neutro} />
       </Pressable>
     );
   };
 
   return (
-    <View
-      style={[styles.grupo, horizontal && styles.horizontal]}
-      accessible={false}
-      accessibilityLabel={`${sugestao.pontos} pontos`}
-    >
-      {seta(1)}
+    <View style={styles.grupo}>
+      {botao(1)}
       <Texto
         estilo="Texto/Botões e rótulos"
+        cor={corNumero}
         style={styles.placar}
-        accessibilityLabel={`${sugestao.pontos} pontos, ${sugestao.votosPos} a favor e ${sugestao.votosNeg} contra`}
+        accessibilityLabel={`${sugestao.pontos} pontos: ${sugestao.votosPos} a favor e ${sugestao.votosNeg} contra`}
       >
-        {sugestao.pontos}
+        {pontosCurtos(sugestao.pontos)}
       </Texto>
-      {seta(-1)}
+      {botao(-1)}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  grupo: { alignItems: 'center', gap: space[4] },
-  horizontal: { flexDirection: 'row', gap: space[8] },
-  botao: {
-    width: size['touch-target'] - 8,
-    height: size['touch-target'] - 8,
-    borderRadius: radius.full,
-    borderWidth: borderWidth.thin,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  placar: { minWidth: 28, textAlign: 'center' },
+  grupo: { flexDirection: 'row', alignItems: 'center', gap: space[4] },
+  botao: { width: size['touch-target'] - 8, height: size['touch-target'] - 8, alignItems: 'center', justifyContent: 'center' },
+  placar: { minWidth: 24, textAlign: 'center' },
 });

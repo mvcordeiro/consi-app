@@ -33,6 +33,19 @@ Tudo direto no fundo: **sem cartões e sem eyebrows**. Peças de `src/components
 As listas da Comunidade seguem a mesma regra: sugestões e versões são linhas separadas por
 divisória, e cada bloco da moderação começa com uma divisória em vez de um cartão.
 
+Peças da Comunidade (`src/components/comunidade/`):
+
+- `BotoesVoto`: ↑ n ↓ numa linha, setas cheias sem caixa. A favor: seta e número em
+  `action/primary/default`; contra: em `feedback/error`; sem voto: `icon/secondary`. Números grandes
+  ficam curtos ("1,2 mil").
+- `Chip`, `ChipStatus`, `ChipModeracao`: contorno `border/default`, ponto colorido (tons de
+  `feedback/*`) e texto `text/primary`. Não usam fundo "suave", que some contra o `bg/base` no Dark.
+- `RespostaConsi`: a resposta oficial como mensagem (avatar redondo com o logo, "Consi respondeu" e
+  balão `bg/raised`).
+- Detalhe e Moderar começam pelo título da sugestão (sem o título genérico da página), depois chips
+  e "Enviada …". Na Moderar, a decisão vem logo abaixo (Rejeitar e Aprovar lado a lado), depois
+  Status, Resposta (mensagem + "Editar resposta") e Outras ações em texto simples.
+
 ## Personalizar
 
 Preferências locais em `src/data/preferencias.ts` (store com `useSyncExternalStore`, gravado na

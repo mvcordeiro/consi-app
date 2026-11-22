@@ -22,7 +22,8 @@ export function TelaAjustes({
   aviso,
   travarRolagem = false,
 }: {
-  titulo: string;
+  /** Título grande da página. Sem ele, o conteúdo traz o próprio título (ex.: detalhe de sugestão). */
+  titulo?: string;
   voltar?: string;
   direita?: ReactNode;
   children?: ReactNode;
@@ -43,9 +44,11 @@ export function TelaAjustes({
         </View>
         {lista ?? (
           <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled" scrollEnabled={!travarRolagem}>
-            <Texto estilo="Títulos/Grande" accessibilityRole="header">
-              {titulo}
-            </Texto>
+            {titulo ? (
+              <Texto estilo="Títulos/Grande" accessibilityRole="header">
+                {titulo}
+              </Texto>
+            ) : null}
             {children}
           </ScrollView>
         )}

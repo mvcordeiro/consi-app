@@ -1,19 +1,21 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Botao, CampoTexto, Etiqueta, Folha, Texto, useAviso } from '@/components';
+import { Botao, CampoTexto, Folha, Texto, useAviso } from '@/components';
+import { Divisoria } from '@/components/ajustes';
 import {
   BotoesVoto,
   Carregando,
+  Chip,
+  ChipModeracao,
+  ChipStatus,
   FalhaNuvem,
   mensagemErro,
   NOME_CATEGORIA,
-  NOME_MODERACAO,
-  NOME_STATUS,
   quando,
+  RespostaConsi,
   TelaAjustes,
-  TOM_STATUS,
   useCarregar,
   Vazio,
 } from '@/components/comunidade';
@@ -22,8 +24,9 @@ import { LIMITES } from '@/data/nuvem/tipos';
 import { space, useTema } from '@/theme';
 
 /**
- * Detalhe de uma sugestão: título, status, descrição, votos, resposta oficial e a versão em que
- * saiu. Quem enviou vê o estado da revisão e pode apagar enquanto está pendente; os outros podem
+ * Detalhe de uma sugestão. O título da sugestão é o título da página; embaixo, chips (status e
+ * categoria) e "Enviada …"; depois a descrição, os votos, a resposta do Consi como mensagem e a
+ * versão em que saiu. Quem enviou vê a revisão e pode apagar enquanto pendente; os outros podem
  * denunciar (3 denúncias escondem a sugestão até a moderação olhar).
  */
 export default function DetalheSugestao() {
@@ -57,88 +60,70 @@ export default function DetalheSugestao() {
     const publicada = s.moderacao === 'publicada';
     corpo = (
       <>
-        <View style={styles.etiquetas}>
-          {publicada ? (
-            <Etiqueta rotulo={NOME_STATUS[s.status]} tom={TOM_STATUS[s.status]} />
-          ) : (
-            <Etiqueta rotulo={NOME_MODERACAO[s.moderacao]} tom={s.moderacao === 'pendente' ? 'aviso' : 'erro'} />
-          )}
-          {s.categoria ? <Etiqueta rotulo={NOME_CATEGORIA[s.categoria]} /> : null}
+        {/* Cabeçalho: título, chips e quando */}
+        <View style={styles.cabecalho}>
+          <Texto estilo="Títulos/Grande" accessibilityRole="header">
+            {s.titulo}
+          </Texto>
+          <View style={styles.chips}>
+            {publicada ? <ChipStatus status={s.status} /> : <ChipModeracao moderacao={s.moderacao} />}
+            {s.categoria ? <Chip rotulo={NOME_CATEGORIA[s.categoria]} /> : null}
+          </View>
+          <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+            {`Enviada ${quando(s.criadaEm)}${s.minha ? ' por você' : ''}`}
+          </Texto>
         </View>
-        <Texto estilo="Títulos/Médio">{s.titulo}</Texto>
-        <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-          {`Enviada ${quando(s.criadaEm)}${s.minha ? ' · por você' : ''}`}
-        </Texto>
+
         {s.descricao ? <Texto cor={cores.text.secondary}>{s.descricao}</Texto> : null}
 
         {publicada ? (
-          <View style={styles.cartao}>
-            <View style={styles.flex}>
-              <Texto estilo="Títulos/Pequeno">Votos</Texto>
-              <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-                {s.minha ? 'Você não pode votar na sua própria ideia.' : `${s.votosPos} a favor · ${s.votosNeg} contra`}
-              </Texto>
-            </View>
-            <BotoesVoto
-              sugestao={s}
-              horizontal
-              desligado={s.minha}
-              onMudar={(m) => setDados((d) => (d ? { ...d, ...m } : d))}
-              onErro={mostrarAviso}
-            />
-          </View>
-        ) : s.minha ? (
-          <View style={[styles.cartao, styles.coluna]}>
-            <Texto estilo="Títulos/Pequeno">{s.moderacao === 'pendente' ? 'Em revisão' : NOME_MODERACAO[s.moderacao]}</Texto>
-            <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-              {s.moderacao === 'pendente'
-                ? 'Só você vê esta sugestão por enquanto. Ela fica pública depois de revisada.'
-                : 'Esta sugestão não foi publicada.'}
+          <View style={styles.votos}>
+            <BotoesVoto sugestao={s} desligado={s.minha} onMudar={(m) => setDados((d) => (d ? { ...d, ...m } : d))} onErro={mostrarAviso} />
+            <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+              {s.minha ? 'Você não vota na sua própria ideia' : `${s.votosPos} a favor · ${s.votosNeg} contra`}
             </Texto>
           </View>
+        ) : s.minha && s.moderacao === 'pendente' ? (
+          <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
+            Só você vê esta sugestão por enquanto. Ela fica pública depois de revisada.
+          </Texto>
         ) : null}
 
-        {s.resposta ? (
-          <View style={[styles.cartao, styles.coluna, { borderLeftColor: cores.action.primary.default }, styles.resposta]}>
-            <Texto estilo="Títulos/Pequeno">{publicada ? 'Resposta do Consi' : 'Motivo'}</Texto>
-            <Texto>{s.resposta}</Texto>
-          </View>
-        ) : null}
+        {s.resposta || s.versao ? <Divisoria /> : null}
+
+        {s.resposta ? <RespostaConsi texto={s.resposta} titulo={publicada ? 'Consi respondeu' : 'Motivo da revisão'} /> : null}
 
         {s.versao ? (
-          <Botao
-            rotulo={`Saiu na versão ${s.versao.versao}`}
-            estilo="secundario"
-            onPress={() => router.push('/ajustes/novidades')}
-          />
+          <Botao rotulo={`Saiu na versão ${s.versao.versao}`} estilo="secundario" onPress={() => router.push('/ajustes/novidades' as Href)} />
         ) : null}
 
-        {s.minha && s.moderacao === 'pendente' ? (
-          <Botao rotulo="Apagar sugestão" estilo="secundario" onPress={() => setFolha('apagar')} />
-        ) : null}
-        {!s.minha && publicada ? (
-          <Botao rotulo="Denunciar" estilo="secundario" onPress={() => setFolha('denunciar')} />
+        {/* Ação discreta no fim, só para quem pode */}
+        {(s.minha && s.moderacao === 'pendente') || (!s.minha && publicada) ? (
+          <Pressable
+            onPress={() => setFolha(s.minha ? 'apagar' : 'denunciar')}
+            accessibilityRole="button"
+            hitSlop={8}
+            style={({ pressed }) => [styles.acaoDiscreta, pressed && { opacity: 0.6 }]}
+          >
+            <Texto estilo="Texto/Botões e rótulos" cor={s.minha ? cores.feedback.error : cores.text.tertiary}>
+              {s.minha ? 'Apagar sugestão' : 'Denunciar sugestão'}
+            </Texto>
+          </Pressable>
         ) : null}
       </>
     );
   }
 
   return (
-    <TelaAjustes titulo="Sugestão" voltar="Sugestões" aviso={aviso}>
-      {corpo}
+    <TelaAjustes voltar="Sugestões" aviso={aviso}>
+      <View style={styles.pagina}>{corpo}</View>
       <Folha
         visivel={folha === 'denunciar'}
         onFechar={() => setFolha(null)}
         titulo="Denunciar sugestão?"
         descricao="Conte o que há de errado, se quiser. Com 3 denúncias ela sai do ar até ser revisada."
       >
-        <CampoTexto
-          placeholder="Motivo (opcional)"
-          value={motivo}
-          onChangeText={setMotivo}
-          maxLength={LIMITES.motivoMax}
-          acessibilidade="Motivo da denúncia"
-        />
+        <CampoTexto placeholder="Motivo (opcional)" value={motivo} onChangeText={setMotivo} maxLength={LIMITES.motivoMax} acessibilidade="Motivo da denúncia" />
         <Botao
           rotulo="Denunciar"
           onPress={() => fazer(() => denunciar(id, motivo), 'Denúncia enviada. Obrigado por avisar.')}
@@ -166,9 +151,9 @@ export default function DetalheSugestao() {
 }
 
 const styles = StyleSheet.create({
-  etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
-  cartao: { flexDirection: 'row', alignItems: 'center', gap: space[12], paddingVertical: space[8] },
-  coluna: { flexDirection: 'column', alignItems: 'stretch', gap: space[8] },
-  resposta: { borderLeftWidth: 3, paddingLeft: space[12] },
-  flex: { flex: 1, gap: space[4] },
+  pagina: { gap: space[24] },
+  cabecalho: { gap: space[12] },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  votos: { flexDirection: 'row', alignItems: 'center', gap: space[12], marginLeft: -space[8] },
+  acaoDiscreta: { alignSelf: 'center', paddingVertical: space[8], marginTop: space[16] },
 });

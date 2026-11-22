@@ -2,17 +2,19 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Botao, CampoTexto, Etiqueta, Filtro, Folha, Texto, useAviso } from '@/components';
+import { Botao, CampoTexto, Filtro, Folha, Texto, useAviso } from '@/components';
 import {
   Carregando,
+  Chip,
+  ChipModeracao,
+  ChipStatus,
   FalhaNuvem,
   mensagemErro,
   NOME_CATEGORIA,
-  NOME_MODERACAO,
   NOME_STATUS,
   quando,
+  RespostaConsi,
   TelaAjustes,
-  TOM_STATUS,
   useCarregar,
   Vazio,
 } from '@/components/comunidade';
@@ -74,9 +76,9 @@ export default function ModerarSugestao() {
     }
   };
 
-  if (carregando) return <TelaAjustes titulo="Moderar" voltar="Moderação"><Carregando /></TelaAjustes>;
-  if (erro) return <TelaAjustes titulo="Moderar" voltar="Moderação"><FalhaNuvem erro={erro} onTentar={tentarDeNovo} /></TelaAjustes>;
-  if (!dados) return <TelaAjustes titulo="Moderar" voltar="Moderação"><Vazio titulo="Sugestão não encontrada" /></TelaAjustes>;
+  if (carregando) return <TelaAjustes voltar="Moderação"><Carregando /></TelaAjustes>;
+  if (erro) return <TelaAjustes voltar="Moderação"><FalhaNuvem erro={erro} onTentar={tentarDeNovo} /></TelaAjustes>;
+  if (!dados) return <TelaAjustes voltar="Moderação"><Vazio titulo="Sugestão não encontrada" /></TelaAjustes>;
 
   const { s, denuncias } = dados;
   const textoResposta = resposta ?? s.resposta ?? '';
@@ -89,78 +91,116 @@ export default function ModerarSugestao() {
   };
 
   return (
-    <TelaAjustes titulo="Moderar" voltar="Moderação" aviso={aviso}>
-      <View style={styles.etiquetas}>
-        <Etiqueta rotulo={NOME_MODERACAO[s.moderacao]} tom={s.moderacao === 'publicada' ? 'sucesso' : s.moderacao === 'pendente' ? 'aviso' : 'erro'} />
-        <Etiqueta rotulo={NOME_STATUS[s.status]} tom={TOM_STATUS[s.status]} />
-        {s.categoria ? <Etiqueta rotulo={NOME_CATEGORIA[s.categoria]} /> : null}
-      </View>
-      <Texto estilo="Títulos/Médio">{s.titulo}</Texto>
-      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-        {`Enviada ${quando(s.criadaEm)} · ${s.pontos} pontos (${s.votosPos} a favor, ${s.votosNeg} contra)`}
-      </Texto>
-      {s.descricao ? <Texto cor={cores.text.secondary}>{s.descricao}</Texto> : null}
-      {s.duplicadaDe ? (
-        <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-          Juntada com outra sugestão.
+    <TelaAjustes voltar="Moderação" aviso={aviso}>
+      {/* A sugestão, como a pessoa vê: título, chips e quando */}
+      <View style={styles.cabecalho}>
+        <Texto estilo="Títulos/Grande" accessibilityRole="header">
+          {s.titulo}
         </Texto>
-      ) : null}
+        <View style={styles.chips}>
+          <ChipModeracao moderacao={s.moderacao} />
+          <ChipStatus status={s.status} />
+          {s.categoria ? <Chip rotulo={NOME_CATEGORIA[s.categoria]} /> : null}
+        </View>
+        <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+          {`Enviada ${quando(s.criadaEm)} · ${s.pontos} ${Math.abs(s.pontos) === 1 ? 'ponto' : 'pontos'}${s.duplicadaDe ? ' · juntada com outra' : ''}`}
+        </Texto>
+      </View>
+      {s.descricao ? <Texto cor={cores.text.secondary}>{s.descricao}</Texto> : null}
 
-      {denuncias.length ? (
-        <Bloco titulo={`Denúncias (${denuncias.length})`}>
-          {denuncias.map((d, i) => (
-            <Texto key={i} estilo="Texto/Pequeno" cor={cores.text.secondary}>
-              {`${quando(d.criadaEm)}: ${d.motivo ?? 'sem motivo'}`}
-            </Texto>
-          ))}
-        </Bloco>
-      ) : null}
-
-      <Bloco titulo="Publicação">
+      {/* Decisão principal: um botão primário, o outro secundário, lado a lado */}
+      <View style={styles.decisao}>
         {s.moderacao === 'pendente' ? (
           <>
-            <Botao rotulo="Aprovar e publicar" onPress={() => fazer(() => aprovar(s.id), 'Publicada.')} estado={estado} disabled={ocupado} />
-            <Botao rotulo="Rejeitar" estilo="secundario" onPress={() => setFolha('rejeitar')} estado={estado} disabled={ocupado} />
+            <View style={styles.flex}>
+              <Botao rotulo="Rejeitar" estilo="secundario" onPress={() => setFolha('rejeitar')} estado={estado} disabled={ocupado} />
+            </View>
+            <View style={styles.flex}>
+              <Botao rotulo="Aprovar" onPress={() => fazer(() => aprovar(s.id), 'Publicada.')} estado={estado} disabled={ocupado} />
+            </View>
           </>
         ) : s.moderacao === 'publicada' ? (
-          <Botao rotulo="Esconder" estilo="secundario" onPress={() => fazer(() => esconder(s.id), 'Escondida.')} estado={estado} disabled={ocupado} />
+          <View style={styles.flex}>
+            <Botao rotulo="Esconder" estilo="secundario" onPress={() => fazer(() => esconder(s.id), 'Escondida.')} estado={estado} disabled={ocupado} />
+          </View>
         ) : (
-          <Botao rotulo="Publicar" onPress={() => fazer(() => aprovar(s.id), 'Publicada.')} estado={estado} disabled={ocupado} />
+          <View style={styles.flex}>
+            <Botao rotulo="Publicar" onPress={() => fazer(() => aprovar(s.id), 'Publicada.')} estado={estado} disabled={ocupado} />
+          </View>
         )}
-      </Bloco>
+      </View>
 
-      <Bloco titulo="Status" descricao="Aparece para todos na lista e no detalhe.">
-        <View style={styles.etiquetas} accessibilityRole="radiogroup">
+      {denuncias.length ? (
+        <Secao titulo={`Denúncias · ${denuncias.length}`}>
+          {denuncias.map((d, i) => (
+            <Texto key={i} estilo="Texto/Pequeno" cor={cores.text.secondary}>
+              {`${d.motivo ?? 'Sem motivo'} · ${quando(d.criadaEm)}`}
+            </Texto>
+          ))}
+        </Secao>
+      ) : null}
+
+      <Secao titulo="Status" descricao="Todos veem na lista e no detalhe.">
+        <View style={styles.chips} accessibilityRole="radiogroup">
           {STATUS_SUGESTAO.map((st) => (
             <Filtro key={st} rotulo={NOME_STATUS[st]} ativo={s.status === st} onPress={() => mudarStatus(st)} />
           ))}
         </View>
-      </Bloco>
+      </Secao>
 
-      <Bloco titulo="Resposta oficial" descricao={s.moderacao === 'rejeitada' ? 'Numa rejeitada, é o motivo que só o autor vê.' : 'Aparece em destaque no detalhe da sugestão.'}>
-        <CampoTexto
-          value={textoResposta}
-          onChangeText={setResposta}
-          multiline
-          alturaMinima={96}
-          maxLength={LIMITES.respostaMax}
-          placeholder="Ex.: Obrigado! Isso entra no próximo mês."
-          acessibilidade="Resposta oficial"
-        />
-        <Botao
-          rotulo="Salvar resposta"
-          estilo="secundario"
-          onPress={() => fazer(() => responder(s.id, textoResposta), textoResposta.trim() ? 'Resposta salva.' : 'Resposta apagada.')}
-          estado={resposta === null || ocupado ? 'desabilitado' : 'normal'}
-          disabled={resposta === null || ocupado}
-        />
-      </Bloco>
+      <Secao
+        titulo={s.moderacao === 'rejeitada' ? 'Motivo para quem enviou' : 'Resposta do Consi'}
+        descricao={s.moderacao === 'rejeitada' ? 'Só a pessoa que enviou vê.' : 'Aparece como mensagem no detalhe da sugestão.'}
+      >
+        {/* Com resposta: só a mensagem e "Editar". Sem resposta (ou editando): o campo. */}
+        {s.resposta && resposta === null ? (
+          <>
+            <RespostaConsi texto={s.resposta} titulo={s.moderacao === 'rejeitada' ? 'Motivo da revisão' : 'Consi respondeu'} />
+            <AcaoTexto rotulo="Editar resposta" onPress={() => setResposta(s.resposta ?? '')} />
+          </>
+        ) : (
+          <>
+            <CampoTexto
+              value={textoResposta}
+              onChangeText={setResposta}
+              multiline
+              alturaMinima={88}
+              maxLength={LIMITES.respostaMax}
+              placeholder="Ex.: Obrigado! Isso entra no próximo mês."
+              acessibilidade="Resposta do Consi"
+            />
+            {resposta !== null && (resposta.trim() || s.resposta) ? (
+              <View style={styles.decisao}>
+                {s.resposta ? (
+                  <View style={styles.flex}>
+                    <Botao rotulo="Cancelar" estilo="secundario" onPress={() => setResposta(null)} disabled={ocupado} />
+                  </View>
+                ) : null}
+                <View style={styles.flex}>
+                  <Botao
+                    rotulo={resposta.trim() ? 'Enviar' : 'Apagar resposta'}
+                    onPress={() =>
+                      fazer(() => responder(s.id, resposta), resposta.trim() ? 'Resposta enviada.' : 'Resposta apagada.', () => {
+                        setResposta(null);
+                        void recarregar();
+                      })
+                    }
+                    estado={estado}
+                    disabled={ocupado}
+                  />
+                </View>
+              </View>
+            ) : null}
+          </>
+        )}
+      </Secao>
 
-      <Bloco titulo="Mais ações">
-        <Botao rotulo="Editar texto" estilo="secundario" onPress={() => setFolha('editar')} />
-        <Botao rotulo="Juntar com outra parecida" estilo="secundario" onPress={() => setFolha('mesclar')} />
-        <Botao rotulo="Apagar de vez" estilo="secundario" onPress={() => setFolha('apagar')} />
-      </Bloco>
+      {/* Ações raras: texto simples, sem peso visual */}
+      <Secao titulo="Outras ações">
+        <AcaoTexto rotulo="Editar texto" onPress={() => setFolha('editar')} />
+        <AcaoTexto rotulo="Juntar com uma parecida" onPress={() => setFolha('mesclar')} />
+        <AcaoTexto rotulo="Apagar de vez" perigo onPress={() => setFolha('apagar')} />
+      </Secao>
 
       <Folha visivel={folha === 'rejeitar'} onFechar={() => setFolha(null)} titulo="Rejeitar sugestão?" descricao="Ela não fica pública. O motivo aparece só para quem enviou.">
         <CampoTexto value={motivo} onChangeText={setMotivo} placeholder="Motivo (opcional)" maxLength={LIMITES.respostaMax} acessibilidade="Motivo" />
@@ -193,20 +233,37 @@ export default function ModerarSugestao() {
   );
 }
 
-function Bloco({ titulo, descricao, children }: { titulo: string; descricao?: string; children: React.ReactNode }) {
+/** Uma seção da moderação: divisória em cima, título, explicação curta e o conteúdo. */
+function Secao({ titulo, descricao, children }: { titulo: string; descricao?: string; children: React.ReactNode }) {
   const { cores } = useTema();
   return (
-    <View style={[styles.bloco, { borderTopColor: cores.border.subtle }]}>
-      <Texto estilo="Títulos/Pequeno" accessibilityRole="header">
-        {titulo}
-      </Texto>
-      {descricao ? (
-        <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-          {descricao}
+    <View style={[styles.secao, { borderTopColor: cores.border.subtle }]}>
+      <View style={styles.secaoTopo}>
+        <Texto estilo="Títulos/Pequeno" accessibilityRole="header">
+          {titulo}
         </Texto>
-      ) : null}
+        {descricao ? (
+          <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
+            {descricao}
+          </Texto>
+        ) : null}
+      </View>
       {children}
     </View>
+  );
+}
+
+function AcaoTexto({ rotulo, onPress, perigo = false }: { rotulo: string; onPress: () => void; perigo?: boolean }) {
+  const { cores } = useTema();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" hitSlop={4} style={({ pressed }) => [styles.acaoTexto, pressed && { opacity: 0.6 }]}>
+      <Texto estilo="Texto/Botões e rótulos" cor={perigo ? cores.feedback.error : cores.text.primary} style={styles.flex}>
+        {rotulo}
+      </Texto>
+      <Texto estilo="Texto/Botões e rótulos" cor={cores.icon.secondary}>
+        ›
+      </Texto>
+    </Pressable>
   );
 }
 
@@ -310,7 +367,12 @@ function FolhaMesclar({
 
 const styles = StyleSheet.create({
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
-  bloco: { gap: space[12], paddingTop: space[16], borderTopWidth: 1 },
+  cabecalho: { gap: space[12] },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  decisao: { flexDirection: 'row', gap: space[12], marginTop: space[8] },
+  secao: { gap: space[16], paddingTop: space[24], marginTop: space[8], borderTopWidth: 1 },
+  secaoTopo: { gap: space[4] },
+  acaoTexto: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
   opcao: { flexDirection: 'row', alignItems: 'center', gap: space[8], minHeight: 48, paddingHorizontal: space[12], borderWidth: 1, borderRadius: radius.md },
   flex: { flex: 1 },
 });
