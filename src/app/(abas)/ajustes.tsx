@@ -55,7 +55,7 @@ export default function Ajustes() {
         {nuvem ? (
           <LinhaLink
             titulo="Comunidade"
-            descricao={admin ? 'Sugestões, novidades e moderação.' : 'Sugira ideias e veja o que há de novo.'}
+            descricao={admin || __DEV__ ? 'Sugestões, novidades e moderação.' : 'Sugira ideias e veja o que há de novo.'}
             selo={novidade}
             onPress={() => ir('/ajustes/comunidade')}
           />

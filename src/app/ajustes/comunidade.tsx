@@ -28,7 +28,8 @@ export default function PaginaComunidade() {
       <ListaLinks>
         <LinhaLink titulo="Sugestões" descricao="Envie ideias e vote nas de outras pessoas." onPress={() => ir('/ajustes/sugestoes')} />
         <LinhaLink titulo="Novidades" descricao="O que mudou em cada versão." selo={novidade} onPress={() => ir('/ajustes/novidades')} />
-        {admin ? (
+        {/* Em desenvolvimento (Expo Go, web local) sempre aparece; sem sessão de admin, abre o login. */}
+        {admin || __DEV__ ? (
           <LinhaLink titulo="Moderação" descricao="Revisar sugestões e escrever as notas de versão." onPress={() => ir('/ajustes/moderacao')} />
         ) : null}
       </ListaLinks>

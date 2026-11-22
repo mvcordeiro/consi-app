@@ -124,8 +124,19 @@ autor vê a própria como "Aguardando revisão"); 1 voto por pessoa e ninguém v
 mesmo voto tira o voto; 3 denúncias escondem a sugestão e ela volta para a fila; até 3 sugestões por
 dia por pessoa (o servidor recusa a 4ª e a tela explica).
 
-Entrada da moderação: tocar 7 vezes seguidas na versão, no cartão Sobre. Com sessão de admin, o
-cartão Comunidade ganha a linha "Moderação" e "Para testes" aparece também no APK.
+Entrada da moderação:
+
+- **Em desenvolvimento** (`npx expo start`: Expo Go, web local, dev client): Ajustes → Comunidade →
+  Moderação sempre aparece. Sem sessão de admin, abre o login.
+- **No APK**: escondida. Tocar 7 vezes seguidas na versão (Ajustes → Sobre) abre o login; depois de
+  entrar, a página Comunidade ganha a linha "Moderação" e "Para testes" aparece no índice.
+
+Login: a conta de admin do Supabase (Authentication → Users, listada em `admins`; ver
+`docs/supabase.md` → "Virar admin"). A sessão fica no aparelho até tocar em "Sair" na Moderação.
+
+Aprovar uma sugestão: Moderação → aba Pendentes → tocar na sugestão → "Aprovar e publicar" (ou
+"Rejeitar", com motivo que só o autor vê). Na mesma tela: status, resposta oficial, editar, juntar
+com parecida e apagar. Notas de versão: aba Versões → "Nova versão" → ligar "Publicada".
 
 Rotas index de `app/ajustes` aparecem como `…/index` nos tipos gerados do expo-router (há também a
 aba `ajustes`); por isso os links usam `'/ajustes/sugestoes' as Href` e equivalentes.
