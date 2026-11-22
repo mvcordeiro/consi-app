@@ -12,9 +12,10 @@ export type AssuntoWidget = 'dia' | 'atividades' | 'sugestao' | 'frases';
 
 type ModuloConsiWidgets = {
   atualizar(assunto: AssuntoWidget, json: string): void;
-  /** Troca o ícone do app no launcher pelo da emoção `id`; `null` volta ao ícone normal. */
-  definirIcone(id: string | null): void;
-  /** Troca o ícone do app no launcher pelo da emoção `id`; `null` volta ao ícone normal. */
+  /**
+   * Pede o ícone do app no launcher da emoção `id` (`null` volta ao ícone normal).
+   * A troca acontece uns 5 minutos depois, com o app fora de uso (ver Icone.kt).
+   */
   definirIcone(id: string | null): void;
 };
 

@@ -67,5 +67,7 @@
         android:name="android.appwidget.provider"
         android:resource="@xml/consi_widget_sugestao" />
     </receiver>
+    <!-- Alarme da troca de ícone por emoção (Icone.kt). Só o próprio app dispara: exported=false. -->
+    <receiver android:name=".IconeReceiver" android:exported="false" />
   </application>
 </manifest>

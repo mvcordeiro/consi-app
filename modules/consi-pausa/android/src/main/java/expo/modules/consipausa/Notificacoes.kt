@@ -50,6 +50,22 @@ internal object Notificacoes {
     )
   }
 
+  /**
+   * Abre o app pela atividade de verdade, não pelo apelido do launcher: com o ícone por emoção
+   * (consi-widgets/Icone.kt), o apelido que existia quando a notificação fixa nasceu pode ser
+   * desligado depois, e o toque na notificação deixaria de abrir o app.
+   */
+  private fun abrirApp(context: Context): Intent? {
+    val lancador = context.packageManager.getLaunchIntentForPackage(context.packageName) ?: return null
+    val apelido = lancador.component ?: return lancador
+    val alvo = try {
+      context.packageManager.getActivityInfo(apelido, 0).targetActivity
+    } catch (_: Exception) {
+      null
+    }
+    return if (alvo != null) lancador.setClassName(context.packageName, alvo) else lancador
+  }
+
   /** Abre a pausa do app (consi://pausa?app=…&grupo=…&origem=vigia). */
   fun intentDaPausa(context: Context, pacote: String, grupo: String): Intent =
     Intent(
@@ -81,9 +97,7 @@ internal object Notificacoes {
       .setCategory(NotificationCompat.CATEGORY_SERVICE)
       .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
       .setContentIntent(
-        context.packageManager.getLaunchIntentForPackage(context.packageName)?.let {
-          PendingIntent.getActivity(context, 0, it, PendingIntent.FLAG_IMMUTABLE)
-        },
+        abrirApp(context)?.let { PendingIntent.getActivity(context, 0, it, PendingIntent.FLAG_IMMUTABLE) },
       )
       .setDeleteIntent(
         PendingIntent.getService(

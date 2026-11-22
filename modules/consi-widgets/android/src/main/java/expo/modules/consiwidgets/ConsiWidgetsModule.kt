@@ -18,10 +18,18 @@ class ConsiWidgetsModule : Module() {
      */
     Function("atualizar") { chave: String, json: String -> Widgets.guardar(context, chave, json) }
 
-    /** O ícone do app no launcher: o id de uma emoção, ou null para o ícone normal. */
-    Function("definirIcone") { id: String? -> Icone.definir(context, id) }
+    /**
+     * O ícone do app no launcher: o id de uma emoção, ou null para o ícone normal.
+     * Só agenda: a troca acontece uns minutos depois, com o app fora de uso (ver Icone.kt).
+     */
+    Function("definirIcone") { id: String? -> Icone.pedir(context, id) }
 
-    /** O ícone do app no launcher: o id de uma emoção, ou null para o ícone normal. */
-    Function("definirIcone") { id: String? -> Icone.definir(context, id) }
+    OnCreate {
+      // O módulo nasce com o app aberto (o JS está rodando).
+      Icone.entrou()
+      appContext.reactContext?.let { Icone.retomar(it.applicationContext) }
+    }
+    OnActivityEntersForeground { Icone.entrou() }
+    OnActivityEntersBackground { Icone.saiu() }
   }
 }

@@ -93,7 +93,7 @@ export function Personalizar() {
         <>
           <Ajuste
             titulo="Ícone com a sua emoção"
-            descricao="O ícone do Consi muda para a última emoção que você registrar. Atenção: quem vir a tela do seu celular vai ver como você se sente."
+            descricao="O ícone do Consi muda para a última emoção que você registrar, alguns minutos depois, com o app fechado. Atenção: quem vir a tela do seu celular vai ver como você se sente."
             acessorio={
               <Alternancia
                 rotulo="Ícone com a sua emoção"
