@@ -72,6 +72,8 @@ function Pilha() {
         <Stack.Screen name="grupo" />
         {/* Diário: novo momento, dia aberto e busca */}
         <Stack.Screen name="diario" />
+        {/* Ajustes → Sugestões, Novidades e Moderação */}
+        <Stack.Screen name="ajustes" />
       </Stack>
       {/* APK fora da loja: avisa quando há um build nativo mais novo (o JS chega pelo expo-updates). */}
       <AvisoNovaVersao />

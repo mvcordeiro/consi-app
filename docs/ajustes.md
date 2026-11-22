@@ -92,28 +92,42 @@ Regras:
 ## Comunidade (Sugestões e Novidades)
 
 Back-end: Supabase com login anônimo, só para sugestões, votos e changelog. Nada do diário,
-hobbies ou pausa sai do aparelho. Cliente, migration e configuração: `src/data/nuvem/`,
-`supabase/migrations/` e `docs/supabase.md` (em desenvolvimento noutra branch).
+hobbies ou pausa sai do aparelho. Dados: `src/data/nuvem/` (cliente, `sugestoes`, `novidades`,
+`moderacao`, `tipos`); banco e regras: `supabase/migrations/`; configuração do projeto e do admin:
+`docs/supabase.md`.
 
-Enquanto a nuvem não está no ar, "Sugerir uma ideia" e "Novidades" abrem o marcador
-"Em construção". Telas previstas:
+O cartão Comunidade só aparece quando `app.json → expo.extra.supabase` tem URL e chave
+(`nuvemConfigurada()`). O login anônimo só acontece ao abrir Sugestões (ou votar); Novidades e o
+ponto de "novo" leem sem criar conta.
+
+### Telas (`src/app/ajustes/`)
 
 | Rota | O que faz |
 |---|---|
-| `/ajustes/sugestoes` | lista pública: Em alta · Recentes · Planejadas · Lançadas · Minhas; votar ▲▼ |
-| `/ajustes/sugestoes/nova` | título, descrição, categoria; mostra parecidas antes de enviar |
-| `/ajustes/sugestoes/[id]` | detalhe, placar, resposta oficial, versão em que saiu, denunciar |
-| `/ajustes/novidades` | changelog por versão, abre offline com o cache; ponto de "novo" em Ajustes |
-| `/ajustes/moderacao` | fila Pendentes · Publicadas · Escondidas (só admin) |
-| `/ajustes/moderacao/[id]` | aprovar, rejeitar, editar, status, responder, mesclar duplicadas |
-| `/ajustes/admin-entrar` | login de admin por e-mail + código |
+| `/ajustes/sugestoes` | lista pública: Em alta · Recentes · Planejadas · Lançadas · Minhas; votar, puxar para atualizar, "Carregar mais" (20 por página) |
+| `/ajustes/sugestoes/nova` | título (5–80), detalhes (até 1000), categoria; mostra até 3 publicadas parecidas para votar em vez de duplicar; tela de "Recebemos" ao enviar |
+| `/ajustes/sugestoes/[id]` | detalhe, votos, resposta oficial, versão em que saiu; autor vê "Em revisão" e pode apagar enquanto pendente; os outros podem denunciar |
+| `/ajustes/novidades` | changelog por versão (Novo · Melhorias · Correções + Ideias da comunidade); abre offline com o cache e marca a versão como vista |
+| `/ajustes/admin-entrar` | login de admin (e-mail e senha de uma conta criada no painel do Supabase e listada em `admins`) |
+| `/ajustes/moderacao` | fila Pendentes · Publicadas · Rejeitadas · Escondidas (com contadores) e Versões; "Sair" no topo |
+| `/ajustes/moderacao/[id]` | aprovar/rejeitar (motivo só para o autor), esconder/publicar, status (Lançada pede a versão), resposta oficial, editar texto, juntar com parecida, apagar spam, denúncias |
+| `/ajustes/moderacao/versao` | criar/editar nota de versão (sem `id` cria): número, data, título, itens por tipo, publicada |
+
+Peças comuns em `src/components/comunidade/`: `TelaComunidade` (área segura, "‹ Ajustes", título,
+rodapé fixo, aviso), `CardSugestao`, `BotoesVoto` (voto otimista: muda na hora, acerta com o placar
+do servidor e desfaz com aviso se falhar), `Carregando`/`FalhaNuvem`/`Vazio`, `useCarregar` e
+`rotulos.ts` (nomes de status, categorias, moderação e a frase de cada erro).
 
 Regras de produto: sugestões são **pré-moderadas** (só aparecem para todos depois de aprovadas; o
-autor vê a própria como "Em análise"); 1 voto por pessoa, tocar de novo tira o voto; 3 denúncias
-escondem a sugestão e ela volta para a fila; até 3 sugestões por dia por pessoa.
+autor vê a própria como "Aguardando revisão"); 1 voto por pessoa e ninguém vota na própria; tocar no
+mesmo voto tira o voto; 3 denúncias escondem a sugestão e ela volta para a fila; até 3 sugestões por
+dia por pessoa (o servidor recusa a 4ª e a tela explica).
 
-Entrada da moderação: tocar 7 vezes seguidas na versão, no cartão Sobre (`Sobre onAdmin`). Ainda
-desligada: liga quando a tela de login de admin existir.
+Entrada da moderação: tocar 7 vezes seguidas na versão, no cartão Sobre. Com sessão de admin, o
+cartão Comunidade ganha a linha "Moderação" e "Para testes" aparece também no APK.
+
+Rotas index de `app/ajustes` aparecem como `…/index` nos tipos gerados do expo-router (há também a
+aba `ajustes`); por isso os links usam `'/ajustes/sugestoes' as Href` e equivalentes.
 
 ## Sobre
 
@@ -123,8 +137,8 @@ pessoa dizer exatamente o que tem instalado ao relatar um problema.
 
 ## Para testes
 
-"Refazer onboarding" e "Abrir tela de pausa" só aparecem em desenvolvimento (`__DEV__`). No APK de
-piloto eles não aparecem; quando a moderação existir, passam a aparecer também para o admin.
+"Refazer onboarding" e "Abrir tela de pausa" aparecem em desenvolvimento (`__DEV__`) ou quando o
+aparelho está com sessão de admin. Para quem testa o APK de piloto, não aparecem.
 
 ## Como verificar
 
