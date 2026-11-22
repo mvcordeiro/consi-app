@@ -3,4 +3,4 @@ export * from './CardSugestao';
 export * from './Estados';
 export * from './rotulos';
 export * from './useCarregar';
-export * from './TelaComunidade';
+export * from '../ajustes/TelaAjustes';

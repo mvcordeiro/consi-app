@@ -11,7 +11,7 @@ import {
   NOME_MODERACAO,
   NOME_STATUS,
   quando,
-  TelaComunidade,
+  TelaAjustes,
   TOM_STATUS,
   useCarregar,
   Vazio,
@@ -74,9 +74,9 @@ export default function ModerarSugestao() {
     }
   };
 
-  if (carregando) return <TelaComunidade titulo="Moderar" voltar="Moderação"><Carregando /></TelaComunidade>;
-  if (erro) return <TelaComunidade titulo="Moderar" voltar="Moderação"><FalhaNuvem erro={erro} onTentar={tentarDeNovo} /></TelaComunidade>;
-  if (!dados) return <TelaComunidade titulo="Moderar" voltar="Moderação"><Vazio titulo="Sugestão não encontrada" /></TelaComunidade>;
+  if (carregando) return <TelaAjustes titulo="Moderar" voltar="Moderação"><Carregando /></TelaAjustes>;
+  if (erro) return <TelaAjustes titulo="Moderar" voltar="Moderação"><FalhaNuvem erro={erro} onTentar={tentarDeNovo} /></TelaAjustes>;
+  if (!dados) return <TelaAjustes titulo="Moderar" voltar="Moderação"><Vazio titulo="Sugestão não encontrada" /></TelaAjustes>;
 
   const { s, denuncias } = dados;
   const textoResposta = resposta ?? s.resposta ?? '';
@@ -89,7 +89,7 @@ export default function ModerarSugestao() {
   };
 
   return (
-    <TelaComunidade titulo="Moderar" voltar="Moderação" aviso={aviso}>
+    <TelaAjustes titulo="Moderar" voltar="Moderação" aviso={aviso}>
       <View style={styles.etiquetas}>
         <Etiqueta rotulo={NOME_MODERACAO[s.moderacao]} tom={s.moderacao === 'publicada' ? 'sucesso' : s.moderacao === 'pendente' ? 'aviso' : 'erro'} />
         <Etiqueta rotulo={NOME_STATUS[s.status]} tom={TOM_STATUS[s.status]} />
@@ -189,14 +189,14 @@ export default function ModerarSugestao() {
         <Botao rotulo="Apagar" onPress={() => fazer(() => apagar(s.id), 'Apagada.', () => router.back())} estado={estado} disabled={ocupado} />
         <Botao rotulo="Cancelar" estilo="secundario" onPress={() => setFolha(null)} />
       </Folha>
-    </TelaComunidade>
+    </TelaAjustes>
   );
 }
 
 function Bloco({ titulo, descricao, children }: { titulo: string; descricao?: string; children: React.ReactNode }) {
   const { cores } = useTema();
   return (
-    <View style={[styles.bloco, { backgroundColor: cores.bg.raised }]}>
+    <View style={[styles.bloco, { borderTopColor: cores.border.subtle }]}>
       <Texto estilo="Títulos/Pequeno" accessibilityRole="header">
         {titulo}
       </Texto>
@@ -310,7 +310,7 @@ function FolhaMesclar({
 
 const styles = StyleSheet.create({
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
-  bloco: { gap: space[12], padding: space[16], borderRadius: radius.card },
+  bloco: { gap: space[12], paddingTop: space[16], borderTopWidth: 1 },
   opcao: { flexDirection: 'row', alignItems: 'center', gap: space[8], minHeight: 48, paddingHorizontal: space[12], borderWidth: 1, borderRadius: radius.md },
   flex: { flex: 1 },
 });

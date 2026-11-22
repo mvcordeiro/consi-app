@@ -1,38 +1,37 @@
 # Ajustes
 
-A aba Ajustes reúne tudo o que a pessoa pode mudar no Consi. É uma página só, rolável, feita de
-cartões. Figma: arquivo "Consi - Design de Interação", página "📱 APP // Telas do app", seção
-**10 · AJUSTES**.
+A aba Ajustes é um índice: uma linha por assunto, e cada linha abre a sua página. Figma: arquivo
+"Consi - Design de Interação", página "📱 APP // Telas do app", seção **10 · AJUSTES**.
 
 Plano completo (front e back-end, incluindo sugestões e changelog): decidido em 21/11/2026. As
 decisões estão resumidas no fim deste arquivo.
 
-## Ordem dos cartões
+## Índice e páginas
 
-| # | Cartão | Componente | Onde os dados ficam |
+| Linha do índice | Rota | O que tem | Onde os dados ficam |
 |---|---|---|---|
-| 1 | Personalizar | `src/components/ajustes/Personalizar.tsx` → `Personalizar` | aparelho (`consi:preferencias`) |
-| 2 | Seções do Início | `Personalizar.tsx` → `SecoesInicio` | aparelho (`consi:preferencias`) |
-| 3 | Pausa nos apps | `src/components/AjustesPausa.tsx` | permissões do Android (só APK) |
-| 4 | Cuidado com o tempo de tela | `src/components/AjustesLembretesTela.tsx` | aparelho (só APK) |
-| 5 | Comunidade | `src/app/(abas)/ajustes.tsx` (linhas `LinhaLink`) | Supabase (ver abaixo) |
-| 6 | Seus dados | `src/components/ajustes/SeusDados.tsx` | — |
-| 7 | Sobre | `src/components/ajustes/Sobre.tsx` | — |
-| 8 | Para testes | `ajustes.tsx`, só com `__DEV__` | — |
+| Personalizar aparência | `/ajustes/personalizar` | aparência, tamanho do texto, reduzir movimento, vibração, abrir o app em, seções do Início | aparelho (`consi:preferencias`) |
+| Pausa e lembretes (só APK Android) | `/ajustes/pausa` | `AjustesPausa` (permissões) e `AjustesLembretesTela` | aparelho |
+| Comunidade (só com Supabase) | `/ajustes/comunidade` | Sugestões, Novidades e, para o admin, Moderação | Supabase |
+| Privacidade e dados | `/ajustes/privacidade` | o que fica onde, `SeusDados` (exportar e apagar) | — |
+| Sobre | `/ajustes/sobre` | versão, segurança, código aberto, por que fora da loja | — |
+| Para testes (dev ou admin) | `/ajustes/testes` | refazer onboarding, abrir a pausa | — |
 
-A tela em si (`src/app/(abas)/ajustes.tsx`) só monta os cartões; cada cartão é um componente.
+O índice (`src/app/(abas)/ajustes.tsx`) só lista; as páginas ficam em `src/app/ajustes/` e usam
+`TelaAjustes` (área segura, "‹ Ajustes", título grande, rodapé e aviso opcionais).
 
 ## Hierarquia visual
 
-Todo cartão usa as peças de `src/components/ajustes/Cartao.tsx`:
+Tudo direto no fundo: **sem cartões e sem eyebrows**. Peças de `src/components/ajustes/Cartao.tsx`:
 
-- `CartaoAjustes`: fundo `bg/raised`, raio `radius.card`, padding `space[16]`, gap `space[16]`.
-  O `rotulo` opcional vira o eyebrow (Texto/Botões e rótulos, `text/tertiary`, caixa alta). Cartões
-  com um único assunto (ex.: Seções do Início) ficam sem eyebrow.
 - `Ajuste`: título em Títulos/Pequeno, explicação em Texto/Pequeno `text/secondary`, controle à
-  direita (`acessorio`, ex.: `Alternancia`) ou abaixo (`children`, ex.: `Filtro`s).
-- `Divisoria`: 1 px `border/subtle` entre ajustes do mesmo cartão.
-- `LinhaLink`: linha que abre outra tela (título, explicação, valor, ponto de "novo", "›").
+  direita (`acessorio`, ex.: `Alternancia`) ou abaixo (`children`, ex.: `Filtro`s); 16 px em cima e embaixo.
+- `Divisoria`: 1 px `border/subtle` entre um ajuste e outro.
+- `LinhaLink`: linha que abre outra página (título, explicação, valor, ponto de "novo", "›").
+- `ListaLinks`: põe `Divisoria` entre as `LinhaLink` (índice, Comunidade).
+
+As listas da Comunidade seguem a mesma regra: sugestões e versões são linhas separadas por
+divisória, e cada bloco da moderação começa com uma divisória em vez de um cartão.
 
 ## Personalizar
 
@@ -62,7 +61,9 @@ Regras:
 
 ### Seções do Início (lista arrastável)
 
-`src/components/ajustes/ListaArrastavel.tsx`: lista genérica com altura de linha fixa.
+`src/components/ajustes/ListaArrastavel.tsx`: lista genérica com altura de linha fixa, direto no
+fundo (sem caixa), linhas separadas por 1 px. Só a linha que está sendo arrastada ganha fundo
+`bg/selected` e cantos `radius.card`.
 
 - Segure o pegador (6 pontos, à direita) e arraste; as outras linhas abrem espaço, vibra a cada
   troca de posição e grava ao soltar (`moverSecao(id, posicao)`).
@@ -131,9 +132,19 @@ aba `ajustes`); por isso os links usam `'/ajustes/sugestoes' as Href` e equivale
 
 ## Sobre
 
-Mostra a versão (`expo-application`, ou a do `app.json` no web), o build nativo (`versionCode`) e a
-atualização do EAS Update em uso (8 primeiros caracteres do `updateId`, ou "do APK"). Serve para a
-pessoa dizer exatamente o que tem instalado ao relatar um problema.
+Linguagem simples, sem dados de build: "Consi · Versão 1.0.0" (`app.json → expo.version`, via
+`versaoDoApp()`), e por que dá para confiar no app mesmo fora da Play Store:
+
+- os registros ficam só no aparelho, sem conta;
+- o banco é criptografado (SQLCipher) e a chave fica no cofre do Android (`expo-secure-store`);
+- o que sai do celular: só sugestões e votos, sem nome nem e-mail;
+- código aberto sob a licença de `expo.extra.sobre.licenca`, com o botão "Ver o código no GitHub"
+  para `expo.extra.sobre.repositorio` (os dois dá para trocar por EAS Update);
+- por que não está na loja (piloto; instalador gerado pelo EAS a partir do mesmo código);
+- com o que é feito (Expo e React Native, SQLite criptografado, Supabase só na Comunidade).
+
+Antes de distribuir: o repositório precisa estar público para o link abrir, e o `LICENSE` precisa
+nomear o dono do Consi (hoje é o do modelo da Expo).
 
 ## Para testes
 
@@ -160,3 +171,5 @@ aparelho está com sessão de admin. Para quem testa o APK de piloto, não apare
 - Changelog vindo do Supabase, com cache local.
 - Seções do Início reordenadas arrastando (sem setas).
 - Deslizar entre abas em todo o app.
+- (22/11) Ajustes vira índice de páginas; nada de cartões nem eyebrows; Sobre simples e voltado a
+  mostrar que o app é seguro e aberto.

@@ -77,6 +77,10 @@
       "versaoNativa": {
         "url": "https://PREENCHER-ENDERECO-DO-ARQUIVO/consi-versao.json"
       },
+      "sobre": {
+        "repositorio": "https://github.com/mvcordeiro/consi-app",
+        "licenca": "MIT"
+      },
       "supabase": {
         "url": "https://qxrxvosvavtlqhzzhhfg.supabase.co",
         "anonKey": "sb_publishable_MVNK1FvjdTFjTBuo-WTRaw__KaKsgbF"

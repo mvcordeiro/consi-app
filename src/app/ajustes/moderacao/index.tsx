@@ -9,14 +9,15 @@ import {
   dataLonga,
   estilosLista,
   FalhaNuvem,
-  TelaComunidade,
+  TelaAjustes,
   TituloLista,
   useCarregar,
   Vazio,
 } from '@/components/comunidade';
+import { Divisoria } from '@/components/ajustes';
 import { contarFila, fila, listarVersoes, sairAdmin, souAdmin } from '@/data/nuvem/moderacao';
 import type { Moderacao, SugestaoModeracao, Versao } from '@/data/nuvem/tipos';
-import { radius, space, useTema } from '@/theme';
+import { space, useTema } from '@/theme';
 
 type Aba = Moderacao | 'versoes';
 
@@ -87,8 +88,9 @@ export default function PainelModeracao() {
   );
 
   return (
-    <TelaComunidade
+    <TelaAjustes
       titulo="Moderação"
+      voltar="Comunidade"
       aviso={aviso}
       direita={
         <Pressable onPress={sair} accessibilityRole="button" accessibilityLabel="Sair da moderação" hitSlop={8}>
@@ -103,6 +105,7 @@ export default function PainelModeracao() {
           data={carregando || erro ? [] : (dados?.itens ?? [])}
           keyExtractor={(i) => (i.tipo === 'sugestao' ? i.s.id : i.v.id)}
           contentContainerStyle={estilosLista.conteudo}
+          ItemSeparatorComponent={Divisoria}
           ListHeaderComponent={cabecalho}
           refreshControl={<RefreshControl refreshing={atualizando} onRefresh={recarregar} tintColor={cores.action.primary.default} />}
           renderItem={({ item }) =>
@@ -146,7 +149,7 @@ function LinhaVersao({ versao }: { versao: Versao }) {
       onPress={() => router.push({ pathname: '/ajustes/moderacao/versao', params: { id: versao.id } })}
       accessibilityRole="button"
       accessibilityLabel={`Versão ${versao.versao}, ${versao.publicada ? 'publicada' : 'rascunho'}`}
-      style={({ pressed }) => [styles.versao, { backgroundColor: cores.bg.raised }, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [styles.versao, pressed && { opacity: 0.7 }]}
     >
       <View style={styles.flex}>
         <Texto estilo="Títulos/Pequeno">{`Versão ${versao.versao}`}</Texto>
@@ -161,6 +164,6 @@ function LinhaVersao({ versao }: { versao: Versao }) {
 
 const styles = StyleSheet.create({
   abas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
-  versao: { flexDirection: 'row', alignItems: 'center', gap: space[12], padding: space[16], borderRadius: radius.card },
+  versao: { flexDirection: 'row', alignItems: 'center', gap: space[12], paddingVertical: space[16] },
   flex: { flex: 1, gap: space[4] },
 });

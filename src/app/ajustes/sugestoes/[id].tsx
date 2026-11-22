@@ -12,14 +12,14 @@ import {
   NOME_MODERACAO,
   NOME_STATUS,
   quando,
-  TelaComunidade,
+  TelaAjustes,
   TOM_STATUS,
   useCarregar,
   Vazio,
 } from '@/components/comunidade';
 import { apagarMinhaSugestao, denunciar, detalheSugestao } from '@/data/nuvem/sugestoes';
 import { LIMITES } from '@/data/nuvem/tipos';
-import { radius, space, useTema } from '@/theme';
+import { space, useTema } from '@/theme';
 
 /**
  * Detalhe de uma sugestão: título, status, descrição, votos, resposta oficial e a versão em que
@@ -72,7 +72,7 @@ export default function DetalheSugestao() {
         {s.descricao ? <Texto cor={cores.text.secondary}>{s.descricao}</Texto> : null}
 
         {publicada ? (
-          <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
+          <View style={styles.cartao}>
             <View style={styles.flex}>
               <Texto estilo="Títulos/Pequeno">Votos</Texto>
               <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
@@ -88,7 +88,7 @@ export default function DetalheSugestao() {
             />
           </View>
         ) : s.minha ? (
-          <View style={[styles.cartao, styles.coluna, { backgroundColor: cores.bg.raised }]}>
+          <View style={[styles.cartao, styles.coluna]}>
             <Texto estilo="Títulos/Pequeno">{s.moderacao === 'pendente' ? 'Em revisão' : NOME_MODERACAO[s.moderacao]}</Texto>
             <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
               {s.moderacao === 'pendente'
@@ -99,10 +99,8 @@ export default function DetalheSugestao() {
         ) : null}
 
         {s.resposta ? (
-          <View style={[styles.cartao, styles.coluna, { backgroundColor: cores.bg.raised, borderLeftColor: cores.action.primary.default }, styles.resposta]}>
-            <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
-              {publicada ? 'RESPOSTA DO CONSI' : 'MOTIVO'}
-            </Texto>
+          <View style={[styles.cartao, styles.coluna, { borderLeftColor: cores.action.primary.default }, styles.resposta]}>
+            <Texto estilo="Títulos/Pequeno">{publicada ? 'Resposta do Consi' : 'Motivo'}</Texto>
             <Texto>{s.resposta}</Texto>
           </View>
         ) : null}
@@ -126,7 +124,7 @@ export default function DetalheSugestao() {
   }
 
   return (
-    <TelaComunidade titulo="Sugestão" voltar="Sugestões" aviso={aviso}>
+    <TelaAjustes titulo="Sugestão" voltar="Sugestões" aviso={aviso}>
       {corpo}
       <Folha
         visivel={folha === 'denunciar'}
@@ -163,14 +161,14 @@ export default function DetalheSugestao() {
         />
         <Botao rotulo="Cancelar" estilo="secundario" onPress={() => setFolha(null)} />
       </Folha>
-    </TelaComunidade>
+    </TelaAjustes>
   );
 }
 
 const styles = StyleSheet.create({
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
-  cartao: { flexDirection: 'row', alignItems: 'center', gap: space[12], padding: space[16], borderRadius: radius.card },
+  cartao: { flexDirection: 'row', alignItems: 'center', gap: space[12], paddingVertical: space[8] },
   coluna: { flexDirection: 'column', alignItems: 'stretch', gap: space[8] },
-  resposta: { borderLeftWidth: 3 },
+  resposta: { borderLeftWidth: 3, paddingLeft: space[12] },
   flex: { flex: 1, gap: space[4] },
 });

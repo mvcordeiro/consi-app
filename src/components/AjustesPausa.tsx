@@ -9,7 +9,7 @@ import {
   temPausaDeVerdade,
   usePermissoes,
 } from '@/data/vigia';
-import { radius, space, useTema } from '@/theme';
+import { space, useTema } from '@/theme';
 
 import { Botao } from './Botao';
 import { Icone } from './Icone';
@@ -18,7 +18,6 @@ import { Texto } from './Texto';
 /**
  * Ajustes · "Pausa nos apps" (só no APK Android). As três permissões que a pausa de verdade
  * usa e o liga/desliga do vigia. Cada permissão diz o que deixa de funcionar sem ela.
- * PROVISÓRIO: sem tela no Figma; layout e textos aguardam o design (fase 4 do plano).
  */
 export function AjustesPausa() {
   const { cores } = useTema();
@@ -31,11 +30,11 @@ export function AjustesPausa() {
   };
 
   return (
-    <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
-      <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
-        PAUSA NOS APPS
+    <View style={styles.secao}>
+      <Texto estilo="Títulos/Pequeno" accessibilityRole="header">
+        Pausa nos apps
       </Texto>
-      <Texto cor={cores.text.secondary}>
+      <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
         O Consi abre uma pausa antes dos apps dos seus grupos. Para isso, o Android pede algumas permissões.
       </Texto>
 
@@ -122,7 +121,7 @@ function Permissao({
 }
 
 const styles = StyleSheet.create({
-  cartao: { gap: space[12], padding: space[16], borderRadius: radius.card },
+  secao: { gap: space[16], paddingVertical: space[16] },
   permissao: { gap: space[8] },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   flex: { flex: 1 },

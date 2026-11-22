@@ -1,28 +1,15 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { borderWidth, radius, space, useTema } from '@/theme';
+import { borderWidth, size, space, useTema } from '@/theme';
 
 import { Texto } from '../Texto';
 
 /**
- * Peças comuns dos cartões de Ajustes. A hierarquia é sempre a mesma:
- * rótulo do cartão (Texto/Botões e rótulos, text/tertiary, caixa alta) →
- * título do ajuste (Títulos/Pequeno) → explicação (Texto/Pequeno, text/secondary) → controle.
+ * Peças das páginas de Ajustes. Tudo fica direto no fundo, sem cartões e sem eyebrows:
+ * título do ajuste (Títulos/Pequeno) → explicação (Texto/Pequeno, text/secondary) → controle,
+ * e uma `Divisoria` de 1 px entre um ajuste e outro.
  */
-export function CartaoAjustes({ rotulo, children }: { rotulo?: string; children: ReactNode }) {
-  const { cores } = useTema();
-  return (
-    <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
-      {rotulo ? (
-        <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary} accessibilityRole="header">
-          {rotulo.toUpperCase()}
-        </Texto>
-      ) : null}
-      {children}
-    </View>
-  );
-}
 
 /** Um ajuste: título, explicação opcional, controle à direita (`acessorio`) ou abaixo (`children`). */
 export function Ajuste({
@@ -40,7 +27,7 @@ export function Ajuste({
   return (
     <View style={styles.ajuste}>
       <View style={styles.linha}>
-        <Texto estilo="Títulos/Pequeno" style={styles.flex}>
+        <Texto estilo="Títulos/Pequeno" style={styles.flex} accessibilityRole="header">
           {titulo}
         </Texto>
         {acessorio}
@@ -60,7 +47,7 @@ export function Divisoria() {
   return <View style={[styles.divisoria, { backgroundColor: cores.border.subtle }]} />;
 }
 
-/** Linha que abre outra tela: título, explicação curta, valor ou selo à direita e "›". */
+/** Linha que abre outra página: título, explicação curta, valor ou ponto de "novo" e "›". */
 export function LinhaLink({
   titulo,
   descricao,
@@ -107,13 +94,27 @@ export function LinhaLink({
   );
 }
 
+/** Lista de linhas com divisórias entre elas (o índice de Ajustes, Comunidade). */
+export function ListaLinks({ children }: { children: ReactNode }) {
+  const itens = (Array.isArray(children) ? children : [children]).filter(Boolean);
+  return (
+    <View>
+      {itens.map((item, i) => (
+        <View key={i}>
+          {i > 0 ? <Divisoria /> : null}
+          {item}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  cartao: { gap: space[16], padding: space[16], borderRadius: radius.card },
-  ajuste: { gap: space[8] },
+  ajuste: { gap: space[8], paddingVertical: space[16] },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   controle: { marginTop: space[4], gap: space[8] },
-  flex: { flex: 1 },
+  flex: { flex: 1, gap: space[2] },
   divisoria: { height: borderWidth.thin },
-  link: { flexDirection: 'row', alignItems: 'center', gap: space[12], minHeight: 44 },
+  link: { flexDirection: 'row', alignItems: 'center', gap: space[12], minHeight: size['touch-target'] + space[16], paddingVertical: space[16] },
   selo: { width: 8, height: 8, borderRadius: 4 },
 });

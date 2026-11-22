@@ -2,7 +2,7 @@ import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 
 import { Botao, CampoTexto, Texto } from '@/components';
-import { mensagemErro, TelaComunidade } from '@/components/comunidade';
+import { mensagemErro, TelaAjustes } from '@/components/comunidade';
 import { entrarAdmin } from '@/data/nuvem/moderacao';
 import { useTema } from '@/theme';
 
@@ -37,7 +37,7 @@ export default function AdminEntrar() {
   };
 
   return (
-    <TelaComunidade
+    <TelaAjustes
       titulo="Moderação"
       rodape={
         <>
@@ -73,6 +73,6 @@ export default function AdminEntrar() {
         onSubmitEditing={entrar}
         acessibilidade="Senha"
       />
-    </TelaComunidade>
+    </TelaAjustes>
   );
 }

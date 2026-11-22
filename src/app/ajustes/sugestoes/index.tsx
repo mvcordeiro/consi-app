@@ -8,11 +8,12 @@ import {
   CardSugestao,
   estilosLista,
   FalhaNuvem,
-  TelaComunidade,
+  TelaAjustes,
   TituloLista,
   useCarregar,
   Vazio,
 } from '@/components/comunidade';
+import { Divisoria } from '@/components/ajustes';
 import { listarSugestoes, type AbaSugestoes } from '@/data/nuvem/sugestoes';
 import type { Sugestao } from '@/data/nuvem/tipos';
 import { space, useTema } from '@/theme';
@@ -102,13 +103,15 @@ export default function Sugestoes() {
   );
 
   return (
-    <TelaComunidade
+    <TelaAjustes
       titulo="Sugestões"
+      voltar="Comunidade"
       lista={
         <FlatList
           data={carregando || erro ? [] : itens}
           keyExtractor={(s) => s.id}
           contentContainerStyle={estilosLista.conteudo}
+          ItemSeparatorComponent={Divisoria}
           ListHeaderComponent={cabecalho}
           refreshControl={<RefreshControl refreshing={atualizando} onRefresh={recarregar} tintColor={cores.action.primary.default} />}
           renderItem={({ item }) => (

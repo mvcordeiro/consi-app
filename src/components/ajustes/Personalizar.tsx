@@ -16,7 +16,7 @@ import { space, useTema } from '@/theme';
 import { Alternancia } from '../Alternancia';
 import { Filtro } from '../Filtro';
 import { Texto } from '../Texto';
-import { Ajuste, CartaoAjustes, Divisoria } from './Cartao';
+import { Ajuste, Divisoria } from './Cartao';
 import { ListaArrastavel } from './ListaArrastavel';
 
 function Opcoes<T extends string>({ lista, atual, onEscolher }: { lista: [T, string][]; atual: T; onEscolher: (v: T) => void }) {
@@ -36,7 +36,7 @@ function Opcoes<T extends string>({ lista, atual, onEscolher }: { lista: [T, str
 export function Personalizar() {
   const prefs = usePreferencias();
   return (
-    <CartaoAjustes rotulo="Personalizar">
+    <View>
       <Ajuste titulo="Aparência">
         <Opcoes<Aparencia>
           lista={[
@@ -99,7 +99,7 @@ export function Personalizar() {
           onEscolher={(abaInicial) => definirPreferencias({ abaInicial })}
         />
       </Ajuste>
-    </CartaoAjustes>
+    </View>
   );
 }
 
@@ -111,7 +111,7 @@ export function SecoesInicio({ onArrastando }: { onArrastando: (a: boolean) => v
   const { secoesHome } = usePreferencias();
   const visiveis = secoesHome.filter((s) => s.visivel).length;
   return (
-    <CartaoAjustes>
+    <View>
       <Ajuste
         titulo="Seções do Início"
         descricao={`Escolha o que aparece abaixo das emoções. Arraste para mudar a ordem. ${visiveis} de ${secoesHome.length} visíveis.`}
@@ -139,7 +139,7 @@ export function SecoesInicio({ onArrastando }: { onArrastando: (a: boolean) => v
           </>
         )}
       />
-    </CartaoAjustes>
+    </View>
   );
 }
 

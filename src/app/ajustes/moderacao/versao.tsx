@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Alternancia, Botao, CampoTexto, Filtro, Folha, Texto, useAviso } from '@/components';
-import { Carregando, FalhaNuvem, mensagemErro, NOME_ITEM, TelaComunidade, useCarregar } from '@/components/comunidade';
+import { Carregando, FalhaNuvem, mensagemErro, NOME_ITEM, TelaAjustes, useCarregar } from '@/components/comunidade';
 import { apagarVersao, criarVersao, editarVersao, listarVersoes } from '@/data/nuvem/moderacao';
 import type { ItemVersao, TipoItemVersao, Versao } from '@/data/nuvem/tipos';
-import { radius, space, useTema } from '@/theme';
+import { space, useTema } from '@/theme';
 
 const TIPOS: TipoItemVersao[] = ['novo', 'melhoria', 'correcao'];
 const hoje = () => {
@@ -26,8 +26,8 @@ export default function EditarVersao() {
     [id],
   );
 
-  if (id && carregando) return <TelaComunidade titulo="Versão" voltar="Moderação"><Carregando /></TelaComunidade>;
-  if (id && erro) return <TelaComunidade titulo="Versão" voltar="Moderação"><FalhaNuvem erro={erro} onTentar={tentarDeNovo} /></TelaComunidade>;
+  if (id && carregando) return <TelaAjustes titulo="Versão" voltar="Moderação"><Carregando /></TelaAjustes>;
+  if (id && erro) return <TelaAjustes titulo="Versão" voltar="Moderação"><FalhaNuvem erro={erro} onTentar={tentarDeNovo} /></TelaAjustes>;
   return <Formulario key={dados?.id ?? 'nova'} inicial={dados} />;
 }
 
@@ -74,7 +74,7 @@ function Formulario({ inicial }: { inicial: Versao | null }) {
   };
 
   return (
-    <TelaComunidade
+    <TelaAjustes
       titulo={inicial ? `Versão ${inicial.versao}` : 'Nova versão'}
       voltar="Moderação"
       aviso={aviso}
@@ -98,7 +98,7 @@ function Formulario({ inicial }: { inicial: Versao | null }) {
       </View>
       <CampoTexto titulo="Título (opcional)" value={titulo} onChangeText={setTitulo} placeholder="Ex.: Ajustes do seu jeito" acessibilidade="Título da versão" />
 
-      <View style={[styles.bloco, { backgroundColor: cores.bg.raised }]}>
+      <View style={[styles.bloco, { borderTopColor: cores.border.subtle }]}>
         <Texto estilo="Títulos/Pequeno">O que mudou</Texto>
         {itens.map((item, i) => (
           <View key={i} style={[styles.item, { borderColor: cores.border.subtle }]}>
@@ -120,7 +120,7 @@ function Formulario({ inicial }: { inicial: Versao | null }) {
         <Botao rotulo="Adicionar item" estilo="secundario" onPress={() => setItens((l) => [...l, { tipo: 'novo', texto: '' }])} />
       </View>
 
-      <View style={[styles.bloco, styles.linha, { backgroundColor: cores.bg.raised }]}>
+      <View style={[styles.bloco, styles.linha, { borderTopColor: cores.border.subtle }]}>
         <View style={styles.flex}>
           <Texto estilo="Títulos/Pequeno">Publicada</Texto>
           <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
@@ -136,14 +136,14 @@ function Formulario({ inicial }: { inicial: Versao | null }) {
         <Botao rotulo="Apagar" onPress={apagar} estado={ocupado ? 'desabilitado' : 'normal'} disabled={ocupado} />
         <Botao rotulo="Cancelar" estilo="secundario" onPress={() => setConfirmarApagar(false)} />
       </Folha>
-    </TelaComunidade>
+    </TelaAjustes>
   );
 }
 
 const styles = StyleSheet.create({
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[12] },
   flex: { flex: 1, gap: space[4] },
-  bloco: { gap: space[12], padding: space[16], borderRadius: radius.card },
+  bloco: { gap: space[12], paddingTop: space[16], borderTopWidth: 1 },
   item: { gap: space[8], paddingTop: space[12], borderTopWidth: 1 },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
 });

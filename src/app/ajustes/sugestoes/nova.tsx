@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Botao, CampoTexto, Filtro, Texto, useAviso } from '@/components';
-import { CardSugestao, mensagemErro, NOME_CATEGORIA, TelaComunidade } from '@/components/comunidade';
+import { CardSugestao, mensagemErro, NOME_CATEGORIA, TelaAjustes } from '@/components/comunidade';
 import { buscarParecidas, enviarSugestao } from '@/data/nuvem/sugestoes';
 import { CATEGORIAS_SUGESTAO, LIMITES, type CategoriaSugestao, type Sugestao } from '@/data/nuvem/tipos';
 import { space, useTema } from '@/theme';
@@ -62,16 +62,16 @@ export default function NovaSugestao() {
 
   if (enviada) {
     return (
-      <TelaComunidade titulo="Recebemos sua ideia" voltar="Sugestões" rodape={<Botao rotulo="Voltar para as sugestões" onPress={() => router.back()} />}>
+      <TelaAjustes titulo="Recebemos sua ideia" voltar="Sugestões" rodape={<Botao rotulo="Voltar para as sugestões" onPress={() => router.back()} />}>
         <Texto cor={cores.text.secondary}>
           Obrigado! Ela aparece para todos depois de revisada. Enquanto isso, você acompanha em Sugestões → Minhas.
         </Texto>
-      </TelaComunidade>
+      </TelaAjustes>
     );
   }
 
   return (
-    <TelaComunidade
+    <TelaAjustes
       titulo="Nova sugestão"
       voltar="Sugestões"
       aviso={aviso}
@@ -145,7 +145,7 @@ export default function NovaSugestao() {
           ))}
         </View>
       </View>
-    </TelaComunidade>
+    </TelaAjustes>
   );
 }
 

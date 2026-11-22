@@ -9,7 +9,7 @@ import {
   temLembretesDeTela,
   usePermissoes,
 } from '@/data/vigia';
-import { radius, space, useTema } from '@/theme';
+import { space, useTema } from '@/theme';
 
 import { Alternancia } from './Alternancia';
 import { Botao } from './Botao';
@@ -22,7 +22,6 @@ import { Texto } from './Texto';
  * sugere ajustar a postura, olhar para longe, relaxar os olhos ou alongar.
  * Vale para o celular todo, não só para o Consi, e não precisa do Acesso de uso.
  * Começa desligado: é a pessoa quem escolhe receber.
- * PROVISÓRIO: sem tela no Figma; layout e textos aguardam o design.
  */
 export function AjustesLembretesTela() {
   const { cores } = useTema();
@@ -40,12 +39,9 @@ export function AjustesLembretesTela() {
   };
 
   return (
-    <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
-      <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
-        CUIDADO COM O TEMPO DE TELA
-      </Texto>
+    <View style={styles.secao}>
       <View style={styles.linha}>
-        <Texto estilo="Títulos/Pequeno" style={styles.flex}>
+        <Texto estilo="Títulos/Pequeno" style={styles.flex} accessibilityRole="header">
           Lembretes de pausa
         </Texto>
         <Alternancia
@@ -54,7 +50,7 @@ export function AjustesLembretesTela() {
           onMudar={(ligados) => void mudar({ ...estado, ligados })}
         />
       </View>
-      <Texto cor={cores.text.secondary}>
+      <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
         Depois de um tempo seguido no celular, uma sugestão simples: ajustar a postura, olhar para longe, relaxar os
         olhos ou alongar. Conta o uso do celular todo, não só do Consi. Apagar a tela por 1 minuto já conta como pausa.
       </Texto>
@@ -88,7 +84,7 @@ export function AjustesLembretesTela() {
 }
 
 const styles = StyleSheet.create({
-  cartao: { gap: space[12], padding: space[16], borderRadius: radius.card },
+  secao: { gap: space[12], paddingVertical: space[16] },
   permissao: { gap: space[8] },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },

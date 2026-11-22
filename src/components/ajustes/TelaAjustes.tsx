@@ -8,11 +8,11 @@ import { CabecalhoVoltar } from '../CabecalhoVoltar';
 import { Texto } from '../Texto';
 
 /**
- * Base das telas da Comunidade (fora das abas): área segura, "‹ Ajustes" no topo, título grande,
- * conteúdo rolável ou uma lista própria (`lista`) e um rodapé fixo opcional (botão principal).
- * Sobe com o teclado nos formulários.
+ * Base das sub-páginas de Ajustes (fora das abas): área segura, "‹ Ajustes" no topo, título grande,
+ * conteúdo rolável direto no fundo ou uma lista própria (`lista`), rodapé fixo opcional (botão
+ * principal) e o aviso. Sobe com o teclado nos formulários.
  */
-export function TelaComunidade({
+export function TelaAjustes({
   titulo,
   voltar = 'Ajustes',
   direita,
@@ -20,6 +20,7 @@ export function TelaComunidade({
   lista,
   rodape,
   aviso,
+  travarRolagem = false,
 }: {
   titulo: string;
   voltar?: string;
@@ -30,6 +31,8 @@ export function TelaComunidade({
   rodape?: ReactNode;
   /** O aviso de useAviso(), por cima de tudo. */
   aviso?: ReactNode;
+  /** Trava a rolagem (ex.: enquanto arrasta uma seção do Início). */
+  travarRolagem?: boolean;
 }) {
   const { cores } = useTema();
   return (
@@ -39,7 +42,7 @@ export function TelaComunidade({
           <CabecalhoVoltar rotulo={voltar} direita={direita} />
         </View>
         {lista ?? (
-          <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
+          <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled" scrollEnabled={!travarRolagem}>
             <Texto estilo="Títulos/Grande" accessibilityRole="header">
               {titulo}
             </Texto>
@@ -53,7 +56,7 @@ export function TelaComunidade({
   );
 }
 
-/** Título grande para usar no cabeçalho de uma FlatList dentro de `TelaComunidade lista`. */
+/** Título grande para usar no cabeçalho de uma FlatList dentro de `TelaAjustes lista`. */
 export function TituloLista({ titulo, children }: { titulo: string; children?: ReactNode }) {
   return (
     <View style={styles.cabecalhoLista}>

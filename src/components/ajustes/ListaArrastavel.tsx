@@ -19,7 +19,8 @@ type Props<T> = {
 };
 
 /**
- * Lista reordenável arrastando a alça (ícone "reordenar") à direita de cada linha.
+ * Lista reordenável direto no fundo (sem caixa): linhas separadas por 1 px e um pegador à direita.
+ * Só a linha que está sendo arrastada ganha fundo e cantos arredondados.
  * As outras linhas abrem espaço enquanto o item passa; ao soltar, chama `onMover` com a posição
  * nova. Para leitor de tela, cada alça também tem as ações "Subir" e "Descer".
  */
@@ -30,7 +31,7 @@ export function ListaArrastavel<T>({ itens, chave, altura, renderizar, rotuloAlc
   const [dy] = useState(() => new Animated.Value(0));
 
   return (
-    <View style={[styles.lista, { backgroundColor: cores.bg.base, borderColor: cores.border.subtle }]}>
+    <View>
       {itens.map((item, i) => {
         // Enquanto outro item é arrastado, as linhas entre a origem e o alvo andam uma posição.
         let desloc = 0;
@@ -51,6 +52,9 @@ export function ListaArrastavel<T>({ itens, chave, altura, renderizar, rotuloAlc
                     zIndex: 2,
                     backgroundColor: cores.bg.selected,
                     borderRadius: radius.card,
+                    // Sai do alinhamento só enquanto flutua, para o fundo ter respiro dos lados.
+                    marginHorizontal: -space[12],
+                    paddingLeft: space[12],
                     transform: [{ translateY: dy }, { scale: 1.02 }],
                   }
                 : { transform: [{ translateY: desloc }] },
@@ -174,8 +178,7 @@ function Alca({
 }
 
 const styles = StyleSheet.create({
-  lista: { borderRadius: radius.card, borderWidth: borderWidth.thin },
-  linha: { flexDirection: 'row', alignItems: 'center', paddingLeft: space[12] },
+  linha: { flexDirection: 'row', alignItems: 'center' },
   conteudo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[8] },
   alca: { width: 44, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
 });

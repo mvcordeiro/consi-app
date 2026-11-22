@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Placar, Sugestao, ValorVoto } from '@/data/nuvem/tipos';
-import { radius, space, useTema } from '@/theme';
+import { space, useTema } from '@/theme';
 
 import { Etiqueta } from '../Etiqueta';
 import { Texto } from '../Texto';
@@ -33,7 +33,7 @@ export function CardSugestao({
     .join(' · ');
 
   return (
-    <View style={[styles.card, { backgroundColor: cores.bg.raised }]}>
+    <View style={styles.card}>
       <Pressable
         onPress={onAbrir}
         style={({ pressed }) => [styles.texto, pressed && { opacity: 0.7 }]}
@@ -66,7 +66,7 @@ export function CardSugestao({
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', alignItems: 'center', gap: space[12], padding: space[16], borderRadius: radius.card },
+  card: { flexDirection: 'row', alignItems: 'center', gap: space[12], paddingVertical: space[16] },
   texto: { flex: 1, gap: space[8] },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
 });

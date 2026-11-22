@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Texto } from '@/components';
-import { Carregando, dataLonga, FalhaNuvem, NOME_ITEM, TelaComunidade, useCarregar, Vazio } from '@/components/comunidade';
+import { Carregando, dataLonga, FalhaNuvem, NOME_ITEM, TelaAjustes, useCarregar, Vazio } from '@/components/comunidade';
 import { listarNovidades, marcarNovidadesVistas } from '@/data/nuvem/novidades';
 import type { TipoItemVersao, Versao } from '@/data/nuvem/tipos';
-import { radius, space, useTema } from '@/theme';
+import { space, useTema } from '@/theme';
 
 const ORDEM_ITENS: TipoItemVersao[] = ['novo', 'melhoria', 'correcao'];
 
@@ -41,26 +41,21 @@ export default function Novidades() {
       </>
     );
 
-  return <TelaComunidade titulo="Novidades">{corpo}</TelaComunidade>;
+  return <TelaAjustes titulo="Novidades" voltar="Comunidade">{corpo}</TelaAjustes>;
 }
 
 function CartaoVersao({ versao, maisNova }: { versao: Versao; maisNova: boolean }) {
   const { cores } = useTema();
   return (
-    <View style={[styles.cartao, { backgroundColor: cores.bg.raised }]} accessible={false}>
-      <View style={styles.topo}>
-        <Texto estilo="Texto/Botões e rótulos" cor={cores.text.tertiary}>
-          {`VERSÃO ${versao.versao}${maisNova ? ' · ATUAL' : ''}`}
+    <View style={[styles.cartao, !maisNova && { borderTopWidth: 1, borderTopColor: cores.border.subtle }]} accessible={false}>
+      <View>
+        <Texto estilo="Títulos/Pequeno" accessibilityRole="header">
+          {versao.titulo ? `${versao.titulo} · ${versao.versao}` : `Versão ${versao.versao}`}
         </Texto>
         <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-          {dataLonga(versao.data)}
+          {`${maisNova ? 'Versão atual · ' : ''}${dataLonga(versao.data)}`}
         </Texto>
       </View>
-      {versao.titulo ? (
-        <Texto estilo="Títulos/Pequeno" accessibilityRole="header">
-          {versao.titulo}
-        </Texto>
-      ) : null}
 
       {ORDEM_ITENS.map((tipo) => {
         const itens = versao.itens.filter((i) => i.tipo === tipo);
@@ -105,8 +100,7 @@ function CartaoVersao({ versao, maisNova }: { versao: Versao; maisNova: boolean 
 }
 
 const styles = StyleSheet.create({
-  cartao: { gap: space[12], padding: space[16], borderRadius: radius.card },
-  topo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space[8] },
+  cartao: { gap: space[12], paddingVertical: space[16] },
   grupo: { gap: space[4] },
   item: { flexDirection: 'row', gap: space[8], alignItems: 'flex-start', minHeight: 24 },
   ideias: { borderTopWidth: 1, paddingTop: space[12] },

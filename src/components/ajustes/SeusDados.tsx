@@ -2,7 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Updates from 'expo-updates';
 import { useState } from 'react';
-import { DevSettings } from 'react-native';
+import { DevSettings, View } from 'react-native';
 
 import { apagarTudo, exportarTudo } from '@/data/banco';
 import { chaveDia } from '@/data/momentos';
@@ -11,7 +11,7 @@ import { useTema } from '@/theme';
 import { Botao } from '../Botao';
 import { Folha } from '../Folha';
 import { Texto } from '../Texto';
-import { Ajuste, CartaoAjustes } from './Cartao';
+import { Ajuste } from './Cartao';
 
 /**
  * Ajustes → Seus dados (LGPD): exportar tudo num JSON (compartilhamento do sistema) e apagar tudo
@@ -57,7 +57,7 @@ export function SeusDados() {
 
   const estado = ocupado ? 'desabilitado' : 'normal';
   return (
-    <CartaoAjustes rotulo="Seus dados">
+    <View>
       <Ajuste
         titulo="Guardados neste celular"
         descricao="Tudo o que você registra no Consi fica só aqui, criptografado. Se desinstalar o app, os dados somem: exporte antes para guardar uma cópia."
@@ -80,6 +80,6 @@ export function SeusDados() {
         <Botao rotulo="Apagar tudo" onPress={apagar} estado={estado} disabled={ocupado} />
         <Botao rotulo="Cancelar" estilo="secundario" onPress={() => setConfirmar(false)} />
       </Folha>
-    </CartaoAjustes>
+    </View>
   );
 }
