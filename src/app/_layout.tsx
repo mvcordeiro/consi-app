@@ -11,6 +11,7 @@ import { useAparencia } from '@/data/aparencia';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
 import { carregarHobbiesPersonalizados } from '@/data/hobbiesPersonalizados';
 import { useVigia } from '@/data/vigia';
+import { useIconeEmocao } from '@/data/iconeEmocao';
 import { useWidgets } from '@/data/widgets';
 import { arquivosDeFonte, ModoDeCor, useTema } from '@/theme';
 
@@ -56,6 +57,8 @@ function Pilha() {
   useVigia();
   // APK Android: as emoções de hoje para os widgets da tela inicial.
   useWidgets();
+  // APK Android, se a pessoa ligou em Ajustes: o ícone do app mostra a última emoção.
+  useIconeEmocao();
   // Piloto: eventos de uso anônimos (qual tela abriu, sem conteúdo) e o convite do dia 7.
   useEffect(() => {
     iniciarPiloto();

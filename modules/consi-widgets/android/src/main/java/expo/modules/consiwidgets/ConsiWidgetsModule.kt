@@ -17,5 +17,11 @@ class ConsiWidgetsModule : Module() {
      * Redesenha todos os widgets.
      */
     Function("atualizar") { chave: String, json: String -> Widgets.guardar(context, chave, json) }
+
+    /** O ícone do app no launcher: o id de uma emoção, ou null para o ícone normal. */
+    Function("definirIcone") { id: String? -> Icone.definir(context, id) }
+
+    /** O ícone do app no launcher: o id de uma emoção, ou null para o ícone normal. */
+    Function("definirIcone") { id: String? -> Icone.definir(context, id) }
   }
 }

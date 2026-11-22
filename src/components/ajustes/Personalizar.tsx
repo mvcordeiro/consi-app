@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
+import { temIconePorEmocao } from '@/data/iconeEmocao';
 import {
   alternarSecao,
   definirPreferencias,
@@ -87,6 +88,24 @@ export function Personalizar() {
       />
 
       <Divisoria />
+
+      {temIconePorEmocao ? (
+        <>
+          <Ajuste
+            titulo="Ícone com a sua emoção"
+            descricao="O ícone do Consi muda para a última emoção que você registrar. Atenção: quem vir a tela do seu celular vai ver como você se sente."
+            acessorio={
+              <Alternancia
+                rotulo="Ícone com a sua emoção"
+                ligado={prefs.iconePorEmocao}
+                onMudar={(iconePorEmocao) => definirPreferencias({ iconePorEmocao })}
+              />
+            }
+          />
+
+          <Divisoria />
+        </>
+      ) : null}
 
       <Ajuste titulo="Abrir o app em">
         <Opcoes<AbaInicial>

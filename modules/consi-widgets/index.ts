@@ -12,6 +12,10 @@ export type AssuntoWidget = 'dia' | 'atividades' | 'sugestao' | 'frases';
 
 type ModuloConsiWidgets = {
   atualizar(assunto: AssuntoWidget, json: string): void;
+  /** Troca o ícone do app no launcher pelo da emoção `id`; `null` volta ao ícone normal. */
+  definirIcone(id: string | null): void;
+  /** Troca o ícone do app no launcher pelo da emoção `id`; `null` volta ao ícone normal. */
+  definirIcone(id: string | null): void;
 };
 
 export const ConsiWidgets: ModuloConsiWidgets | null =

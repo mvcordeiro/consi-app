@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.consi.app",
-      "versionCode": 8,
+      "versionCode": 9,
       "adaptiveIcon": {
         "backgroundColor": "#111D4F",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -67,7 +67,8 @@
           "useSQLCipher": true
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "./plugins/withIconeEmocao"
     ],
     "scheme": "consi",
     "experiments": {
