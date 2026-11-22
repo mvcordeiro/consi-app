@@ -3,7 +3,14 @@ import * as Linking from 'expo-linking';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { codigoDoPiloto, enderecoDoFormulario, marcarRespondeu, pilotoCarregado } from '@/data/piloto';
+import {
+  codigoDoPiloto,
+  DIAS_DO_PILOTO,
+  diaDoPiloto,
+  enderecoDoFormulario,
+  marcarRespondeu,
+  pilotoCarregado,
+} from '@/data/piloto';
 import { space, useTema } from '@/theme';
 
 import { Botao } from '../Botao';
@@ -30,12 +37,19 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
   const toques = useRef({ n: 0, ultimo: 0 });
   const info = ((Constants.expoConfig?.extra as { sobre?: InfoSobre } | undefined)?.sobre ?? {}) as InfoSobre;
   const licenca = info.licenca ?? 'MIT';
-  // Piloto: código anônimo e o formulário final (só aparece com o formulário configurado).
+  // Piloto: código anônimo e o formulário final. Só depois de 7 dias de uso (a partir da primeira
+  // abertura) e com o formulário configurado; antes disso o bloco nem aparece.
   const [piloto, setPiloto] = useState<{ codigo: string; formulario: string | null } | null>(null);
   useEffect(() => {
     let vivo = true;
     pilotoCarregado()
-      .then((d) => vivo && setPiloto({ codigo: codigoDoPiloto(d), formulario: enderecoDoFormulario(d) }))
+      .then(
+        (d) =>
+          vivo &&
+          diaDoPiloto(d) > DIAS_DO_PILOTO &&
+          !d.respondeu &&
+          setPiloto({ codigo: codigoDoPiloto(d), formulario: enderecoDoFormulario(d) }),
+      )
       .catch(() => {});
     return () => {
       vivo = false;
