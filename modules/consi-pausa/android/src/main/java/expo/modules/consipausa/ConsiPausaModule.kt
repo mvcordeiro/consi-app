@@ -147,7 +147,10 @@ class ConsiPausaModule : Module() {
 
     /** Depois do "Dessa vez não abro": o app fica fechado por `minutos`. */
     Function("bloquear") { pacote: String, minutos: Double ->
-      if (minutos > 0) prefs.bloquearAte(pacote, System.currentTimeMillis() + (minutos * 60_000).toLong())
+      if (minutos > 0) {
+        prefs.bloquearAte(pacote, System.currentTimeMillis() + (minutos * 60_000).toLong())
+      }
+      Unit
     }
 
     /** Até quando o app está bloqueado (epoch ms; 0 = não está). */
