@@ -1,5 +1,5 @@
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Animated, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 
 import {
@@ -19,24 +19,28 @@ import {
 import { appPorId, useGrupos } from '@/data/gruposHome';
 import { hobbyInfo, type HobbyId } from '@/data/catalogo';
 import { resistenciasDaSemana, type Resistencia } from '@/data/pausa';
-import { borderWidth, radius, space, useTema } from '@/theme';
+import { borderWidth, radius, space, useTema, type Cores } from '@/theme';
 
 import { Aparecer } from '../animacao';
+import { Botao } from '../Botao';
 import { DiaCalendario } from '../DiaCalendario';
-import { Etiqueta } from '../Etiqueta';
+import { Filtro } from '../Filtro';
 import { Folha } from '../Folha';
 import { IconeHobby } from '../hobbies/IconeHobby';
-import { Icone } from '../Icone';
+import { Icone, type NomeIcone } from '../Icone';
 import { IconeApp } from '../IconeApp';
 import { ABA_A, AbaArraste, BordasArraste, sairPeloLado, useArrasteLateral, useLarguraTela, voltarAoLugar } from '../hobbies/Arraste';
 import { Texto } from '../Texto';
-import { IconeCheckin, IconeRelogio } from './assets';
 import { BalaoEmocao } from './BalaoEmocao';
 
 /** Abreviações como no Figma (sem acento, como "SAB"). */
 const SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+/** Momentos por dia antes do "Ver mais" (e quantos cada toque mostra a mais). */
+const POR_VEZ = 7;
+const LADO_MARCADOR = 32;
 
 type Dia = { id: string; data: Date };
+type FiltroSemana = 'tudo' | 'emocoes' | 'escolhas';
 
 /** Os últimos 7 dias, terminando hoje (à direita). */
 function ultimosDias(): Dia[] {
@@ -47,13 +51,38 @@ function ultimosDias(): Dia[] {
 }
 
 /**
- * V2 - Momentos / Feed — seletor dos últimos 7 dias e os momentos de cada dia, do mais recente
- * para o mais antigo: os check-ins de emoção ("Você fez check-in às 14:05 sentindo Alegria") e as
- * escolhas da pausa, que juntam o que veio logo depois:
- *   "Você não abriu Instagram às 12:58 e sentiu Fascinação"
- *   "Você não abriu Instagram às 12:32 e explorou Música"
- *   "Você saiu de Instagram às 13:32 e sentiu Cansaço" (quando já estava usando o app)
- * O check-in ligado a uma escolha não aparece de novo como card próprio.
+ * Tom de cada emoção na linha do tempo: as agradáveis em success, as difíceis em warning e as
+ * ambíguas (tédio, desejo) no neutro. Só uma pista visual para ler o dia de relance, sem
+ * julgar a emoção: o nome está sempre escrito ao lado.
+ */
+const AGRADAVEIS = new Set(['satisfeito', 'alegria', 'orgulho', 'admiracao', 'fascinacao', 'esperanca']);
+const DIFICEIS = new Set(['tristeza', 'vergonha', 'medo', 'repulsa', 'raiva', 'desprezo']);
+type Tom = 'agradavel' | 'dificil' | 'neutro' | 'naoAbriu' | 'saiu';
+
+function fundoDoTom(c: Cores, t: Tom) {
+  if (t === 'agradavel' || t === 'naoAbriu') return c.bg['success-subtle'];
+  if (t === 'dificil') return c.bg['warning-subtle'];
+  if (t === 'saiu') return c.bg['info-subtle'];
+  return c.bg.sunken;
+}
+const tomDaEmocao = (id: string): Tom => (AGRADAVEIS.has(id) ? 'agradavel' : DIFICEIS.has(id) ? 'dificil' : 'neutro');
+
+/** Manhã (até 12 h), Tarde (até 18 h) ou Noite: separa a linha do tempo do dia. */
+function periodo(em: number) {
+  const h = new Date(em).getHours();
+  return h < 5 ? 'Madrugada' : h < 12 ? 'Manhã' : h < 18 ? 'Tarde' : 'Noite';
+}
+
+/**
+ * V2 - Momentos / Feed — seletor dos últimos 7 dias e, embaixo, a linha do tempo do dia (do mais
+ * recente para o mais antigo), dividida em Manhã / Tarde / Noite, com a hora sempre à esquerda.
+ * Dois tipos de momento, que dá para filtrar:
+ * - Emoções (check-ins): marcador redondo com o balão, no tom da emoção (agradável, difícil, neutra).
+ * - Escolhas da pausa: marcador quadrado com o que a pessoa fez, e o que veio logo depois:
+ *     "Instagram ficou para depois" · "Sentiu Fascinação" / "Trocou por Música"
+ *     "Parou de usar Instagram" (quando já estava usando o app)
+ *   O check-in ligado a uma escolha não aparece de novo como momento próprio.
+ * Mostra 7 momentos por vez, com "Ver mais".
  */
 export function SuaSemana({
   margem,
@@ -73,6 +102,8 @@ export function SuaSemana({
   const [resistencias, setResistencias] = useState<Resistencia[]>([]);
   // Check-in sendo editado (troca de emoção, pela folha).
   const [editando, setEditando] = useState<RegistroEmocao | null>(null);
+  const [filtro, setFiltro] = useState<FiltroSemana>('tudo');
+  const [mostrando, setMostrando] = useState(POR_VEZ);
 
   const apagar = (r: RegistroEmocao) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -110,6 +141,14 @@ export function SuaSemana({
   );
 
   const dia = dias.find((d) => d.id === diaId) ?? dias[dias.length - 1];
+  const escolherDia = (id: string) => {
+    setDiaId(id);
+    setMostrando(POR_VEZ);
+  };
+  const escolherFiltro = (f: FiltroSemana) => {
+    setFiltro(f);
+    setMostrando(POR_VEZ);
+  };
   // Check-ins que já fazem parte de uma escolha da pausa ("… e sentiu X").
   const ligados = useMemo(() => new Set(resistencias.map((r) => r.checkinEm).filter(Boolean)), [resistencias]);
   const checkins = useMemo(
@@ -125,7 +164,7 @@ export function SuaSemana({
     [resistencias, dia],
   );
   // Check-ins e escolhas juntos, do mais recente para o mais antigo.
-  const itens = useMemo(
+  const todos = useMemo(
     () =>
       [
         ...checkins.map((c) => ({ tipo: 'checkin' as const, em: c.r.em, c })),
@@ -133,7 +172,9 @@ export function SuaSemana({
       ].sort((a, b) => b.em - a.em),
     [checkins, escolhas],
   );
-  const total = itens.length;
+  const itens = todos.filter((i) => filtro === 'tudo' || (filtro === 'emocoes') === (i.tipo === 'checkin'));
+  const visiveis = itens.slice(0, mostrando);
+  const total = todos.length;
 
   return (
     <View style={styles.secao}>
@@ -146,41 +187,72 @@ export function SuaSemana({
               semana={SEMANA[d.data.getDay()]}
               dia={d.data.getDate()}
               selecionado={d.id === dia.id}
-              onPress={() => setDiaId(d.id)}
+              onPress={() => escolherDia(d.id)}
             />
           ))}
         </View>
       </View>
-      <Aparecer key={`${dia.id}-${total}`} deslocamento={6} duracao={400} style={styles.momentos}>
+      <Aparecer key={`${dia.id}-${total}-${filtro}`} deslocamento={6} duracao={400} style={styles.momentos}>
         {total > 0 ? (
           <>
-            <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-              {total} {total === 1 ? 'MOMENTO REGISTRADO' : 'MOMENTOS REGISTRADOS'}
-            </Texto>
-            <View style={styles.lista}>
-              {itens.map((i) =>
-                i.tipo === 'checkin' ? (
-                  <CardCheckin
-                    key={`c${i.em}`}
-                    registro={i.c.r}
-                    emocao={i.c.e}
-                    margem={margem}
-                    onArrastando={onArrastando}
-                    onApagar={() => apagar(i.c.r)}
-                    onEditar={() => setEditando(i.c.r)}
-                  />
-                ) : (
-                  <CardEscolha
-                    key={`r${i.em}`}
-                    escolha={i.r}
-                    checkin={i.r.checkinEm ? registros.find((x) => x.em === i.r.checkinEm) : undefined}
-                  />
-                ),
-              )}
+            <View style={styles.filtros}>
+              <Filtro rotulo="Tudo" ativo={filtro === 'tudo'} onPress={() => escolherFiltro('tudo')} />
+              <Filtro rotulo="Emoções" ativo={filtro === 'emocoes'} onPress={() => escolherFiltro('emocoes')} />
+              <Filtro rotulo="Escolhas" ativo={filtro === 'escolhas'} onPress={() => escolherFiltro('escolhas')} />
             </View>
-            {checkins.length > 0 ? (
+            {visiveis.length ? (
+              <View>
+                {visiveis.map((i, n) => {
+                  const p = periodo(i.em);
+                  const novoPeriodo = n === 0 || periodo(visiveis[n - 1].em) !== p;
+                  const ultimo = n === visiveis.length - 1;
+                  return (
+                    <View key={`${i.tipo}${i.em}`}>
+                      {novoPeriodo ? (
+                        <Texto
+                          estilo="Legenda/Pequena"
+                          cor={cores.text.tertiary}
+                          style={[styles.periodo, n > 0 && styles.periodoMeio]}
+                        >
+                          {p.toUpperCase()}
+                        </Texto>
+                      ) : null}
+                      {i.tipo === 'checkin' ? (
+                        <CardCheckin
+                          registro={i.c.r}
+                          emocao={i.c.e}
+                          margem={margem}
+                          linha={!ultimo}
+                          onArrastando={onArrastando}
+                          onApagar={() => apagar(i.c.r)}
+                          onEditar={() => setEditando(i.c.r)}
+                        />
+                      ) : (
+                        <CardEscolha
+                          escolha={i.r}
+                          linha={!ultimo}
+                          checkin={i.r.checkinEm ? registros.find((x) => x.em === i.r.checkinEm) : undefined}
+                        />
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            ) : (
+              <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+                {filtro === 'emocoes' ? 'NENHUMA EMOÇÃO REGISTRADA NESTE DIA' : 'NENHUMA ESCOLHA NA PAUSA NESTE DIA'}
+              </Texto>
+            )}
+            {itens.length > mostrando ? (
+              <Botao
+                rotulo={`Ver mais (${itens.length - mostrando})`}
+                estilo="secundario"
+                onPress={() => setMostrando((m) => m + POR_VEZ)}
+              />
+            ) : null}
+            {visiveis.some((i) => i.tipo === 'checkin') ? (
               <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
-                Arraste um check-in para esquerda para apagar, direita para editar.
+                Arraste uma emoção para esquerda para apagar, direita para editar.
               </Texto>
             ) : null}
           </>
@@ -231,14 +303,64 @@ export function SuaSemana({
 }
 
 /**
- * Momento de check-in — "Você fez check-in às 14:05 sentindo Alegria", em etiquetas que quebram
- * linha como no Figma. Arrastar para a esquerda apaga e para a direita edita, com as mesmas
- * bordas e abas laterais de "Suas atividades" (lixeira em feedback/error, lápis em feedback/success).
+ * Uma linha da linha do tempo: a hora à esquerda, o marcador (redondo para emoções, quadrado
+ * para escolhas) ligado ao próximo por um traço, e o conteúdo num card.
+ */
+function LinhaDoTempo({
+  hora,
+  marcador,
+  linha,
+  children,
+}: {
+  hora: string;
+  marcador: ReactNode;
+  /** Traço até o próximo momento (não no último). */
+  linha: boolean;
+  children: ReactNode;
+}) {
+  const { cores } = useTema();
+  return (
+    <View style={styles.linhaTempo}>
+      <Texto estilo="Texto/Botões e rótulos" style={styles.hora}>
+        {hora}
+      </Texto>
+      <View style={styles.trilho}>
+        {marcador}
+        {linha ? <View style={[styles.traco, { backgroundColor: cores.border.subtle }]} /> : null}
+      </View>
+      <View style={[styles.conteudoLinha, linha && styles.comEspaco]}>{children}</View>
+    </View>
+  );
+}
+
+function MarcadorEmocao({ emocao }: { emocao: Emocao }) {
+  const { cores } = useTema();
+  return (
+    <View style={[styles.marcador, styles.redondo, { backgroundColor: fundoDoTom(cores, tomDaEmocao(emocao.id)) }]}>
+      <BalaoEmocao Svg={emocao.Svg} Textura={emocao.Textura} circulo={emocao.circulo} tamanho={22} flutuar={false} />
+    </View>
+  );
+}
+
+function MarcadorEscolha({ tom, icone }: { tom: Tom; icone: NomeIcone }) {
+  const { cores } = useTema();
+  return (
+    <View style={[styles.marcador, styles.quadrado, { backgroundColor: fundoDoTom(cores, tom) }]}>
+      <Icone nome={icone} tamanho={16} cor={cores.text.primary} />
+    </View>
+  );
+}
+
+/**
+ * Momento de check-in: a emoção como título e "Check-in" embaixo. Arrastar para a esquerda apaga
+ * e para a direita edita, com as mesmas bordas e abas laterais de "Suas atividades" (lixeira em
+ * feedback/error, lápis em feedback/success).
  */
 function CardCheckin({
   registro,
   emocao,
   margem,
+  linha,
   onArrastando,
   onApagar,
   onEditar,
@@ -246,6 +368,7 @@ function CardCheckin({
   registro: RegistroEmocao;
   emocao: Emocao;
   margem: number;
+  linha: boolean;
   onArrastando: (a: boolean) => void;
   onApagar: () => void;
   onEditar: () => void;
@@ -274,32 +397,26 @@ function CardCheckin({
         onLayout={(e) => setAltura(e.nativeEvent.layout.height)}
         style={{ marginHorizontal: margem, transform: [{ translateX: arraste.pan }, { rotate: giro }] }}
       >
-        <View
-          accessible
-          accessibilityLabel={`Você fez check-in às ${hora} sentindo ${emocao.nome}`}
-          accessibilityActions={[
-            { name: 'delete', label: 'Apagar' },
-            { name: 'activate', label: 'Editar' },
-          ]}
-          onAccessibilityAction={(ev) => (ev.nativeEvent.actionName === 'delete' ? onApagar() : onEditar())}
-          style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}
-        >
-          <Texto estilo="Texto/Botões e rótulos">Você</Texto>
-          <Etiqueta rotulo="Fez check-in" tom="sucesso" icone={IconeCheckin} style={styles.etiqueta} />
-          <Texto estilo="Texto/Botões e rótulos">às</Texto>
-          <Etiqueta rotulo={hora} tom="info" icone={IconeRelogio} style={styles.etiqueta} />
-          <Texto estilo="Texto/Botões e rótulos">sentindo</Texto>
-          <Etiqueta
-            rotulo={emocao.nome}
-            style={styles.etiqueta}
-            iconeNode={
-              <BalaoEmocao Svg={emocao.Svg} Textura={emocao.Textura} circulo={emocao.circulo} tamanho={15} flutuar={false} />
-            }
-          />
-        </View>
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.bordas]}>
-          <BordasArraste progressoEsq={arraste.progressoEsq} progressoDir={arraste.progressoDir} />
-        </View>
+        <LinhaDoTempo hora={hora} linha={linha} marcador={<MarcadorEmocao emocao={emocao} />}>
+          <View
+            accessible
+            accessibilityLabel={`Às ${hora}, check-in: ${emocao.nome}`}
+            accessibilityActions={[
+              { name: 'delete', label: 'Apagar' },
+              { name: 'activate', label: 'Editar' },
+            ]}
+            onAccessibilityAction={(ev) => (ev.nativeEvent.actionName === 'delete' ? onApagar() : onEditar())}
+            style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.subtle }]}
+          >
+            <Texto estilo="Texto/Botões e rótulos">{emocao.nome}</Texto>
+            <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
+              Check-in
+            </Texto>
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.bordas]}>
+              <BordasArraste progressoEsq={arraste.progressoEsq} progressoDir={arraste.progressoDir} />
+            </View>
+          </View>
+        </LinhaDoTempo>
       </Animated.View>
       <AbaArraste
         lado="esquerda"
@@ -322,64 +439,51 @@ function CardCheckin({
 }
 
 /**
- * Escolha da pausa — "Você [Não abriu] [Instagram] às [12:58]" (ou "[Saiu] de [Instagram]", quando a
- * pessoa já estava usando o app), seguida do que veio logo depois, se houve: "e sentiu
- * [Fascinação]" (check-in na mesma pausa) ou "e explorou [Música]" (hobby no lugar do app).
- * Mesmas etiquetas do check-in; só leitura, sem arraste.
+ * Escolha da pausa: "Instagram ficou para depois" (não abriu) ou "Parou de usar Instagram"
+ * (já estava usando o app), sem artigo antes do nome do app. Embaixo, o que veio logo depois,
+ * se houve: "Sentiu Fascinação" (check-in na mesma pausa) ou "Trocou por Música" (hobby).
+ * Só leitura, sem arraste.
  */
-function CardEscolha({ escolha, checkin }: { escolha: Resistencia; checkin?: RegistroEmocao }) {
+function CardEscolha({ escolha, checkin, linha }: { escolha: Resistencia; checkin?: RegistroEmocao; linha: boolean }) {
   const { cores } = useTema();
   const grupos = useGrupos();
   const hora = horaMinuto(escolha.em);
   const app = escolha.app ? appPorId(escolha.app) : undefined;
-  const nomeApp = app?.nome ?? grupos.find((g) => g.id === escolha.grupo)?.nome ?? 'um app';
-  const acao = escolha.depoisDeUsar ? 'Saiu' : 'Não abriu';
+  const nomeApp = app?.nome ?? grupos.find((g) => g.id === escolha.grupo)?.nome ?? 'O app';
+  const saiu = !!escolha.depoisDeUsar;
   const emocao = checkin ? emocaoPorId(checkin.id) : undefined;
   const hobby = escolha.hobby ? hobbyInfo(escolha.hobby as HobbyId) : undefined;
-  const depois = emocao ? ` e sentiu ${emocao.nome}` : hobby ? ` e explorou ${hobby.nome}` : '';
+  const titulo = saiu ? `Parou de usar ${nomeApp}` : `${nomeApp} ficou para depois`;
+  const depois = emocao ? `Sentiu ${emocao.nome}` : hobby ? `Trocou por ${hobby.nome}` : saiu ? 'Saiu do app' : 'Não abriu';
   return (
-    <View
-      accessible
-      accessibilityLabel={`Você ${acao.toLowerCase()} ${escolha.depoisDeUsar ? 'de ' : ''}${nomeApp} às ${hora}${depois}`}
-      style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}
+    <LinhaDoTempo
+      hora={hora}
+      linha={linha}
+      marcador={<MarcadorEscolha tom={saiu ? 'saiu' : 'naoAbriu'} icone={saiu ? 'pedestre' : 'cadeado'} />}
     >
-      <Texto estilo="Texto/Botões e rótulos">Você</Texto>
-      <Etiqueta
-        rotulo={acao}
-        tom="sucesso"
-        iconeNode={<Icone nome="rosto-positivo" tamanho={15} cor={cores.text.primary} />}
-        style={styles.etiqueta}
-      />
-      {escolha.depoisDeUsar ? <Texto estilo="Texto/Botões e rótulos">de</Texto> : null}
-      <Etiqueta
-        rotulo={nomeApp}
-        style={styles.etiqueta}
-        iconeNode={app ? <IconeApp app={app} lado={15} /> : undefined}
-      />
-      <Texto estilo="Texto/Botões e rótulos">às</Texto>
-      <Etiqueta rotulo={hora} tom="info" icone={IconeRelogio} style={styles.etiqueta} />
-      {emocao ? (
-        <>
-          <Texto estilo="Texto/Botões e rótulos">e sentiu</Texto>
-          <Etiqueta
-            rotulo={emocao.nome}
-            style={styles.etiqueta}
-            iconeNode={
-              <BalaoEmocao Svg={emocao.Svg} Textura={emocao.Textura} circulo={emocao.circulo} tamanho={15} flutuar={false} />
-            }
-          />
-        </>
-      ) : hobby && escolha.hobby ? (
-        <>
-          <Texto estilo="Texto/Botões e rótulos">e explorou</Texto>
-          <Etiqueta
-            rotulo={hobby.nome}
-            style={styles.etiqueta}
-            iconeNode={<IconeHobby hobby={escolha.hobby as HobbyId} caixa={15} cor={cores.text.primary} />}
-          />
-        </>
-      ) : null}
-    </View>
+      <View
+        accessible
+        accessibilityLabel={`Às ${hora}, ${titulo}. ${depois}`}
+        style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.subtle }]}
+      >
+        <View style={styles.tituloEscolha}>
+          {app ? <IconeApp app={app} lado={16} /> : null}
+          <Texto estilo="Texto/Botões e rótulos" style={styles.encolher}>
+            {titulo}
+          </Texto>
+        </View>
+        <View style={styles.tituloEscolha}>
+          {emocao ? (
+            <BalaoEmocao Svg={emocao.Svg} Textura={emocao.Textura} circulo={emocao.circulo} tamanho={14} flutuar={false} />
+          ) : hobby && escolha.hobby ? (
+            <IconeHobby hobby={escolha.hobby as HobbyId} caixa={14} cor={cores.text.secondary} />
+          ) : null}
+          <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
+            {depois}
+          </Texto>
+        </View>
+      </View>
+    </LinhaDoTempo>
   );
 }
 
@@ -387,10 +491,22 @@ const styles = StyleSheet.create({
   secao: { gap: space[32] },
   topo: { gap: space[12] },
   dias: { flexDirection: 'row', gap: space[8] },
-  momentos: { gap: space[12] },
-  lista: { gap: space[8] },
-  etiqueta: { alignSelf: 'center' },
+  momentos: { gap: space[16] },
+  filtros: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  periodo: { marginBottom: space[8] },
+  periodoMeio: { marginTop: space[4] },
   centro: { textAlign: 'center' },
+  linhaTempo: { flexDirection: 'row', gap: space[12] },
+  hora: { width: 44, paddingTop: 6, fontVariant: ['tabular-nums'] },
+  trilho: { width: LADO_MARCADOR, alignItems: 'center' },
+  traco: { flex: 1, width: borderWidth.thin, marginVertical: space[4] },
+  marcador: { width: LADO_MARCADOR, height: LADO_MARCADOR, alignItems: 'center', justifyContent: 'center' },
+  redondo: { borderRadius: radius.full },
+  quadrado: { borderRadius: radius.sm },
+  conteudoLinha: { flex: 1, minWidth: 0 },
+  comEspaco: { paddingBottom: space[12] },
+  tituloEscolha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
+  encolher: { flexShrink: 1 },
   // as bordas do arraste usam radius.card; aqui o card é radius.md
   bordas: { borderRadius: radius.md, overflow: 'hidden' },
   grade: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
@@ -403,11 +519,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   card: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: space[8],
-    padding: space[12] - borderWidth.thin, // borda interna no Figma
+    gap: space[2],
+    paddingHorizontal: space[12] - borderWidth.thin,
+    paddingVertical: space[8],
     borderRadius: radius.md,
     borderWidth: borderWidth.thin,
   },
