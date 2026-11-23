@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { AppState, Linking, StyleSheet, View } from 'react-native';
 
 import { buscarVersaoNova, type VersaoNativa } from '@/data/versaoNativa';
 import { space } from '@/theme';
@@ -17,16 +17,28 @@ export function AvisoNovaVersao() {
   const [nova, setNova] = useState<VersaoNativa | null>(null);
   const [visivel, setVisivel] = useState(false);
 
+  // Confere ao abrir e sempre que o app volta para a frente (antes só no início a frio: com o
+  // Consi aberto nas recentes, o aviso nunca vinha). Um aviso já mostrado não volta na mesma sessão.
   useEffect(() => {
     let ativo = true;
-    buscarVersaoNova().then((v) => {
-      if (ativo && v) {
-        setNova(v);
-        setVisivel(true);
-      }
+    let mostrado = false;
+    const conferir = () => {
+      if (mostrado) return;
+      buscarVersaoNova().then((v) => {
+        if (ativo && v && !mostrado) {
+          mostrado = true;
+          setNova(v);
+          setVisivel(true);
+        }
+      });
+    };
+    conferir();
+    const assinatura = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') conferir();
     });
     return () => {
       ativo = false;
+      assinatura.remove();
     };
   }, []);
 
