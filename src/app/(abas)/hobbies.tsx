@@ -42,6 +42,7 @@ export default function Hobbies() {
     aoAgendar: (r) => mostrarAviso(r ? `Lembrete para ${r}` : 'Lembrete removido'),
   });
   const [arrastando, setArrastando] = useState(false);
+  // null = "Todos": sugestões de todos os hobbies da pessoa, intercaladas (o filtro padrão).
   const [filtro, setFiltro] = useState<HobbyId | null>(null);
   const [aba, setAba] = useState<HobbyId | null>(null);
 
@@ -71,10 +72,15 @@ export default function Hobbies() {
   const { sincronizarOnboarding } = h;
   useFocusEffect(useCallback(() => sincronizarOnboarding(), [sincronizarOnboarding]));
 
-  const hobbyFiltro = filtro && h.hobbies.includes(filtro) ? filtro : h.hobbies[0];
+  const hobbyFiltro = filtro && h.hobbies.includes(filtro) ? filtro : null;
   const hobbyAba = aba && h.hobbies.includes(aba) ? aba : h.hobbies[0];
 
-  const pilha = h.pilha(hobbyFiltro);
+  // "Todos": uma de cada hobby por vez, para a pilha não começar com 20 de um hobby só.
+  const pilha = hobbyFiltro ? h.pilha(hobbyFiltro) : intercalar(h.hobbies.map((hb) => h.pilha(hb)));
+  const podeRever = hobbyFiltro ? h.temIgnoradas(hobbyFiltro) : h.hobbies.some((hb) => h.temIgnoradas(hb));
+  const reverIgnoradas = () =>
+    hobbyFiltro ? h.reverIgnoradas(hobbyFiltro) : h.hobbies.forEach((hb) => h.reverIgnoradas(hb));
+  const sugerir = () => irPara.criar('comunidade', hobbyFiltro ?? undefined);
   const naAba = h.atividades.filter((a) => a.hobby === hobbyAba && a.status === 'andamento');
 
   const decidir = (s: Atividade, d: Decisao) => {
@@ -130,6 +136,12 @@ export default function Hobbies() {
               style={styles.sangria}
               contentContainerStyle={styles.filtros}
             >
+              <Filtro
+                rotulo="Todos"
+                ativo={!hobbyFiltro}
+                onPress={() => setFiltro(null)}
+                icone={(cor) => <Icone nome="blocos" tamanho={16} cor={cor} />}
+              />
               {h.hobbies.map((hb) => (
                 <Filtro
                   key={hb}
@@ -143,14 +155,14 @@ export default function Hobbies() {
               <Filtro
                 rotulo="Sugerir atividade"
                 tracejado
-                onPress={() => irPara.criar('comunidade', hobbyFiltro)}
+                onPress={sugerir}
                 iconeDireita={(cor) => <Icone nome="adicionar" tamanho={16} cor={cor} />}
               />
             </ScrollView>
           </Aparecer>
         </View>
 
-        <Aparecer atraso={300} key={hobbyFiltro} style={styles.pilha}>
+        <Aparecer atraso={300} key={hobbyFiltro ?? 'todos'} style={styles.pilha}>
           <PilhaSugestoes
             sugestoes={pilha}
             margem={MARGEM}
@@ -162,9 +174,9 @@ export default function Hobbies() {
             vazio={
               <PilhaVazia
                 hobby={hobbyFiltro}
-                podeRever={h.temIgnoradas(hobbyFiltro)}
-                onRever={() => h.reverIgnoradas(hobbyFiltro)}
-                onSugerir={() => irPara.criar('comunidade', hobbyFiltro)}
+                podeRever={podeRever}
+                onRever={reverIgnoradas}
+                onSugerir={sugerir}
               />
             }
           />
@@ -255,38 +267,54 @@ export default function Hobbies() {
   );
 }
 
-/** Fim da pilha (sem design no Figma): mesmo tamanho do card, em bg/sunken com borda border/focus. */
+/** Intercala as listas: a primeira de cada, depois a segunda de cada… */
+function intercalar<T>(listas: T[][]): T[] {
+  const saida: T[] = [];
+  const maior = Math.max(0, ...listas.map((l) => l.length));
+  for (let i = 0; i < maior; i++) for (const l of listas) if (l[i]) saida.push(l[i]);
+  return saida;
+}
+
+/**
+ * Fim da pilha (sem design no Figma): mesmo tamanho do card, em bg/sunken com borda border/focus.
+ * Em "Todos" (`hobby` null), fala de todos os hobbies. Sempre dá para sugerir uma atividade;
+ * se a pessoa ignorou alguma, também dá para revê-las.
+ */
 function PilhaVazia({
   hobby,
   podeRever,
   onRever,
   onSugerir,
 }: {
-  hobby: HobbyId;
+  hobby: HobbyId | null;
   podeRever: boolean;
   onRever: () => void;
   onSugerir: () => void;
 }) {
   const { cores } = useTema();
-  const nome = hobbyInfo(hobby).nome;
+  const nome = hobby ? hobbyInfo(hobby).nome : null;
   return (
     <View style={[styles.vazio, { backgroundColor: cores.bg.sunken, borderColor: cores.border.focus }]}>
-      <IconeHobby hobby={hobby} caixa={32} />
+      {hobby ? <IconeHobby hobby={hobby} caixa={32} /> : <Icone nome="blocos" tamanho={32} />}
       <View style={styles.vazioTextos}>
         <Texto estilo="Títulos/Médio" style={styles.centro}>
           {podeRever ? 'Por hoje é isso' : 'Ainda não há sugestões aqui'}
         </Texto>
         <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.centro}>
           {podeRever
-            ? `Você viu todas as sugestões de ${nome}. Novas ideias chegam amanhã.`
-            : `Que tal ser a primeira pessoa a sugerir algo de ${nome}?`}
+            ? `Você viu todas as sugestões${nome ? ` de ${nome}` : ''}. Novas ideias chegam amanhã.`
+            : `Que tal ser a primeira pessoa a sugerir algo${nome ? ` de ${nome}` : ''}?`}
         </Texto>
       </View>
-      {podeRever ? (
-        <Botao rotulo="Rever as que ignorei" estilo="secundario" onPress={onRever} />
-      ) : (
-        <Botao rotulo="Sugerir atividade" estilo="secundario" onPress={onSugerir} />
-      )}
+      <View style={styles.botoesVazio}>
+        {podeRever ? <Botao rotulo="Rever as que ignorei" estilo="secundario" onPress={onRever} /> : null}
+        <Botao
+          rotulo="Sugerir atividade"
+          estilo="secundario"
+          icone={(cor) => <Icone nome="adicionar" tamanho={16} cor={cor} />}
+          onPress={onSugerir}
+        />
+      </View>
     </View>
   );
 }
@@ -330,6 +358,7 @@ const styles = StyleSheet.create({
     borderWidth: borderWidth.thin,
   },
   vazioTextos: { gap: space[8], alignItems: 'center' },
+  botoesVazio: { alignSelf: 'stretch', gap: space[8] },
   abaVazia: {
     alignItems: 'center',
     gap: space[8],
