@@ -4,7 +4,14 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { BarraNavegacao, ModoImersivoProvider, useModoImersivo } from '@/components';
 import { GestoAbas } from '@/components/GestoAbas';
 import { onboardingConcluido } from '@/data/onboarding';
-import { preferenciasCarregadas, useMovimentoReduzido, type AbaInicial } from '@/data/preferencias';
+import {
+  ordemDasAbas,
+  preferenciasCarregadas,
+  useMovimentoReduzido,
+  usePreferencias,
+  type Aba,
+  type AbaInicial,
+} from '@/data/preferencias';
 import { useTema } from '@/theme';
 
 /** Abre em Início, mesmo com Hobbies e Diário antes dele na barra (ou na aba escolhida em Ajustes). */
@@ -60,8 +67,6 @@ export default function LayoutAbas() {
   );
 }
 
-/** Ordem das abas na barra (a mesma dos <Tabs.Screen>): o gesto vai para a vizinha. */
-const ORDEM_ABAS = ['hobbies', 'diario', 'index', 'social', 'ajustes'] as const;
 
 /**
  * Deslizar troca de aba. Envolve o navegador inteiro (o `screenLayout` das Tabs não chega ao
@@ -69,9 +74,11 @@ const ORDEM_ABAS = ['hobbies', 'diario', 'index', 'social', 'ajustes'] as const;
  */
 function ComGesto({ children }: { children: ReactNode }) {
   const { imersivo } = useModoImersivo();
+  // A mesma ordem da barra: a aba em que o app abre fica no meio.
+  const ORDEM_ABAS = ordemDasAbas(usePreferencias().abaInicial);
   const segmentos = useSegments();
   // Em "/(abas)" o segmento da aba vem depois do grupo; o Início não tem segmento.
-  const aba = (segmentos[1] ?? 'index') as (typeof ORDEM_ABAS)[number];
+  const aba = (segmentos[1] ?? 'index') as Aba;
   const i = ORDEM_ABAS.indexOf(aba);
   return (
     <GestoAbas

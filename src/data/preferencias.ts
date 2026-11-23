@@ -12,12 +12,30 @@ import { apagarEstado, gravarEstado, lerEstado } from './banco';
 export type Aparencia = 'sistema' | Modo;
 export type Movimento = 'sistema' | 'reduzido' | 'normal';
 export type SecaoHome = 'drops' | 'grupos' | 'semana';
-export type TamanhoTexto = 'normal' | 'grande';
+/** Cinco marcas no controle deslizante de Ajustes → Personalizar ("grande" é o antigo "Maior"). */
+export type TamanhoTexto = 'menor' | 'normal' | 'medio' | 'grande' | 'maior';
+export const TAMANHOS_TEXTO: TamanhoTexto[] = ['menor', 'normal', 'medio', 'grande', 'maior'];
 /** Aba em que o app abre (nomes das rotas de src/app/(abas)). */
 export type AbaInicial = 'index' | 'hobbies' | 'diario';
 
-/** Quanto o texto cresce em "Texto maior" (soma com o tamanho de fonte do celular). */
-export const FATOR_TEXTO: Record<TamanhoTexto, number> = { normal: 1, grande: 1.15 };
+/** Quanto o texto cresce (soma com o tamanho de fonte do celular). */
+export const FATOR_TEXTO: Record<TamanhoTexto, number> = { menor: 0.92, normal: 1, medio: 1.08, grande: 1.15, maior: 1.25 };
+
+/** Abas da barra, na ordem do <Tabs> (a Início no meio). */
+export const ABAS = ['hobbies', 'diario', 'index', 'social', 'ajustes'] as const;
+export type Aba = (typeof ABAS)[number];
+
+/**
+ * Ordem das abas na barra: a aba em que o app abre fica no meio, trocando de lugar com a Início
+ * (pedido do produto: o ícone escolhido fica centralizado). O gesto de deslizar segue a mesma ordem.
+ */
+export function ordemDasAbas(abaInicial: AbaInicial): Aba[] {
+  const o: Aba[] = [...ABAS];
+  const i = o.indexOf(abaInicial);
+  const meio = o.indexOf('index');
+  [o[i], o[meio]] = [o[meio], o[i]];
+  return o;
+}
 
 export type Preferencias = {
   aparencia: Aparencia;
@@ -65,7 +83,7 @@ function normalizar(dado: unknown): Preferencias {
   const aparencia = d.aparencia === 'light' || d.aparencia === 'dark' ? d.aparencia : 'sistema';
   const movimento = d.movimento === 'reduzido' || d.movimento === 'normal' ? d.movimento : 'sistema';
   const vibracao = typeof d.vibracao === 'boolean' ? d.vibracao : true;
-  const tamanhoTexto = d.tamanhoTexto === 'grande' ? 'grande' : 'normal';
+  const tamanhoTexto = TAMANHOS_TEXTO.includes(d.tamanhoTexto as TamanhoTexto) ? (d.tamanhoTexto as TamanhoTexto) : 'normal';
   const abaInicial = d.abaInicial === 'hobbies' || d.abaInicial === 'diario' ? d.abaInicial : 'index';
   const iconePorEmocao = d.iconePorEmocao !== false;
   const vistas = new Set<SecaoHome>();

@@ -10,6 +10,8 @@ import IconeDiario from '../../assets/home/icone-diario.svg';
 import IconeHobbies from '../../assets/home/icone-hobbies.svg';
 import IconeInicio from '../../assets/home/icone-inicio.svg';
 import IconeSocial from '../../assets/home/icone-social.svg';
+import { ordemDasAbas, usePreferencias } from '@/data/preferencias';
+
 import { useModoImersivo } from './ModoImersivo';
 import type { IconeSvg } from './onboarding/assets';
 
@@ -19,7 +21,7 @@ export const ALTURA_BARRA = 64;
 export const MARGEM_BARRA = space[8];
 const PARADA = new Animated.Value(0);
 
-const icones: Record<string, IconeSvg> = {
+export const iconesDasAbas: Record<string, IconeSvg> = {
   hobbies: IconeHobbies,
   diario: IconeDiario,
   index: IconeInicio,
@@ -46,6 +48,11 @@ export function BarraNavegacao({ state, descriptors, emitter, navigateToTab }: B
   const naInicio = state.routes[state.index]?.name === 'index';
   const imersivo = imersivoHome && naInicio;
   const saida = naInicio ? saidaHome : PARADA;
+  // A aba em que o app abre fica no meio da barra (Ajustes → Personalizar → Abrir o app em).
+  const ordem = ordemDasAbas(usePreferencias().abaInicial);
+  const rotas = state.routes
+    .map((rota, i) => ({ rota, i }))
+    .sort((a, b) => ordem.indexOf(a.rota.name as never) - ordem.indexOf(b.rota.name as never));
 
   return (
     <Animated.View
@@ -67,10 +74,10 @@ export function BarraNavegacao({ state, descriptors, emitter, navigateToTab }: B
       ]}
     >
       <View style={[styles.barra, { backgroundColor: cores.bg.raised }]}>
-        {state.routes.map((rota, i) => {
+        {rotas.map(({ rota, i }) => {
           const ativo = state.index === i;
           const { options } = descriptors[rota.key];
-          const Icone = icones[rota.name];
+          const Icone = iconesDasAbas[rota.name];
           const aoTocar = () => {
             const evento = emitter.emit({ type: 'tabPress', target: rota.key, canPreventDefault: true });
             if (!ativo && !evento.defaultPrevented) navigateToTab(rota.key);
