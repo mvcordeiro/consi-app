@@ -16,14 +16,22 @@ internal object Notificacoes {
   /** Canal da fixa. "-2": a primeira versão usava importância mínima, que esconde a notificação. */
   const val CANAL_VIGIA = "consi-vigia-2"
   private const val CANAL_VIGIA_ANTIGO = "consi-vigia"
-  const val CANAL_LEMBRETES = "consi-lembretes"
+  /**
+   * Canais que aparecem por cima da tela (heads-up). "-2": os canais antigos tinham importância
+   * padrão (só tocavam, sem aparecer) e o Android não deixa subir a importância de um canal que
+   * já existe; por isso canais novos, e os antigos são apagados.
+   */
+  const val CANAL_LEMBRETES = "consi-lembretes-2"
   const val ID_FIXA = 4201
   const val ID_LEMBRETE = 4202
   const val ID_PAUSA = 4203
   const val ID_CUIDADO_TELA = 4204
-  const val CANAL_CUIDADO_TELA = "consi-cuidado-tela"
+  const val CANAL_CUIDADO_TELA = "consi-cuidado-tela-2"
   const val ID_CONVITE = 4205
-  const val CANAL_CONVITE = "consi-piloto"
+  const val CANAL_CONVITE = "consi-piloto-2"
+  const val ID_DIARIO = 4206
+  const val CANAL_DIARIO = "consi-diario"
+  private val CANAIS_ANTIGOS = listOf("consi-lembretes", "consi-cuidado-tela", "consi-piloto")
   /** A pessoa arrastou a fixa para o lado (Android 14+ deixa): o serviço publica de novo. */
   const val ACAO_REPOR = "expo.modules.consipausa.REPOR_NOTIFICACAO"
 
@@ -34,27 +42,23 @@ internal object Notificacoes {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
     val nm = context.getSystemService(NotificationManager::class.java)
     nm.deleteNotificationChannel(CANAL_VIGIA_ANTIGO)
+    CANAIS_ANTIGOS.forEach { nm.deleteNotificationChannel(it) }
+    fun alto(id: String, nome: String, descricao: String) =
+      NotificationChannel(id, nome, NotificationManager.IMPORTANCE_HIGH).apply {
+        this.description = descricao
+        enableVibration(true)
+        lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+      }
     nm.createNotificationChannel(
       NotificationChannel(CANAL_VIGIA, "Pausa nos apps", NotificationManager.IMPORTANCE_LOW).apply {
         description = "Fica sempre no topo enquanto o Consi cuida das pausas e mostra o tempo no app."
         setShowBadge(false)
       },
     )
-    nm.createNotificationChannel(
-      NotificationChannel(CANAL_LEMBRETES, "Lembretes de tempo", NotificationManager.IMPORTANCE_HIGH).apply {
-        description = "Avisos do Cuidar tempo e a pausa quando ela não pode abrir sozinha."
-      },
-    )
-    nm.createNotificationChannel(
-      NotificationChannel(CANAL_CUIDADO_TELA, "Cuidado com o tempo de tela", NotificationManager.IMPORTANCE_DEFAULT).apply {
-        description = "Uma sugestão de pausa depois de muito tempo seguido no celular."
-      },
-    )
-    nm.createNotificationChannel(
-      NotificationChannel(CANAL_CONVITE, "Piloto de teste", NotificationManager.IMPORTANCE_DEFAULT).apply {
-        description = "O convite para contar como foi a semana de teste do Consi."
-      },
-    )
+    nm.createNotificationChannel(alto(CANAL_LEMBRETES, "Lembretes de tempo", "Avisos do Cuidar tempo e a pausa quando ela não pode abrir sozinha."))
+    nm.createNotificationChannel(alto(CANAL_CUIDADO_TELA, "Cuidado com o tempo de tela", "Uma sugestão de pausa depois de muito tempo seguido no celular."))
+    nm.createNotificationChannel(alto(CANAL_CONVITE, "Piloto de teste", "O convite para contar como foi a semana de teste do Consi."))
+    nm.createNotificationChannel(alto(CANAL_DIARIO, "Lembrete do Diário", "Uma pergunta para escrever no Diário, nos dias e no horário que você escolheu."))
   }
 
   /** Convite do piloto (dia 7). Tocar abre o Consi, onde a folha leva ao formulário. */
@@ -69,7 +73,8 @@ internal object Notificacoes {
         .setContentText(texto)
         .setStyle(NotificationCompat.BigTextStyle().bigText(texto))
         .setAutoCancel(true)
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_ALL)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setContentIntent(
           abrirApp(context)?.let { PendingIntent.getActivity(context, 7, it, PendingIntent.FLAG_IMMUTABLE) },
@@ -95,10 +100,13 @@ internal object Notificacoes {
   }
 
   /** Abre a pausa do app (consi://pausa?app=…&grupo=…&origem=vigia). */
-  fun intentDaPausa(context: Context, pacote: String, grupo: String): Intent =
+  fun intentDaPausa(context: Context, pacote: String, grupo: String, bloqueado: Boolean = false): Intent =
     Intent(
       Intent.ACTION_VIEW,
-      Uri.parse("consi://pausa?app=${Uri.encode(pacote)}&grupo=${Uri.encode(grupo)}&origem=vigia"),
+      Uri.parse(
+        "consi://pausa?app=${Uri.encode(pacote)}&grupo=${Uri.encode(grupo)}&origem=vigia" +
+          if (bloqueado) "&bloqueado=1" else "",
+      ),
     )
       .setPackage(context.packageName)
       .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -170,7 +178,8 @@ internal object Notificacoes {
         .setContentText("Que tal uma pausa para ver como você está?")
         .setAutoCancel(true)
         .setSilent(calado)
-        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setPriority(if (calado) NotificationCompat.PRIORITY_LOW else NotificationCompat.PRIORITY_HIGH)
+        .apply { if (!calado) setDefaults(NotificationCompat.DEFAULT_ALL) }
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setContentIntent(abrirPausa(context, pacote, regra.grupo, 2))
         .build(),
@@ -191,7 +200,8 @@ internal object Notificacoes {
         .setStyle(NotificationCompat.BigTextStyle().bigText(sugestao))
         .setAutoCancel(true)
         .setTimeoutAfter(10 * 60_000L)
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_ALL)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setContentIntent(
           PendingIntent.getBroadcast(
@@ -216,10 +226,34 @@ internal object Notificacoes {
         .setAutoCancel(true)
         .setOnlyAlertOnce(true)
         .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_ALL)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setContentIntent(abrirPausa(context, pacote, regra.grupo, 3))
         .build(),
     )
+
+  /** Lembrete diário do Diário: tocar abre um momento novo já com a pergunta. */
+  fun lembreteDiario(context: Context, pergunta: String) {
+    criarCanais(context)
+    val abrir = Intent(Intent.ACTION_VIEW, Uri.parse("consi://diario/novo?pergunta=${Uri.encode(pergunta)}"))
+      .setPackage(context.packageName)
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    publicar(
+      context,
+      ID_DIARIO,
+      NotificationCompat.Builder(context, CANAL_DIARIO)
+        .setSmallIcon(R.drawable.consi_notificacao)
+        .setContentTitle("Um minuto para o seu diário?")
+        .setContentText(pergunta)
+        .setStyle(NotificationCompat.BigTextStyle().bigText(pergunta))
+        .setAutoCancel(true)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_ALL)
+        .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        .setContentIntent(PendingIntent.getActivity(context, 9, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+        .build(),
+    )
+  }
 
   fun cancelarPausa(context: Context) = NotificationManagerCompat.from(context).cancel(ID_PAUSA)
 
