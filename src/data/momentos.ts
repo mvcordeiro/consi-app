@@ -282,7 +282,11 @@ export function acharTermo(texto: string, termo: string) {
 }
 
 // ─── Perguntas ──────────────────────────────────────────────────────────────
-/** Perguntas da "Página de hoje" (a do Figma primeiro). O botão de setas troca a pergunta. */
+/**
+ * Perguntas da "Página de hoje" (a do Figma primeiro). O botão de setas troca a pergunta; o
+ * lembrete diário (lembreteDiario.ts) usa a mesma lista. Agrupadas por tema só para facilitar a
+ * leitura: celular e atenção, corpo e presença, emoções, pessoas, gratidão e o dia em si.
+ */
 export const PERGUNTAS_DO_DIA = [
   'O que você queria fazer quando pegou o celular pela primeira vez hoje?',
   'Qual foi o momento mais calmo do seu dia até agora?',
@@ -291,6 +295,60 @@ export const PERGUNTAS_DO_DIA = [
   'Quem você gostaria de ter encontrado hoje, mesmo que por pouco tempo?',
   'O que te deixou inquieto hoje? E o que te acalmou?',
   'Se hoje tivesse um título, qual seria?',
+  // celular e atenção
+  'Qual app mais chamou sua atenção hoje? O que você estava procurando nele?',
+  'Teve um momento hoje em que largar o celular foi bom? Como foi?',
+  'O que você estaria fazendo agora se o celular não existisse?',
+  'Em que momento do dia você mais sentiu vontade de rolar a tela sem pensar?',
+  'O que você viu hoje numa tela que ficou na sua cabeça?',
+  'Qual notificação você poderia ter ignorado hoje sem perder nada?',
+  'Quando foi a última vez hoje que você ficou sem fazer nada, só olhando em volta?',
+  'O que te fez pegar o celular da última vez? Era o que você precisava?',
+  // corpo e presença
+  'Como está o seu corpo agora? Onde você sente mais tensão?',
+  'O que você ouviu hoje que não veio de um fone ou de uma tela?',
+  'Qual foi a última coisa que você comeu com calma, prestando atenção?',
+  'Você saiu de casa hoje? O que reparou no caminho?',
+  'Como você dormiu? O que gostaria de fazer diferente esta noite?',
+  'Que cheiro, som ou cor marcou o seu dia?',
+  'Quanto tempo você passou ao ar livre hoje? Como se sentiu?',
+  'Respire fundo três vezes. O que mudou?',
+  // emoções
+  'Que emoção apareceu mais vezes hoje? Quando ela chegou?',
+  'Teve algo hoje que te irritou mais do que deveria? Por quê?',
+  'O que você está evitando sentir hoje?',
+  'Qual foi o momento em que você se sentiu mais você mesmo hoje?',
+  'Se o seu humor de hoje fosse um clima, qual seria?',
+  'O que te deu orgulho hoje, mesmo que seja pequeno?',
+  'Do que você sentiu saudade hoje?',
+  'Teve algo hoje que te deu medo? O que ajudaria a enfrentar?',
+  'O que você diria para alguém que estivesse sentindo o mesmo que você agora?',
+  'Qual pensamento se repetiu na sua cabeça hoje?',
+  // pessoas
+  'Com quem você conversou de verdade hoje, olhando nos olhos?',
+  'Quem te fez rir hoje?',
+  'Tem alguém a quem você gostaria de mandar uma mensagem de carinho? O que diria?',
+  'Qual conversa de hoje você gostaria de ter tido de outro jeito?',
+  'Quem você admirou hoje, de perto ou de longe?',
+  'Alguém precisou de você hoje? Como você se sentiu ajudando?',
+  // gratidão e coisas boas
+  'Escreva três coisas pequenas que foram boas hoje.',
+  'O que você aprendeu hoje, mesmo sem querer?',
+  'Qual foi a melhor parte do seu dia até agora?',
+  'Pelo que você é grato hoje?',
+  'O que te deu energia hoje? E o que tirou?',
+  'Que gentileza você recebeu ou fez hoje?',
+  // o dia e o que vem
+  'O que você quer deixar para amanhã sem culpa?',
+  'Se você pudesse repetir uma hora de hoje, qual seria?',
+  'O que ficou por fazer hoje? Precisa mesmo ser feito?',
+  'O que você espera de amanhã?',
+  'Qual pequena mudança deixaria seus dias mais leves?',
+  'Do que você precisa agora, neste momento?',
+  'O que você fez hoje só por você?',
+  'Se você contasse o dia de hoje para uma criança, o que diria?',
+  'Que hobby ou atividade você gostaria de ter feito hoje? O que impediu?',
+  'Termine a frase: hoje eu percebi que…',
 ];
 
 /** O texto de apoio do campo, por emoção ("O que trouxe essa alegria?"). */
