@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 
 import { borderWidth, radius, space, useTema } from '@/theme';
@@ -8,7 +9,7 @@ import { Icone } from '../Icone';
 import { Texto } from '../Texto';
 
 type Props = {
-  /** Quanto da espera já passou (0 a 1). */
+  /** Quanto da espera já passou (0 a 1). Animado no driver nativo. */
   progresso: Animated.Value;
   /** Segundos que faltam (mostrados no botão). */
   segundos: number;
@@ -25,9 +26,14 @@ type Props = {
  * Botão de continuar com o timer dentro (Figma 638:4351 / 638:4417): contorno border/focus,
  * o preenchimento bg/raised cresce da esquerda conforme a espera passa, com o relógio e os
  * segundos em text/accent. Quando a espera acaba, vira o botão de continuar.
+ *
+ * O preenchimento é uma pílula da largura do botão que desliza da esquerda (translateX no
+ * driver nativo). Antes a largura era animada pelo JS e, com a pausa ocupada, ficava para trás:
+ * o botão virava "Continuar" com 10 a 20% ainda vazio.
  */
 export function BotaoTimer({ progresso, segundos, pronto, variante, onContinuar }: Props) {
   const { cores } = useTema();
+  const [largura, setLargura] = useState(0);
 
   if (pronto) {
     return (
@@ -46,20 +52,30 @@ export function BotaoTimer({ progresso, segundos, pronto, variante, onContinuar 
       accessible
       accessibilityRole="progressbar"
       accessibilityLabel={`Você poderá continuar em ${segundos} segundos`}
+      onLayout={(e) => setLargura(e.nativeEvent.layout.width)}
       style={[styles.botao, { borderColor: cores.border.focus }]}
     >
-      <Animated.View
-        style={[
-          styles.preenchimento,
-          {
-            backgroundColor: cores.bg.raised,
-            borderColor: cores.border.focus,
-            width: progresso.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'], extrapolate: 'clamp' }),
-            // sem o fiapo da borda antes de começar a encher
-            opacity: progresso.interpolate({ inputRange: [0, 0.03], outputRange: [0, 1], extrapolate: 'clamp' }),
-          },
-        ]}
-      />
+      {largura > 0 ? (
+        <Animated.View
+          style={[
+            styles.preenchimento,
+            {
+              width: largura,
+              backgroundColor: cores.bg.raised,
+              borderColor: cores.border.focus,
+              transform: [
+                {
+                  translateX: progresso.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-largura, 0],
+                    extrapolate: 'clamp',
+                  }),
+                },
+              ],
+            },
+          ]}
+        />
+      ) : null}
       {/* Num View: na web, o preenchimento absoluto seria pintado por cima do SVG. */}
       <View style={styles.conteudo}>
         <Icone nome="relogio" tamanho={24} cor={cores.text.accent} />
