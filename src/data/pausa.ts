@@ -3,6 +3,9 @@
  * vêm da regra do grupo do app que a pessoa tentou abrir (ver gruposHome.ts).
  */
 
+import { useEffect, useState } from 'react';
+
+import { ConsiPausa } from '../../modules/consi-pausa';
 import {
   completarResistencia,
   gravarEstado,
@@ -111,4 +114,86 @@ export async function pausaDepoisDeUsar(g: Grupo, app: string | undefined, doVig
   const lib = (await lerLiberacoes())[app];
   const agora = Date.now();
   return !!lib && agora >= lib.em && agora <= lib.ate + FOLGA_MS;
+}
+
+// ─── Bloqueio depois do "Dessa vez não abro" (só no APK Android) ───────────
+/**
+ * Depois de escolher não abrir (ou de sair do app na pausa), o app fica fechado por alguns
+ * minutos: tentar abrir de novo mostra a pausa sem a opção de continuar. Ligado por padrão
+ * (5 minutos); a pessoa desliga ou muda o tempo em Ajustes → Pausa e lembretes.
+ */
+export type Bloqueio = { ligado: boolean; minutos: number };
+
+const CHAVE_BLOQUEIO = 'consi:pausa:bloqueio';
+export const BLOQUEIO_PADRAO: Bloqueio = { ligado: true, minutos: 5 };
+export const BLOQUEIO_MIN = 1;
+export const BLOQUEIO_MAX = 120;
+
+let bloqueioAtual: Bloqueio | null = null;
+const ouvintesBloqueio = new Set<(b: Bloqueio) => void>();
+
+export async function lerBloqueio(): Promise<Bloqueio> {
+  if (bloqueioAtual) return bloqueioAtual;
+  try {
+    const bruto = await lerEstado(CHAVE_BLOQUEIO);
+    bloqueioAtual = { ...BLOQUEIO_PADRAO, ...(bruto ? (JSON.parse(bruto) as Partial<Bloqueio>) : {}) };
+  } catch {
+    bloqueioAtual = BLOQUEIO_PADRAO;
+  }
+  return bloqueioAtual;
+}
+
+export async function gravarBloqueio(b: Bloqueio) {
+  const novo = { ligado: b.ligado, minutos: Math.min(BLOQUEIO_MAX, Math.max(BLOQUEIO_MIN, Math.round(b.minutos))) };
+  bloqueioAtual = novo;
+  ouvintesBloqueio.forEach((f) => f(novo));
+  await gravarEstado(CHAVE_BLOQUEIO, JSON.stringify(novo)).catch(() => {});
+}
+
+export function useBloqueio(): Bloqueio {
+  const [b, setB] = useState<Bloqueio>(bloqueioAtual ?? BLOQUEIO_PADRAO);
+  useEffect(() => {
+    let vivo = true;
+    lerBloqueio().then((x) => vivo && setB(x));
+    ouvintesBloqueio.add(setB);
+    return () => {
+      vivo = false;
+      ouvintesBloqueio.delete(setB);
+    };
+  }, []);
+  return b;
+}
+
+/** Depois do "não abro" numa pausa do vigia: fecha o app pelo tempo escolhido (se ligado). */
+export async function bloquearDepoisDeNaoAbrir(app: string | undefined) {
+  if (!app || !ConsiPausa?.bloquear) return;
+  const b = await lerBloqueio();
+  if (!b.ligado) return;
+  try {
+    ConsiPausa.bloquear(app, b.minutos);
+  } catch {
+    // sem o bloqueio, a pausa segue como antes
+  }
+}
+
+/** Até quando o app está bloqueado (epoch ms; 0 = não está). */
+export function bloqueadoAte(app: string | undefined): number {
+  if (!app || !ConsiPausa?.bloqueadoAte) return 0;
+  try {
+    return ConsiPausa.bloqueadoAte(app);
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Sair da pausa aberta pelo vigia: para a tela inicial do celular, não a do Consi (a pessoa
+ * estava tentando abrir outro app). Devolve false sem o módulo (APK antigo, web, iPhone).
+ */
+export function irParaInicioDoCelular(): boolean {
+  try {
+    return ConsiPausa?.irParaInicio?.() ?? false;
+  } catch {
+    return false;
+  }
 }

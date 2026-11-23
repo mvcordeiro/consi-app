@@ -123,7 +123,10 @@ class VigiaService : Service() {
       prefs.guardarCiclo(app, proximoLembrete, agora)
       guardadoEm = agora
     }
-    if (app != null && regra != null) {
+    if (app != null && regra != null && prefs.bloqueadoAte(app) > agora) {
+      // A pessoa escolheu não abrir há pouco: a pausa volta, agora sem a opção de continuar.
+      abrirPausa(app, regra, agora, bloqueado = true)
+    } else if (app != null && regra != null) {
       when (regra.modo) {
         "apenas-pausar" -> if (!liberado(app, agora)) abrirPausa(app, regra, agora)
         "cuidar-tempo" -> cuidarTempo(app, regra, agora)
@@ -244,7 +247,7 @@ class VigiaService : Service() {
     }
   }
 
-  private fun abrirPausa(app: String, regra: Regra, agora: Long) {
+  private fun abrirPausa(app: String, regra: Regra, agora: Long, bloqueado: Boolean = false) {
     // Não reabre a mesma pausa em sequência enquanto o Consi ainda está subindo.
     ultimaPausa?.let { (de, em) -> if (de == app && agora - em < REABRIR_PAUSA_MS) return }
     ultimaPausa = app to agora
@@ -254,7 +257,7 @@ class VigiaService : Service() {
       return
     }
     try {
-      startActivity(Notificacoes.intentDaPausa(this, app, regra.grupo))
+      startActivity(Notificacoes.intentDaPausa(this, app, regra.grupo, bloqueado))
     } catch (_: Exception) {
       Notificacoes.pausaPendente(this, regra, app)
     }

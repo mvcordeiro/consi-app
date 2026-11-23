@@ -121,6 +121,38 @@ class ConsiPausaModule : Module() {
 
     Function("cancelarConvitePiloto") { ConvitePiloto.cancelar(context) }
 
+    // ─── Lembrete diário do Diário ──────────────────────────────────────────
+    /** `dias`: bits de domingo (0) a sábado (6). `perguntas`: JSON com a lista de perguntas. */
+    Function("definirLembreteDiario") { ligado: Boolean, hora: Int, minuto: Int, dias: Int, perguntas: String ->
+      val p = prefs
+      p.diarioLigado = ligado
+      p.diarioHora = hora.coerceIn(0, 23)
+      p.diarioMinuto = minuto.coerceIn(0, 59)
+      p.diarioDias = dias and 0x7F
+      p.diarioPerguntas = perguntas
+      LembreteDiario.agendar(context)
+    }
+
+    // ─── Saídas da pausa ────────────────────────────────────────────────────
+    /** Vai para a tela inicial do celular (não a do Consi), deixando o Consi por trás. */
+    Function("irParaInicio") {
+      val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      try {
+        (appContext.currentActivity ?: context).startActivity(intent)
+        true
+      } catch (_: Exception) {
+        false
+      }
+    }
+
+    /** Depois do "Dessa vez não abro": o app fica fechado por `minutos`. */
+    Function("bloquear") { pacote: String, minutos: Double ->
+      if (minutos > 0) prefs.bloquearAte(pacote, System.currentTimeMillis() + (minutos * 60_000).toLong())
+    }
+
+    /** Até quando o app está bloqueado (epoch ms; 0 = não está). */
+    Function("bloqueadoAte") { pacote: String -> prefs.bloqueadoAte(pacote).toDouble() }
+
     /** Depois da pausa: libera o app por `minutos` (0 = até a pessoa sair dele). */
     Function("liberar") { pacote: String, minutos: Double ->
       if (minutos > 0) {

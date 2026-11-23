@@ -49,6 +49,15 @@ type ModuloConsiPausa = {
   /** Convite do piloto: notificação em `emMs` (epoch ms). Só existe a partir do APK versionCode 9. */
   agendarConvitePiloto?(emMs: number, titulo: string, texto: string): void;
   cancelarConvitePiloto?(): void;
+  /** A partir do APK versionCode 12: */
+  /** Lembrete diário de escrita (dias: bits de domingo = 0 a sábado = 6; perguntas em JSON). */
+  definirLembreteDiario?(ligado: boolean, hora: number, minuto: number, dias: number, perguntas: string): void;
+  /** Tela inicial do celular (não a do Consi). */
+  irParaInicio?(): boolean;
+  /** Depois do "Dessa vez não abro": o app fica fechado por `minutos`. */
+  bloquear?(pacote: string, minutos: number): void;
+  /** Até quando o app está bloqueado (epoch ms; 0 = não está). */
+  bloqueadoAte?(pacote: string): number;
 };
 
 export const ConsiPausa: ModuloConsiPausa | null =

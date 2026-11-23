@@ -62,6 +62,33 @@ internal class Preferencias(context: Context) {
     get() = prefs.getString("convite-texto", "Conta como foi. Leva uns 6 minutos.") ?: "Conta como foi. Leva uns 6 minutos."
     set(valor) = prefs.edit().putString("convite-texto", valor).apply()
 
+  /** Lembrete diário de escrita (LembreteDiario.kt): ligado, horário, dias (bit 0 = domingo) e as perguntas (JSON). */
+  var diarioLigado: Boolean
+    get() = prefs.getBoolean("diario-ligado", false)
+    set(valor) = prefs.edit().putBoolean("diario-ligado", valor).apply()
+
+  var diarioHora: Int
+    get() = prefs.getInt("diario-hora", 20)
+    set(valor) = prefs.edit().putInt("diario-hora", valor).apply()
+
+  var diarioMinuto: Int
+    get() = prefs.getInt("diario-minuto", 0)
+    set(valor) = prefs.edit().putInt("diario-minuto", valor).apply()
+
+  var diarioDias: Int
+    get() = prefs.getInt("diario-dias", 0x7F)
+    set(valor) = prefs.edit().putInt("diario-dias", valor).apply()
+
+  var diarioPerguntas: String
+    get() = prefs.getString("diario-perguntas", "[]") ?: "[]"
+    set(valor) = prefs.edit().putString("diario-perguntas", valor).apply()
+
+  fun proximaPerguntaDiario(total: Int): Int {
+    val i = prefs.getInt("diario-pergunta", 0).mod(total)
+    prefs.edit().putInt("diario-pergunta", i + 1).apply()
+    return i
+  }
+
   /** Índice da próxima sugestão do lembrete de tela (uma diferente a cada vez). */
   fun proximaSugestao(total: Int): Int {
     val i = prefs.getInt("sugestao-tela", 0).mod(total)
@@ -81,6 +108,18 @@ internal class Preferencias(context: Context) {
   fun proximoLembrete(pacote: String) = prefs.getLong("lembrete:$pacote", 0L)
 
   fun vistoEm(pacote: String) = prefs.getLong("visto:$pacote", 0L)
+
+  /**
+   * Bloqueio depois do "Dessa vez não abro" (ou de sair do app na pausa): até quando o app fica
+   * fechado. Abrir antes disso mostra a pausa no modo bloqueado, sem a opção de continuar.
+   */
+  fun bloqueadoAte(pacote: String) = prefs.getLong("bloqueado:$pacote", 0L)
+
+  fun bloquearAte(pacote: String, ate: Long) {
+    val e = prefs.edit().putLong("bloqueado:$pacote", ate).putLong("liberado:$pacote", 0L)
+    if (liberadoNaSessao == pacote) e.remove("liberado-sessao")
+    e.apply()
+  }
 
   fun guardarCiclo(pacote: String, proximo: Long, visto: Long) =
     prefs.edit().putLong("lembrete:$pacote", proximo).putLong("visto:$pacote", visto).apply()

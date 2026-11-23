@@ -20,6 +20,7 @@ import { BalaoEmocao } from '@/components/home/BalaoEmocao';
 import { BotaoContagem } from '@/components/home/BotaoContagem';
 import { BotaoTimer } from '@/components/pausa/BotaoTimer';
 import { NaoAbri } from '@/components/pausa/NaoAbri';
+import { PausaBloqueada } from '@/components/pausa/PausaBloqueada';
 import { RodaHobbies } from '@/components/pausa/RodaHobbies';
 import { TempoNoApp } from '@/components/pausa/TempoNoApp';
 import { hobbyInfo, type HobbyId } from '@/data/catalogo';
@@ -28,6 +29,8 @@ import { sortearFrase } from '@/data/frases';
 import { useGrupos } from '@/data/gruposHome';
 import { useHobbies } from '@/data/hobbiesEstado';
 import {
+  bloquearDepoisDeNaoAbrir,
+  irParaInicioDoCelular,
   ligarCheckin,
   marcarLiberacao,
   pausaDepoisDeUsar,
@@ -63,8 +66,9 @@ const DESCRICAO_EMOCAO = 'Registramos essa emoção para você.\nVocê pode edit
  * - naoAbri: depois de "Dessa vez não abro"
  * - tempo: "Quanto tempo você precisa nesse app?"
  * - hobbies: a roda de hobbies do botão "Hobbies" (162:255)
+ * - bloqueado: o app foi fechado há pouco com "Dessa vez não abro" e ainda está bloqueado
  */
-type Etapa = 'pausa' | 'checkin' | 'emocao' | 'naoAbri' | 'tempo' | 'hobbies';
+type Etapa = 'pausa' | 'checkin' | 'emocao' | 'naoAbri' | 'tempo' | 'hobbies' | 'bloqueado';
 /** De onde o check-in foi aberto: do "?" da pausa ou da tela de "não abri". */
 type Origem = 'pausa' | 'naoAbri';
 
@@ -78,7 +82,7 @@ type Origem = 'pausa' | 'naoAbri';
  */
 export default function Pausa() {
   const { cores } = useTema();
-  const params = useLocalSearchParams<{ grupo?: string; app?: string; origem?: string }>();
+  const params = useLocalSearchParams<{ grupo?: string; app?: string; origem?: string; bloqueado?: string }>();
   const doVigia = params.origem === 'vigia' && !!params.app;
   const grupos = useGrupos();
   const { grupo } = regraDaPausa(grupos, params);
@@ -103,7 +107,7 @@ export default function Pausa() {
   const [altura, setAltura] = useState(0);
   const [topoRodape, setTopoRodape] = useState(0);
 
-  const [etapa, setEtapa] = useState<Etapa>('pausa');
+  const [etapa, setEtapa] = useState<Etapa>(doVigia && params.bloqueado === '1' ? 'bloqueado' : 'pausa');
   const [origem, setOrigem] = useState<Origem>('pausa');
   const [jaFezCheckin, setJaFezCheckin] = useState(false);
   const [lugares, setLugares] = useState<Lugar[]>([]);
@@ -162,6 +166,7 @@ export default function Pausa() {
   // Explorar um hobby no lugar do app também é não abrir: vira "não abriu … e explorou Música".
   const explorarHobby = () => {
     registrar('pausa_hobby', { via: doVigia ? 'vigia' : 'manual' });
+    if (doVigia) void bloquearDepoisDeNaoAbrir(params.app);
     registrarResistencia({
       grupo: grupo.id,
       app: params.app,
@@ -173,6 +178,8 @@ export default function Pausa() {
   };
   const naoAbro = () => {
     registrar('pausa_nao_abri', { via: doVigia ? 'vigia' : 'manual' });
+    // o app fica fechado por alguns minutos (Ajustes → Pausa e lembretes)
+    if (doVigia) void bloquearDepoisDeNaoAbrir(params.app);
     // Um check-in já feito nesta pausa entra junto; um feito depois é ligado em `soltar`.
     resistenciaEm.current = registrarResistencia({
       grupo: grupo.id,
@@ -182,7 +189,12 @@ export default function Pausa() {
     });
     setEtapa('naoAbri');
   };
-  const sumir = useCallback(() => router.dismissTo('/'), []);
+  // Fim da pausa sem abrir o app. Aberta pelo vigia, volta para a tela inicial do celular (a pessoa
+  // estava indo para outro app, não para o Consi); o Consi fica na Home por trás.
+  const sumir = useCallback(() => {
+    if (doVigia) irParaInicioDoCelular();
+    router.dismissTo('/');
+  }, [doVigia]);
 
   // ─── Check-in ─────────────────────────────────────────────────────────────
   const abrirCheckin = (de: Origem) => {
@@ -284,10 +296,11 @@ export default function Pausa() {
       if (etapa === 'checkin' && aberto && !soltou) fecharCheckin();
       else if (etapa === 'emocao') voltarDaEmocao();
       else if (etapa === 'tempo' || etapa === 'hobbies') setEtapa('pausa');
+      else if (etapa === 'bloqueado') sumir();
       return etapa !== 'pausa' && etapa !== 'naoAbri';
     });
     return () => sub.remove();
-  }, [etapa, aberto, soltou, fecharCheckin, voltarDaEmocao]);
+  }, [etapa, aberto, soltou, fecharCheckin, voltarDaEmocao, sumir]);
 
   const medir = (ev: LayoutChangeEvent) => setAltura(ev.nativeEvent.layout.height);
   const medirRodape = (ev: LayoutChangeEvent) => setTopoRodape(ev.nativeEvent.layout.y);
@@ -473,6 +486,12 @@ export default function Pausa() {
         </View>
       ) : null}
 
+      {etapa === 'bloqueado' ? (
+        <View style={[styles.cheia, { paddingTop: top, paddingBottom: bottom }]}>
+          <PausaBloqueada app={params.app} onInicio={sumir} onConsi={() => router.dismissTo('/')} />
+        </View>
+      ) : null}
+
       {etapa === 'tempo' ? (
         <View style={[styles.cheia, { paddingTop: top, paddingBottom: bottom }]}>
           {/* escolher um tempo segue para o app (aberta por dentro do Consi, só fecha a pausa); Sair volta para a Home */}
@@ -499,6 +518,9 @@ export default function Pausa() {
   );
 }
 
+/** Quanto o botão fica cheio (com "0s") antes de virar o botão de continuar. */
+const SEGURAR_CHEIO_MS = 350;
+
 /**
  * Timer de continuar: começa quando a pausa abre e não para durante o check-in.
  * Se o grupo terminar de carregar depois (outra duração), o fim é recalculado.
@@ -508,16 +530,18 @@ function useTimer(duracaoMs: number) {
   const [progresso] = useState(() => new Animated.Value(0));
   const [agora, setAgora] = useState(inicio);
   const fim = inicio + duracaoMs;
-  const pronto = agora >= fim;
+  // O botão cheio fica um instante na tela antes de virar "Continuar".
+  const pronto = agora >= fim + SEGURAR_CHEIO_MS;
 
   useEffect(() => {
     const passado = Date.now() - inicio;
     progresso.setValue(Math.min(1, passado / duracaoMs));
+    // driver nativo: o preenchimento anda com o relógio mesmo com o JS ocupado
     const a = Animated.timing(progresso, {
       toValue: 1,
       duration: Math.max(0, duracaoMs - passado),
       easing: Easing.linear,
-      useNativeDriver: false,
+      useNativeDriver: nativo,
     });
     a.start();
     return () => a.stop();
