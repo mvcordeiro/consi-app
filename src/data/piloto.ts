@@ -39,6 +39,8 @@ type Dados = {
   respondeu: boolean;
   /** "Lembrar depois": o convite só volta a partir deste instante (ms). */
   adiadoAte: number;
+  /** Última hora certa vista no servidor (ms; 0 = nunca). Ver `agoraConfiavel`. */
+  servidorEm: number;
 };
 
 type Evento = { evento: string; props?: Record<string, string | number | boolean>; em: string };
@@ -68,6 +70,7 @@ async function carregar(): Promise<Dados> {
     coleta: lido.coleta !== false,
     respondeu: lido.respondeu === true,
     adiadoAte: typeof lido.adiadoAte === 'number' ? lido.adiadoAte : 0,
+    servidorEm: typeof lido.servidorEm === 'number' ? lido.servidorEm : 0,
   };
   if (novo) await gravarDados();
   return dados;
@@ -84,8 +87,57 @@ export function pilotoCarregado(): Promise<Dados> {
 
 export const codigoDoPiloto = (d: Dados) => d.id.slice(0, 8).toUpperCase();
 
-/** Em que dia do piloto a pessoa está (1 = primeiro dia). */
-export const diaDoPiloto = (d: Dados, agora = Date.now()) => Math.floor((agora - d.inicio) / DIA) + 1;
+// ─── Relógio confiável ──────────────────────────────────────────────────────
+/**
+ * Os 7 dias do piloto não podem andar só porque a pessoa adiantou a data do celular. A hora vem
+ * do servidor (cabeçalho Date do Supabase) a cada abertura; entre uma leitura e outra, o tempo
+ * conta pelo relógio monotônico (performance.now), que não muda com a data do aparelho.
+ * Sem rede, vale a última hora do servidor (o contador espera, não pula). Só sem nunca ter
+ * falado com o servidor (sem Supabase configurado, ou nunca online) usa a data do celular.
+ */
+let ancora: { servidor: number; monotonico: number } | null = null;
+
+export function agoraConfiavel(d?: Dados) {
+  if (ancora) return ancora.servidor + Math.max(0, performance.now() - ancora.monotonico);
+  if (d?.servidorEm) return d.servidorEm;
+  return Date.now();
+}
+
+/** Lê a hora do servidor. Nunca falha; sem rede, fica a hora anterior. */
+async function sincronizarRelogio() {
+  const cfg = configDaNuvem();
+  if (!cfg) return;
+  const controle = new AbortController();
+  const limite = setTimeout(() => controle.abort(), TEMPO_LIMITE);
+  try {
+    const r = await fetch(`${cfg.url}/rest/v1/`, { method: 'HEAD', headers: { apikey: cfg.anonKey }, signal: controle.signal });
+    const data = Date.parse(r.headers.get('date') ?? '');
+    if (!Number.isFinite(data)) return;
+    ancora = { servidor: data, monotonico: performance.now() };
+    const d = await pilotoCarregado();
+    if (data > d.servidorEm) {
+      d.servidorEm = data;
+      await gravarDados();
+    }
+  } catch {
+    // sem rede: segue com a última hora do servidor
+  } finally {
+    clearTimeout(limite);
+  }
+}
+
+/** Em que dia do piloto a pessoa está (1 = primeiro dia). Pela hora confiável, não pela do celular. */
+export const diaDoPiloto = (d: Dados, agora = agoraConfiavel(d)) => Math.max(1, Math.floor((agora - d.inicio) / DIA) + 1);
+
+/** Quantos dias completos de piloto já passaram (0 a 7) e se o formulário já pode abrir. */
+export function progressoDoPiloto(d: Dados, agora = agoraConfiavel(d)) {
+  const passados = Math.max(0, (agora - d.inicio) / DIA);
+  return {
+    /** Dia atual, de 1 a 7 (fica em 7 depois do fim). */
+    dia: Math.min(DIAS_DO_PILOTO, Math.floor(passados) + 1),
+    pronto: passados >= DIAS_DO_PILOTO,
+  };
+}
 
 // ─── Envio ──────────────────────────────────────────────────────────────────
 let enviando = false;
@@ -208,8 +260,10 @@ export function iniciarPiloto() {
       sincronizarNotificacao(d);
     })
     .catch(() => {});
+  void sincronizarRelogio();
   AppState.addEventListener('change', (estado) => {
     if (estado === 'active') {
+      void sincronizarRelogio();
       void pilotoCarregado()
         .then((d) => {
           registrar('app_aberto', { dia: diaDoPiloto(d) });
@@ -243,7 +297,7 @@ export async function marcarRespondeu() {
 /** "Lembrar depois": o convite some por `dias` dias. */
 export async function adiarConvite(dias = 1) {
   const d = await pilotoCarregado();
-  d.adiadoAte = Date.now() + dias * DIA;
+  d.adiadoAte = agoraConfiavel(d) + dias * DIA;
   await gravarDados();
 }
 
@@ -274,6 +328,6 @@ export function enderecoDoFormulario(d: Dados): string | null {
 }
 
 /** O convite já pode aparecer? Passou uma semana, não respondeu e não foi adiado. */
-export function conviteDevido(d: Dados, agora = Date.now()) {
+export function conviteDevido(d: Dados, agora = agoraConfiavel(d)) {
   return formularioConfigurado() && !d.respondeu && diaDoPiloto(d, agora) > DIAS_DO_PILOTO && agora >= d.adiadoAte;
 }
