@@ -37,7 +37,7 @@ import { BalaoEmocao } from './BalaoEmocao';
 const SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 /** Momentos por dia antes do "Ver mais" (e quantos cada toque mostra a mais). */
 const POR_VEZ = 7;
-const LADO_MARCADOR = 32;
+const LADO_MARCADOR = 38;
 
 type Dia = { id: string; data: Date };
 type FiltroSemana = 'tudo' | 'emocoes' | 'escolhas';
