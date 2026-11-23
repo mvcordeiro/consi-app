@@ -40,6 +40,10 @@
     <receiver
       android:name=".ConvitePilotoReceiver"
       android:exported="false" />
+    <!-- Lembrete diário de escrita no Diário: só o próprio app dispara. -->
+    <receiver
+      android:name=".LembreteDiarioReceiver"
+      android:exported="false" />
     <receiver
       android:name=".InicioReceiver"
       android:exported="false">

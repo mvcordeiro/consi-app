@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 
 import { AvisoNovaVersao } from '@/components/AvisoNovaVersao';
 import { AvisoPiloto } from '@/components/AvisoPiloto';
+import { AvisoLembreteDiario } from '@/components/diario/LembreteDiario';
 import { iniciarPiloto, registrar } from '@/data/piloto';
 import { useAparencia } from '@/data/aparencia';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
@@ -91,6 +92,7 @@ function Pilha() {
       {/* APK fora da loja: avisa quando há um build nativo mais novo (o JS chega pelo expo-updates). */}
       <AvisoNovaVersao />
       <AvisoPiloto />
+      <AvisoLembreteDiario />
     </>
   );
 }
