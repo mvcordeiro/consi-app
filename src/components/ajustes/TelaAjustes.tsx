@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { inset, space, useTema } from '@/theme';
 
 import { CabecalhoVoltar } from '../CabecalhoVoltar';
-import { Texto } from '../Texto';
 
 /**
  * Base das sub-páginas de Ajustes (fora das abas): área segura, "‹ Ajustes" no topo, título grande,
@@ -44,11 +43,9 @@ export function TelaAjustes({
         </View>
         {lista ?? (
           <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled" scrollEnabled={!travarRolagem}>
-            {titulo ? (
-              <Texto estilo="Títulos/Grande" accessibilityRole="header">
-                {titulo}
-              </Texto>
-            ) : null}
+            {/* Sem título grande (pedido do produto): a pessoa acabou de tocar nessa linha, o título
+                só repetia o nome. Ele segue como rótulo de acessibilidade da página. */}
+            {titulo ? <View accessible accessibilityRole="header" accessibilityLabel={titulo} /> : null}
             {children}
           </ScrollView>
         )}
@@ -59,13 +56,11 @@ export function TelaAjustes({
   );
 }
 
-/** Título grande para usar no cabeçalho de uma FlatList dentro de `TelaAjustes lista`. */
+/** Cabeçalho de uma FlatList dentro de `TelaAjustes lista` (sem o título grande, como em TelaAjustes). */
 export function TituloLista({ titulo, children }: { titulo: string; children?: ReactNode }) {
   return (
     <View style={styles.cabecalhoLista}>
-      <Texto estilo="Títulos/Grande" accessibilityRole="header">
-        {titulo}
-      </Texto>
+      <View accessible accessibilityRole="header" accessibilityLabel={titulo} />
       {children}
     </View>
   );

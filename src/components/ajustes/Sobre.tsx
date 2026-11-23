@@ -1,16 +1,8 @@
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import {
-  codigoDoPiloto,
-  DIAS_DO_PILOTO,
-  diaDoPiloto,
-  enderecoDoFormulario,
-  marcarRespondeu,
-  pilotoCarregado,
-} from '@/data/piloto';
 import { space, useTema } from '@/theme';
 
 import { Botao } from '../Botao';
@@ -37,24 +29,6 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
   const toques = useRef({ n: 0, ultimo: 0 });
   const info = ((Constants.expoConfig?.extra as { sobre?: InfoSobre } | undefined)?.sobre ?? {}) as InfoSobre;
   const licenca = info.licenca ?? 'MIT';
-  // Piloto: código anônimo e o formulário final. Só depois de 7 dias de uso (a partir da primeira
-  // abertura) e com o formulário configurado; antes disso o bloco nem aparece.
-  const [piloto, setPiloto] = useState<{ codigo: string; formulario: string | null } | null>(null);
-  useEffect(() => {
-    let vivo = true;
-    pilotoCarregado()
-      .then(
-        (d) =>
-          vivo &&
-          diaDoPiloto(d) > DIAS_DO_PILOTO &&
-          !d.respondeu &&
-          setPiloto({ codigo: codigoDoPiloto(d), formulario: enderecoDoFormulario(d) }),
-      )
-      .catch(() => {});
-    return () => {
-      vivo = false;
-    };
-  }, []);
 
   const tocar = () => {
     if (!onAdmin) return;
@@ -93,25 +67,16 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
         descricao="O que você escreve em Sugestões e os seus votos, sem seu nome nem e-mail. No piloto, também quais telas e recursos você usa (nunca o que você escreve), ligado a um código aleatório. Dá para desligar em Privacidade e dados."
       />
 
-      {piloto?.formulario ? (
-        <>
-          <Divisoria />
-          <Ajuste
-            titulo="Piloto de teste"
-            descricao={`Seu código do piloto é ${piloto.codigo}. Ele não identifica você; só liga suas respostas ao uso do app.`}
-          >
-            <Botao
-              rotulo="Avaliar o piloto"
-              estilo="secundario"
-              onPress={() => {
-                Linking.openURL(piloto.formulario!).catch(() => {});
-              }}
-            />
-            <Botao rotulo="Já respondi" estilo="secundario" onPress={() => void marcarRespondeu()} />
-          </Ajuste>
-        </>
-      ) : null}
+      <Divisoria />
+      <Ajuste
+        titulo="Por que não está na Play Store?"
+        descricao="O Consi está em teste com poucas pessoas. O instalador é gerado a partir deste mesmo código pelo EAS, o serviço de compilação da Expo, e as atualizações chegam pelo próprio app."
+      />
 
+      <Divisoria />
+      <Ajuste titulo="Feito com" descricao="Expo e React Native no app, SQLite criptografado para os seus dados e Supabase só para Sugestões e Novidades." />
+
+      {/* Por último (pedido do produto). O piloto saiu daqui: fica no rodapé da aba Ajustes. */}
       <Divisoria />
       <Ajuste
         titulo="Código aberto"
@@ -121,15 +86,6 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
           <Botao rotulo="Ver o código no GitHub" estilo="secundario" onPress={() => Linking.openURL(info.repositorio!)} />
         ) : null}
       </Ajuste>
-
-      <Divisoria />
-      <Ajuste
-        titulo="Por que não está na Play Store?"
-        descricao="O Consi está em teste com poucas pessoas. O instalador é gerado a partir deste mesmo código pelo EAS, o serviço de compilação da Expo, e as atualizações chegam pelo próprio app."
-      />
-
-      <Divisoria />
-      <Ajuste titulo="Feito com" descricao="Expo e React Native no app, SQLite criptografado para os seus dados e Supabase só para Sugestões e Novidades." />
     </View>
   );
 }

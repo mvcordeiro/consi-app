@@ -2,8 +2,9 @@ import { router, useFocusEffect, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 
-import { Tela, Texto, useEspacoBarra } from '@/components';
+import { Tela, useEspacoBarra } from '@/components';
 import { LinhaLink, ListaLinks } from '@/components/ajustes';
+import { RodapePiloto } from '@/components/ajustes/RodapePiloto';
 import { versaoDoApp } from '@/components/ajustes/Sobre';
 import { nuvemConfigurada } from '@/data/nuvem/cliente';
 import { souAdmin } from '@/data/nuvem/moderacao';
@@ -39,13 +40,10 @@ export default function Ajustes() {
 
   return (
     <Tela>
-      <Texto estilo="Títulos/Grande" accessibilityRole="header">
-        Ajustes
-      </Texto>
-
+      {/* Sem o título "Ajustes": a aba já está marcada na barra de navegação. */}
       <ListaLinks>
         <LinhaLink
-          titulo="Personalizar aparência"
+          titulo="Personalizar"
           descricao="Tema, texto, movimento e o que aparece no Início."
           onPress={() => ir('/ajustes/personalizar')}
         />
@@ -64,6 +62,9 @@ export default function Ajustes() {
         <LinhaLink titulo="Sobre" valor={`Versão ${versaoDoApp()}`} onPress={() => ir('/ajustes/sobre')} />
         {__DEV__ || admin ? <LinhaLink titulo="Para testes" descricao="Refazer onboarding, abrir a pausa." onPress={() => ir('/ajustes/testes')} /> : null}
       </ListaLinks>
+
+      {/* Piloto: em que dia dos 7 a pessoa está e, depois, o formulário. */}
+      <RodapePiloto />
 
       {/* A barra de navegação flutua sobre o fim da página. */}
       <View style={{ height: espacoBarra }} />
