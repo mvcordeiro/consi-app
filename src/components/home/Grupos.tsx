@@ -23,7 +23,6 @@ type Props = {
  * "Criar grupo" fica sempre por último.
  */
 export function Grupos({ onAbrir, onCriar, onAjustes }: Props) {
-  const { cores } = useTema();
   // O "Livre" só aparece quando tem apps (os acompanhados que não estão em nenhum grupo).
   const grupos = useGrupos().filter((g) => !g.oculto && !(g.id === ID_LIVRE && !g.apps.length));
   const linhas = linhasDaGrade(grupos);
@@ -45,17 +44,6 @@ export function Grupos({ onAbrir, onCriar, onAjustes }: Props) {
             <Icone nome="engrenagem" />
           </Pressable>
         </View>
-        <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-          Agrupe seus apps e escolha a regra de cada grupo.
-        </Texto>
-      </View>
-      <View style={styles.meta}>
-        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={styles.flex}>
-          SEUS GRUPOS
-        </Texto>
-        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={[styles.flex, styles.direita]}>
-          {grupos.length} {grupos.length === 1 ? 'grupo' : 'grupos'}
-        </Texto>
       </View>
       <View style={styles.grade}>
         {linhas.map((linha) =>
@@ -74,9 +62,6 @@ export function Grupos({ onAbrir, onCriar, onAjustes }: Props) {
         )}
         <CardCriarGrupo onPress={onCriar} />
       </View>
-      <Texto estilo="Legenda/Pequena" cor={cores.text.secondary} style={styles.centro}>
-        Selecione um grupo para visualizar ou ajustar seus limites.
-      </Texto>
     </View>
   );
 }
@@ -228,11 +213,8 @@ const styles = StyleSheet.create({
   cabecalho: { gap: space[4] },
   tituloLinha: { flexDirection: 'row', alignItems: 'center', gap: space[16] },
   engrenagem: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-  meta: { flexDirection: 'row' },
   flex: { flex: 1, minWidth: 0 },
   encolher: { flexShrink: 1, minWidth: 0 },
-  direita: { textAlign: 'right' },
-  centro: { textAlign: 'center', alignSelf: 'stretch' },
   grade: { gap: space[12] },
   linha: { flexDirection: 'row', gap: space[12], alignItems: 'stretch' },
   coluna: { flex: 1, minWidth: 0 },
