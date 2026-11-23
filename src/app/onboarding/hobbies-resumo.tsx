@@ -6,7 +6,7 @@ import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { Bolha, BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { hobbies } from '@/data/hobbies';
 import { useOnboarding } from '@/data/onboarding';
-import { borderWidth, gap, space, useTema } from '@/theme';
+import { borderWidth, gap, spaceFixo as space, useTema } from '@/theme';
 
 /**
  * D5 · Resumo dos hobbies — "Leitura, música e escrita. Boas ideias para o tempo que sobrar."

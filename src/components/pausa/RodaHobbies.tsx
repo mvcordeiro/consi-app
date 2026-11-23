@@ -13,7 +13,7 @@ import { Icone } from '@/components/Icone';
 import { Texto } from '@/components/Texto';
 import { vibrar } from '@/components/hobbies/Arraste';
 import { hobbyInfo, type HobbyId } from '@/data/catalogo';
-import { borderWidth, radius, size, space, useTema } from '@/theme';
+import { borderWidth, radius, size, spaceFixo as space, useTema } from '@/theme';
 
 const nativo = Platform.OS !== 'web';
 

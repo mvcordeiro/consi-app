@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Animated, Easing, Platform, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 
 import { ImpactoVibracao, vibrarImpacto } from '@/data/haptica';
-import { radius, space, useTema } from '@/theme';
+import { radius, spaceFixo as space, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
 import { IconeHobbies } from '../assets';

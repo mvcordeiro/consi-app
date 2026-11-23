@@ -7,7 +7,7 @@ import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { OpcaoSegurar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { IconeBrincalhao32, IconeGesto32, IconeTempo, type IconeSvg } from '@/components/onboarding/assets';
 import { useOnboarding, type Objetivo } from '@/data/onboarding';
-import { gap, space, useTema } from '@/theme';
+import { gap, spaceFixo as space, useTema } from '@/theme';
 
 /**
  * C1 · Pergunta / C2 · Segurando — "O que mais importa para você?"

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
-import { radius, space, useTema } from '@/theme';
+import { radius, spaceFixo as space, useTema } from '@/theme';
 
 import { AnelProgresso } from './AnelProgresso';
 import { IconeGesto80 } from './assets';

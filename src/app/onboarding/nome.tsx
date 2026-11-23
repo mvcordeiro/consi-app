@@ -5,7 +5,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { useOnboarding } from '@/data/onboarding';
-import { borderWidth, gap, space, tipografia, useTema } from '@/theme';
+import { borderWidth, gap, spaceFixo as space, tipografia, useTema } from '@/theme';
 
 /**
  * B1 · Nome — "Como podemos te chamar?"

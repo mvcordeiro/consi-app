@@ -19,7 +19,7 @@ import { IconeApp } from '@/components/IconeApp';
 import { appsParaOnboarding, comAppsDoAparelho, lerUsoRecente, useApps, type AppInfo } from '@/data/apps';
 import { appsQueIncomodam, definirAcompanhados } from '@/data/gruposHome';
 import { useOnboarding, type CaixaDeApp } from '@/data/onboarding';
-import { easing, gap, primitivas, radius, space, useCoresSvg, useTema } from '@/theme';
+import { easing, gap, primitivas, radius, spaceFixo as space, useCoresSvg, useTema } from '@/theme';
 
 /**
  * E1 · Aplicativos — "Quais apps mais te incomodam?"

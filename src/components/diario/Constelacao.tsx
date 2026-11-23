@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { chaveDia, diaCurto, emocoesDoDia, plural, type Momento } from '@/data/momentos';
-import { borderWidth, space, useTema } from '@/theme';
+import { borderWidth, spaceFixo as space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
 import { Botao } from '../Botao';

@@ -3,7 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { duration, easing, inset, radius, size, space, useTema } from '@/theme';
+import { duration, easing, inset, radius, size, spaceFixo as space, useTema } from '@/theme';
 
 import IconeAjustes from '../../assets/home/icone-ajustes.svg';
 import IconeDiario from '../../assets/home/icone-diario.svg';

@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { BotaoSegurar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { useOnboarding } from '@/data/onboarding';
-import { gap, space, useTema } from '@/theme';
+import { gap, spaceFixo as space, useTema } from '@/theme';
 
 /**
  * F2 · Compromisso — segurar conclui o onboarding e abre a Home.

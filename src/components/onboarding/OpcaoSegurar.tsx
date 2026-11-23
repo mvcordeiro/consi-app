@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 
-import { borderWidth, radius, space, useCoresSvg, useTema } from '@/theme';
+import { borderWidth, radius, spaceFixo as space, useCoresSvg, useTema } from '@/theme';
 
 import { Texto } from '../Texto';
 import { AnelProgresso } from './AnelProgresso';

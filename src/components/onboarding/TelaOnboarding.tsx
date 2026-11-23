@@ -3,7 +3,7 @@ import { useCallback, useRef, type ReactNode } from 'react';
 import { Animated, Easing, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { space, useTema } from '@/theme';
+import { spaceFixo as space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
 import { textura } from './assets';

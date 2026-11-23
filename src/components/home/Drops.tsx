@@ -6,7 +6,7 @@ import type { Atividade } from '@/data/catalogo';
 import { emocaoPorId } from '@/data/emocoes';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { avancarMecanica, mecanicaAtual, type IdMecanica } from '@/data/rodizioDrops';
-import { borderWidth, radius, space, useTema } from '@/theme';
+import { borderWidth, radius, spaceFixo as space, useTema } from '@/theme';
 
 import { Aparecer } from '../animacao';
 import { Botao } from '../Botao';

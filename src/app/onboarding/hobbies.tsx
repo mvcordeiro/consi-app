@@ -10,7 +10,7 @@ import { BotaoContinuar, TelaOnboarding, useTransicao } from '@/components/onboa
 import { buscarHobbies, HOBBIES_ORIGINAIS } from '@/data/catalogo';
 import { MAX_HOBBIES } from '@/data/hobbies';
 import { useOnboarding, type Hobby } from '@/data/onboarding';
-import { gap, space, useTema } from '@/theme';
+import { gap, spaceFixo as space, useTema } from '@/theme';
 
 /** Margem lateral do conteúdo do onboarding (TelaOnboarding). */
 const MARGEM_ONBOARDING = space[32];

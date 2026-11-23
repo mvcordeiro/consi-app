@@ -15,7 +15,7 @@ import {
   usePermissoes,
   type Permissoes,
 } from '@/data/vigia';
-import { borderWidth, gap, radius, space, useCoresSvg, useTema } from '@/theme';
+import { borderWidth, gap, radius, spaceFixo as space, useCoresSvg, useTema } from '@/theme';
 
 /**
  * F1 · Permissões — o caminho real do Android, uma permissão por vez.

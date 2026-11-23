@@ -25,7 +25,7 @@ import {
   type Emocao,
   type RegistroEmocao,
 } from '@/data/emocoes';
-import { duration, easing, radius, space, useTema } from '@/theme';
+import { duration, easing, radius, spaceFixo as space, useTema } from '@/theme';
 
 import BolhaPensamento from '../../../assets/home/bolha-pensamento.svg';
 import PessoaPensando from '../../../assets/home/pessoa-pensando.svg';

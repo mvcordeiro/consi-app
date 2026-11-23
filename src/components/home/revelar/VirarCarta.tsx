@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { easing, radius, space, useTema } from '@/theme';
+import { easing, radius, spaceFixo as space, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
 import { IconeHobbies } from '../assets';

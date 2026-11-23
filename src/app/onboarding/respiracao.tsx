@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { Respiracao, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { useOnboarding, type Objetivo } from '@/data/onboarding';
-import { gap, space, useTema } from '@/theme';
+import { gap, spaceFixo as space, useTema } from '@/theme';
 
 /**
  * C3 / C4 · Respiração

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, StyleSheet } from 'react-native';
 
 import type { Emocao } from '@/data/emocoes';
-import { duration, easing, space, useCoresSvg } from '@/theme';
+import { duration, easing, spaceFixo as space, useCoresSvg } from '@/theme';
 
 import { Texto } from '../Texto';
 import { BalaoEmocao, LADO_BALAO, LADO_SVG_BALAO } from './BalaoEmocao';

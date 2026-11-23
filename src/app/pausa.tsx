@@ -40,7 +40,7 @@ import {
 } from '@/data/pausa';
 import { registrar } from '@/data/piloto';
 import { seguirParaOApp } from '@/data/vigia';
-import { duration, easing, space, useTema } from '@/theme';
+import { duration, easing, spaceFixo as space, useTema } from '@/theme';
 
 import IconeEscrever from '../../assets/home/icone-escrever.svg';
 import PessoaPensando from '../../assets/home/pessoa-pensando.svg';

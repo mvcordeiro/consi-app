@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
-import { borderWidth, easing, radius, space, useTema } from '@/theme';
+import { borderWidth, easing, radius, spaceFixo as space, useTema } from '@/theme';
 
 import { Cabeca, Casca, Convite, vibrar, type PropsMecanica } from './comum';
 

@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { Animated, Easing, PanResponder, Platform, StyleSheet, View } from 'react-native';
 
 import type { Atividade as Sugestao } from '@/data/catalogo';
-import { borderWidth, easing, radius, space, useTema } from '@/theme';
+import { borderWidth, easing, radius, spaceFixo as space, useTema } from '@/theme';
 
 import { vibrar } from './Arraste';
 import { naCaixa, RostoMalHumorado44, RostoPositivo44, tamanhos } from './assets';

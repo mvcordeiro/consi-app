@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Aparecer, TextoAnimado } from '@/components/animacao';
 import { TelaOnboarding } from '@/components/onboarding';
 import { Logo, SplashTraco } from '@/components/onboarding/assets';
-import { easing, space, tipografia, useCoresSvg, useTema } from '@/theme';
+import { easing, spaceFixo as space, tipografia, useCoresSvg, useTema } from '@/theme';
 
 /**
  * A1 · Splash — "Você consigo, no seu ritmo."

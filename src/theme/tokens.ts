@@ -203,7 +203,12 @@ const light: Cores = {
 export const coresPorModo: Record<Modo, Cores> = { dark, light };
 
 // ─── 02 Space & Shape (modo Mobile) ─────────────────────────────────────────
-export const space = {
+/**
+ * A escala do Figma, valor por valor. Fica para as telas com ilustração fixa na tela, em que
+ * o espaço faz parte da geometria (onboarding, a hero da Home, o check-in da pausa, a roda e o
+ * canvas de hobbies, a constelação do Diário, os drops e a barra de navegação).
+ */
+export const spaceFixo = {
   0: 0,
   2: 2,
   4: 4,
@@ -216,6 +221,22 @@ export const space = {
   40: 40,
   48: 48,
   64: 64,
+} as const;
+
+/**
+ * "Respiro" (pedido do produto: o app deve parecer calmo e folgado): os espaços médios e
+ * grandes ganham de 2 a 8 px; os pequenos (até 12) ficam iguais para não afrouxar botões,
+ * etiquetas e listas. As chaves seguem as do Figma (space[24] é o "24" do Figma, agora 28).
+ */
+export const space = {
+  ...spaceFixo,
+  16: 18,
+  20: 24,
+  24: 28,
+  32: 36,
+  40: 44,
+  48: 52,
+  64: 72,
 } as const;
 
 export const inset = {

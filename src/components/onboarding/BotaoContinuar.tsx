@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, type PressableProps } from 'react-native';
 
-import { radius, space, useTema } from '@/theme';
+import { radius, spaceFixo as space, useTema } from '@/theme';
 
 import { Texto } from '../Texto';
 

@@ -2,7 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { HobbyId } from '@/data/catalogo';
-import { borderWidth, radius, space, useTema } from '@/theme';
+import { borderWidth, radius, spaceFixo as space, useTema } from '@/theme';
 
 import { IconeHobby } from '../../hobbies/IconeHobby';
 import { Texto } from '../../Texto';
