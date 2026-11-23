@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
@@ -10,10 +10,10 @@ import { ChevronDireita, ChevronEsquerda } from '@/components/diario/assets';
 import { useAvisoMomento } from '@/components/diario/AvisoMomento';
 import { useAvisoPendente } from '@/components/diario/avisoPendente';
 import { Constelacao } from '@/components/diario/Constelacao';
-import { BuscaDiario, ComeceAEscrever, FiltroDiario, GrupoIndice, ItemIndice, LinhaFiltros } from '@/components/diario/Indice';
+import { BuscaDiario, ComeceAEscrever, GrupoIndice, ItemIndice } from '@/components/diario/Indice';
+import { AjustesLembreteDiario } from '@/components/diario/LembreteDiario';
 import { Premo } from '@/components/diario/Premo';
 import { perguntaDeHoje, proximaPergunta, usePreferenciasDiario } from '@/data/diarioPreferencias';
-import { emocaoPorId } from '@/data/emocoes';
 import {
   apagarMomento,
   DIAS_SEMANA,
@@ -22,14 +22,10 @@ import {
   momentoPorEm,
   nomeMes,
   restaurarMomento,
-  temAudio,
-  temFoto,
   useMomentos,
   type Momento,
 } from '@/data/momentos';
 import { radius, space, useTema } from '@/theme';
-
-type FiltroId = 'tudo' | 'audio' | 'foto' | string;
 
 /**
  * Aba Diário. Abre no Índice (Figma 752:6430 "Caderno · Índice · nova página · hoje no topo");
@@ -48,7 +44,6 @@ export default function Diario() {
   const [aviso, mostrarAviso] = useAvisoMomento(70);
 
   const [opcoes, setOpcoes] = useState(false);
-  const [filtro, setFiltro] = useState<FiltroId>('tudo');
   const [mes, setMes] = useState(() => {
     const d = new Date();
     return { ano: d.getFullYear(), mes: d.getMonth() };
@@ -78,15 +73,25 @@ export default function Diario() {
   const linhaDoTempo = prefs.visao === 'linha';
   const abrirDia = (chave: string) => router.push({ pathname: '/diario/dia', params: { data: chave } });
   const abrirNovo = (params: Record<string, string> = {}) => router.push({ pathname: '/diario/novo', params });
+  // A "Página de hoje" com a pergunta do dia: no topo da lista e da linha do tempo.
+  const pergunta = perguntaDeHoje(prefs);
+  const paginaDeHoje = (
+    <PaginaDeHoje
+      pergunta={pergunta}
+      onTrocarPergunta={() => mudarPrefs({ pergunta: proximaPergunta(prefs) })}
+      onNovo={abrirNovo}
+    />
+  );
 
   return (
     <SafeAreaView style={[styles.tela, { backgroundColor: cores.bg.base }]} edges={['top', 'left', 'right']}>
       {linhaDoTempo ? (
         <View style={styles.tela}>
-          <View style={styles.margem}>
+          <View style={[styles.margem, styles.topo]}>
             <BuscaDiario onPress={() => router.push('/diario/busca')} onControles={() => setOpcoes(true)} />
           </View>
-          <ScrollView contentContainerStyle={{ paddingTop: space[24], paddingBottom: espacoBarra + 160 }} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={{ paddingBottom: espacoBarra + 160 }} showsVerticalScrollIndicator={false}>
+            <View style={[styles.margem, styles.paginaLinha]}>{paginaDeHoje}</View>
             <Constelacao
               momentos={momentos}
               largura={width}
@@ -100,16 +105,12 @@ export default function Diario() {
       ) : (
         <Indice
           momentos={momentos}
-          filtro={filtro}
-          setFiltro={setFiltro}
           mes={mes}
           setMes={setMes}
           semTexto={prefs.semTexto}
-          pergunta={perguntaDeHoje(prefs)}
-          onTrocarPergunta={() => mudarPrefs({ pergunta: proximaPergunta(prefs) })}
+          pagina={paginaDeHoje}
           onOpcoes={() => setOpcoes(true)}
           onAbrirMomento={(em) => router.push({ pathname: '/diario/momento', params: { em: String(em) } })}
-          onNovo={abrirNovo}
         />
       )}
 
@@ -138,6 +139,7 @@ export default function Diario() {
           <Filtro rotulo="Lista" ativo={prefs.visao === 'lista'} onPress={() => mudarPrefs({ visao: 'lista' })} />
           <Filtro rotulo="Linha do tempo" ativo={prefs.visao === 'linha'} onPress={() => mudarPrefs({ visao: 'linha' })} />
         </View>
+        <AjustesLembreteDiario />
         <View style={styles.opcaoLinha}>
           <View style={styles.flex}>
             <Texto estilo="Texto/Médio">Mostrar check-ins sem texto</Texto>
@@ -170,31 +172,60 @@ function Esmaecer({ altura, cor }: { altura: number; cor: string }) {
   );
 }
 
+/** Página de hoje (Figma 752:6643): a data, a pergunta do dia (as setas trocam) e os atalhos para escrever. */
+function PaginaDeHoje({
+  pergunta,
+  onTrocarPergunta,
+  onNovo,
+}: {
+  pergunta: string;
+  onTrocarPergunta: () => void;
+  onNovo: (params?: Record<string, string>) => void;
+}) {
+  const { cores } = useTema();
+  const hoje = new Date();
+  return (
+    <Aparecer deslocamento={8} duracao={600}>
+      <View style={[styles.pagina, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}>
+        <View style={styles.paginaTopo}>
+          <Texto estilo="Legenda/Pequena" cor={cores.text.accent}>
+            Hoje · {DIAS_SEMANA[hoje.getDay()]}, {hoje.getDate()}
+          </Texto>
+          <Pressable onPress={onTrocarPergunta} hitSlop={10} accessibilityRole="button" accessibilityLabel="Outra pergunta">
+            <Icone nome="sincronizar-setas" cor={cores.action.primary.default} />
+          </Pressable>
+        </View>
+        <Pressable onPress={() => onNovo({ pergunta })} accessibilityRole="button">
+          <Texto estilo="Títulos/Pequeno">{pergunta}</Texto>
+        </Pressable>
+        <ComeceAEscrever
+          onEscrever={() => onNovo({ pergunta })}
+          onAudio={() => onNovo({ pergunta, acao: 'audio' })}
+          onFoto={() => onNovo({ pergunta, acao: 'foto' })}
+        />
+      </View>
+    </Aparecer>
+  );
+}
+
 function Indice({
   momentos,
-  filtro,
-  setFiltro,
   mes,
   setMes,
   semTexto,
-  pergunta,
-  onTrocarPergunta,
+  pagina,
   onOpcoes,
   onAbrirMomento,
-  onNovo,
 }: {
   momentos: Momento[];
-  filtro: FiltroId;
-  setFiltro: (f: FiltroId) => void;
   mes: { ano: number; mes: number };
   setMes: (m: { ano: number; mes: number }) => void;
   semTexto: boolean;
-  pergunta: string;
-  onTrocarPergunta: () => void;
+  /** A Página de hoje. */
+  pagina: ReactNode;
   onOpcoes: () => void;
   /** No Índice, tocar abre o próprio momento (o dia aberto é da linha do tempo). */
   onAbrirMomento: (em: number) => void;
-  onNovo: (params?: Record<string, string>) => void;
 }) {
   const { cores } = useTema();
   const espacoBarra = useEspacoBarra();
@@ -210,16 +241,7 @@ function Indice({
     [momentos, mes, semTexto],
   );
 
-  // emoções do mês viram filtros, das mais frequentes para as menos
-  const emocoesDoMes = useMemo(() => {
-    const conta = new Map<string, number>();
-    doMes.forEach((m) => conta.set(m.id, (conta.get(m.id) ?? 0) + 1));
-    return [...conta.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
-  }, [doMes]);
-
-  const filtrados = doMes.filter((m) =>
-    filtro === 'tudo' ? true : filtro === 'audio' ? temAudio(m) : filtro === 'foto' ? temFoto(m) : m.id === filtro,
-  );
+  const filtrados = doMes;
 
   const grupos = useMemo(() => {
     const g: { rotulo: string; itens: Momento[] }[] = [];
@@ -238,10 +260,8 @@ function Indice({
   const mudarMes = (delta: number) => {
     const d = new Date(mes.ano, mes.mes + delta, 1);
     setMes({ ano: d.getFullYear(), mes: d.getMonth() });
-    setFiltro('tudo');
   };
 
-  const filtroValido = filtro === 'tudo' || filtro === 'audio' || filtro === 'foto' || emocoesDoMes.includes(filtro);
   const recente = filtrados[0]?.em;
 
   return (
@@ -253,42 +273,8 @@ function Indice({
       <View style={styles.topo}>
         <BuscaDiario onPress={() => router.push('/diario/busca')} onControles={onOpcoes} />
 
-        {/* Página de hoje (Figma 752:6643) */}
-        <Aparecer deslocamento={8} duracao={600}>
-          <View style={[styles.pagina, { backgroundColor: cores.bg.raised, borderColor: cores.border.focus }]}>
-            <View style={styles.paginaTopo}>
-              <Texto estilo="Legenda/Pequena" cor={cores.text.accent}>
-                Hoje · {DIAS_SEMANA[hoje.getDay()]}, {hoje.getDate()}
-              </Texto>
-              <Pressable onPress={onTrocarPergunta} hitSlop={10} accessibilityRole="button" accessibilityLabel="Outra pergunta">
-                <Icone nome="sincronizar-setas" cor={cores.action.primary.default} />
-              </Pressable>
-            </View>
-            <Pressable onPress={() => onNovo({ pergunta })} accessibilityRole="button">
-              <Texto estilo="Títulos/Pequeno">{pergunta}</Texto>
-            </Pressable>
-            <ComeceAEscrever
-              onEscrever={() => onNovo({ pergunta })}
-              onAudio={() => onNovo({ pergunta, acao: 'audio' })}
-              onFoto={() => onNovo({ pergunta, acao: 'foto' })}
-            />
-          </View>
-        </Aparecer>
+        {pagina}
       </View>
-
-      <LinhaFiltros>
-        <FiltroDiario rotulo="Tudo" ativo={filtro === 'tudo' || !filtroValido} onPress={() => setFiltro('tudo')} />
-        <FiltroDiario rotulo="Com áudio" ativo={filtro === 'audio'} onPress={() => setFiltro(filtro === 'audio' ? 'tudo' : 'audio')} />
-        <FiltroDiario rotulo="Com foto" ativo={filtro === 'foto'} onPress={() => setFiltro(filtro === 'foto' ? 'tudo' : 'foto')} />
-        {emocoesDoMes.map((id) => (
-          <FiltroDiario
-            key={id}
-            rotulo={emocaoPorId(id)?.nome ?? id}
-            ativo={filtro === id}
-            onPress={() => setFiltro(filtro === id ? 'tudo' : id)}
-          />
-        ))}
-      </LinhaFiltros>
 
       <View style={styles.mes}>
         <Texto estilo="Títulos/Médio">{nomeMes(mes.mes)}{mes.ano !== hoje.getFullYear() ? ` de ${mes.ano}` : ''}</Texto>
@@ -309,7 +295,7 @@ function Indice({
         </View>
       </View>
 
-      <Aparecer key={`${mes.ano}-${mes.mes}-${filtro}`} deslocamento={6} duracao={400} style={styles.lista}>
+      <Aparecer key={`${mes.ano}-${mes.mes}`} deslocamento={6} duracao={400} style={styles.lista}>
         {grupos.length ? (
           grupos.map((g) => (
             <View key={g.rotulo} style={styles.lista}>
@@ -322,11 +308,9 @@ function Indice({
         ) : (
           <View style={styles.vazio}>
             <Texto estilo="Texto/Pequeno" cor={cores.text.tertiary} style={styles.centro}>
-              {filtro !== 'tudo' && filtroValido
-                ? 'Nenhum momento com esse filtro neste mês.'
-                : esteMes
-                  ? 'Nenhum momento neste mês ainda. Que tal começar pela página de hoje?'
-                  : `Nenhum momento em ${MESES[mes.mes]}.`}
+              {esteMes
+                ? 'Nenhum momento neste mês ainda. Que tal começar pela página de hoje?'
+                : `Nenhum momento em ${MESES[mes.mes]}.`}
             </Texto>
           </View>
         )}
@@ -342,6 +326,8 @@ const styles = StyleSheet.create({
   topo: { paddingTop: space[12], gap: 18, marginBottom: 25 },
   centro: { flex: 1, textAlign: 'center' },
   pagina: { gap: space[20], padding: space[16], borderRadius: 20, borderWidth: 1 },
+  // na linha do tempo, a Página de hoje fica entre a busca e a constelação
+  paginaLinha: { paddingTop: 18, paddingBottom: space[32] },
   paginaTopo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   mes: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 48, marginBottom: space[16] },
   setas: { flexDirection: 'row', gap: 10 },
