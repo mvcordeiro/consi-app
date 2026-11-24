@@ -5,6 +5,7 @@ import {
   definirLembretesTela,
   INTERVALOS_TELA,
   lerLembretesTela,
+  passoDoIntervalo,
   pedirNotificacoes,
   temLembretesDeTela,
   usePermissoes,
@@ -13,12 +14,12 @@ import { space, useTema } from '@/theme';
 
 import { Alternancia } from './Alternancia';
 import { Botao } from './Botao';
-import { Filtro } from './Filtro';
+import { EscalaPassos } from './EscalaPassos';
 import { Texto } from './Texto';
 
 /**
- * Ajustes · "Cuidado com o tempo de tela" (só no APK Android). Depois de 20 ou 30 minutos
- * seguidos de celular (tela acesa e desbloqueada, sem uma pausa de 1 minuto), uma notificação
+ * Ajustes · "Cuidado com o tempo de tela" (só no APK Android). Depois de 10 a 50 minutos
+ * (escala de 5 passos) seguidos de celular (tela acesa e desbloqueada, sem uma pausa de 1 minuto), uma notificação
  * sugere ajustar a postura, olhar para longe, relaxar os olhos ou alongar.
  * Vale para o celular todo, não só para o Consi, e não precisa do Acesso de uso.
  * Começa desligado: é a pessoa quem escolhe receber.
@@ -57,9 +58,22 @@ export function AjustesLembretesTela() {
       {estado.ligados ? (
         <View style={styles.permissao}>
           <Texto cor={cores.text.secondary}>Lembrar depois de</Texto>
-          <View style={styles.chips}>
+          <EscalaPassos
+            quantidade={INTERVALOS_TELA.length}
+            indice={passoDoIntervalo(estado.minutos)}
+            onMudar={(i) => void mudar({ ...estado, minutos: INTERVALOS_TELA[i] })}
+            rotulo="Lembrar depois de"
+            valorAcessivel={`${INTERVALOS_TELA[passoDoIntervalo(estado.minutos)]} minutos`}
+          />
+          <View style={styles.rotulos}>
             {INTERVALOS_TELA.map((m) => (
-              <Filtro key={m} rotulo={`${m} min`} ativo={estado.minutos === m} onPress={() => void mudar({ ...estado, minutos: m })} />
+              <Texto
+                key={m}
+                estilo="Legenda/Pequena"
+                cor={INTERVALOS_TELA[passoDoIntervalo(estado.minutos)] === m ? cores.text.primary : cores.text.tertiary}
+              >
+                {m} min
+              </Texto>
             ))}
           </View>
         </View>
@@ -87,6 +101,6 @@ const styles = StyleSheet.create({
   secao: { gap: space[12], paddingVertical: space[16] },
   permissao: { gap: space[8] },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  rotulos: { flexDirection: 'row', justifyContent: 'space-between' },
   flex: { flex: 1 },
 });

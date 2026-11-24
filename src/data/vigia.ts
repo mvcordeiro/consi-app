@@ -189,14 +189,28 @@ export function seguirParaOApp(pacote: string | undefined, minutos: number) {
  */
 export const temLembretesDeTela = ConsiPausa != null;
 
-export const INTERVALOS_TELA = [20, 30] as const;
+export const INTERVALOS_TELA = [10, 20, 30, 40, 50] as const;
+
+/** Índice do passo mais próximo (migra valores antigos ou fora da escala). */
+export function passoDoIntervalo(minutos: number) {
+  let melhor = 0;
+  INTERVALOS_TELA.forEach((m, i) => {
+    if (Math.abs(m - minutos) < Math.abs(INTERVALOS_TELA[melhor] - minutos)) melhor = i;
+  });
+  return melhor;
+}
 
 export type LembretesTela = { ligados: boolean; minutos: number };
 
 export function lerLembretesTela(): LembretesTela {
   if (!ConsiPausa) return { ligados: false, minutos: 30 };
   try {
-    return { ligados: ConsiPausa.lembretesTelaLigados(), minutos: ConsiPausa.lembretesTelaMinutos() };
+    const ligados = ConsiPausa.lembretesTelaLigados();
+    const salvo = ConsiPausa.lembretesTelaMinutos();
+    const minutos = INTERVALOS_TELA[passoDoIntervalo(salvo)];
+    // migra valores salvos fora da escala de 5 passos para o mais próximo
+    if (minutos !== salvo) ConsiPausa.definirLembretesTela(ligados, minutos);
+    return { ligados, minutos };
   } catch {
     return { ligados: false, minutos: 30 };
   }
