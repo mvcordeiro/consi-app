@@ -25,15 +25,26 @@ const nativo = Platform.OS !== 'web';
 const TAMANHO = 92;
 /**
  * Espaçamento da espiral (filotaxia) dentro de cada grupo. Mais apertado que antes (pedido da
- * pessoa, 2026-11-21): bolhas vizinhas ficam a ~110 px, só um respiro entre as de 92 px.
+ * pessoa, 2026-11-21 e issue #5): bolhas vizinhas ficam a ~100 px, só um respiro entre as de 92 px.
  */
-const PASSO_ESPIRAL = 66;
+const PASSO_ESPIRAL = 58;
 const ANGULO_DOURADO = (137.508 * Math.PI) / 180;
-/**
- * Distância entre os centros dos grupos (grade hexagonal). O maior grupo (9 bolhas) tem raio
- * de ~200 px na espiral; com a bolha e o rótulo, 520 junta os grupos sem misturá-los.
- */
-const ENTRE_GRUPOS = 520;
+/** Respiro entre dois grupos vizinhos, além das bolhas (issue #5: itens mais agrupados). */
+const RESPIRO_GRUPOS = 40;
+/** Resistência ao passar do limite arrastando (0 = parede, 1 = sem limite). */
+const ELASTICO = 0.3;
+/** Quanto a inércia do arraste "anda" (ms de velocidade) antes de parar dentro dos limites. */
+const INERCIA_MS = 260;
+
+/** Raio da espiral para `n` bolhas. */
+const raioEspiral = (n: number) => (n <= 1 ? 0 : PASSO_ESPIRAL * Math.sqrt(n - 1 + 1.2));
+
+/** Puxa `v` para dentro de [min, max]; com `elastico`, deixa passar só um pouco (efeito borracha). */
+function limitar(v: number, min: number, max: number, elastico = 0) {
+  if (v < min) return min - (min - v) * elastico;
+  if (v > max) return max + (v - max) * elastico;
+  return v;
+}
 /** Zoom com dois dedos: de 45 % (ver tudo) a 180 %. */
 const ZOOM_MIN = 0.45;
 const ZOOM_MAX = 1.8;
@@ -58,6 +69,8 @@ function montarLayout(destaques: HobbyId[]) {
     if (itens.length) grupos.push({ id: c.id, nome: c.nome, itens });
   }
 
+  // Distância entre centros: o diâmetro do maior grupo, a bolha e um respiro (antes 520 fixos).
+  const ENTRE_GRUPOS = 2 * Math.max(...grupos.map((g) => raioEspiral(g.itens.length))) + TAMANHO + RESPIRO_GRUPOS;
   // Centros: o primeiro no meio; os outros em anéis hexagonais.
   const centros: { x: number; y: number }[] = [{ x: 0, y: 0 }];
   for (let anel = 1; centros.length < grupos.length; anel++) {
@@ -118,7 +131,7 @@ type Props = {
 };
 
 /**
- * Canvas infinito de hobbies: bolhas (as mesmas do onboarding) agrupadas por categoria,
+ * Canvas de hobbies (com limites, issue #5): bolhas (as mesmas do onboarding) agrupadas por categoria,
  * que a pessoa explora como um mapa: arrastando com um dedo (com inércia) e aproximando ou
  * afastando com dois (pinça, ancorada entre os dedos). As bolhas perto do centro da tela ficam
  * maiores e as das bordas encolhem e somem um pouco, como um mapa que respira.
@@ -176,18 +189,25 @@ export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques 
 
   // eslint-disable-next-line react-hooks/refs -- os handlers só leem o ref nos eventos
   const [gesto] = useState(() => {
-    const prender = () => {
-      const t = vivo.current.tela;
-      if (!t) return;
+    /** Limites do deslocamento: o centro da tela não sai da área das bolhas. */
+    const faixa = () => {
+      const t = vivo.current.tela ?? { w: 0, h: 0 };
       const { minX, maxX, minY, maxY } = vivo.current.layout.limites;
+      return { x0: t.w / 2 - maxX, x1: t.w / 2 - minX, y0: t.h / 2 - maxY, y1: t.h / 2 - minY };
+    };
+    /** Deslocamento com a borracha nas bordas (durante o gesto). */
+    const elastico = (x: number, y: number) => {
+      const f = faixa();
+      return { x: limitar(x, f.x0, f.x1, ELASTICO), y: limitar(y, f.y0, f.y1, ELASTICO) };
+    };
+    /** Volta (ou desliza) para `ate`, já dentro dos limites. */
+    const prender = (ate = vivo.current.atual) => {
+      if (!vivo.current.tela) return;
+      const f = faixa();
       const atual = vivo.current.atual;
-      // o centro da tela não pode sair da área das bolhas
-      const alvo = {
-        x: Math.min(Math.max(atual.x, t.w / 2 - maxX), t.w / 2 - minX),
-        y: Math.min(Math.max(atual.y, t.h / 2 - maxY), t.h / 2 - minY),
-      };
+      const alvo = { x: limitar(ate.x, f.x0, f.x1), y: limitar(ate.y, f.y0, f.y1) };
       if (alvo.x !== atual.x || alvo.y !== atual.y) {
-        Animated.spring(desloc, { toValue: alvo, useNativeDriver: nativo, speed: 10, bounciness: 4 }).start();
+        Animated.spring(desloc, { toValue: alvo, useNativeDriver: nativo, speed: 10, bounciness: 2 }).start();
       }
     };
     /*
@@ -237,21 +257,19 @@ export function CanvasHobbies({ selecionados, onAlternar, jaTem = [], destaques 
           const s = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, (g0.s0 * distancia(e)) / g0.d0));
           const f = focal(e);
           escala.setValue(s);
-          desloc.setValue({ x: g0.base.x + f.x / s - g0.f0.x / g0.s0, y: g0.base.y + f.y / s - g0.f0.y / g0.s0 });
+          desloc.setValue(elastico(g0.base.x + f.x / s - g0.f0.x / g0.s0, g0.base.y + f.y / s - g0.f0.y / g0.s0));
         } else if (n >= 1) {
           const [a] = toques(e);
-          desloc.setValue({ x: g0.base.x + (a.pageX - g0.p0.x) / g0.s0, y: g0.base.y + (a.pageY - g0.p0.y) / g0.s0 });
+          desloc.setValue(elastico(g0.base.x + (a.pageX - g0.p0.x) / g0.s0, g0.base.y + (a.pageY - g0.p0.y) / g0.s0));
         }
       },
       onPanResponderTerminationRequest: () => false,
       onPanResponderRelease: (_, g) => {
         if (g0.modo === 'pinca') return prender();
+        // Inércia que nunca sai dos limites: projeta onde o arraste pararia e desliza até lá.
         const s = vivo.current.escala;
-        Animated.decay(desloc, {
-          velocity: { x: g.vx / s, y: g.vy / s },
-          deceleration: 0.994,
-          useNativeDriver: nativo,
-        }).start(prender);
+        const a = vivo.current.atual;
+        prender({ x: a.x + (g.vx / s) * INERCIA_MS, y: a.y + (g.vy / s) * INERCIA_MS });
       },
       onPanResponderTerminate: () => prender(),
     });
