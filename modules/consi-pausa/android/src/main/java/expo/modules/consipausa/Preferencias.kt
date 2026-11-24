@@ -89,6 +89,15 @@ internal class Preferencias(context: Context) {
     return i
   }
 
+  /** Lembretes de atividades (LembreteAtividades.kt): a lista em JSON e o horário do alarme agendado. */
+  var atividadesLembretes: String
+    get() = prefs.getString("atividades-lembretes", "[]") ?: "[]"
+    set(valor) = prefs.edit().putString("atividades-lembretes", valor).apply()
+
+  var atividadesAlvo: Long
+    get() = prefs.getLong("atividades-alvo", 0L)
+    set(valor) = prefs.edit().putLong("atividades-alvo", valor).apply()
+
   /** Índice da próxima sugestão do lembrete de tela (uma diferente a cada vez). */
   fun proximaSugestao(total: Int): Int {
     val i = prefs.getInt("sugestao-tela", 0).mod(total)

@@ -19,12 +19,14 @@ import {
   BalaoVazio,
   emocaoPorId,
   emocoes,
+  useNomesEmocoes,
   emocoesDeHoje,
   quandoFoi,
   salvarEmocao,
   type Emocao,
   type RegistroEmocao,
 } from '@/data/emocoes';
+import { saudacaoDaVez, textoDaSaudacao, type Saudacao } from '@/data/saudacoes';
 import { duration, easing, radius, spaceFixo as space, useTema } from '@/theme';
 
 import BolhaPensamento from '../../../assets/home/bolha-pensamento.svg';
@@ -37,6 +39,7 @@ import { BalaoArrastavel, sortearLugares, type Lugar } from './BalaoArrastavel';
 import { BalaoEmocao } from './BalaoEmocao';
 
 const nativo = Platform.OS !== 'web';
+const SAUDACAO_PADRAO: Saudacao = { modelo: 'Olá{, nome}!\nComo você está hoje?' };
 const curva = Easing.bezier(...easing.standard);
 
 const PESSOA = { largura: 151, altura: 155 };
@@ -78,6 +81,7 @@ type Props = {
  */
 export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onArrastando, onEscolher }: Props) {
   const { cores } = useTema();
+  useNomesEmocoes();
   const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();
   const { setImersivo } = useModoImersivo();
@@ -92,6 +96,7 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
   const [subida] = useState(() => new Animated.Value(0));
   const [maisAberto] = useState(() => new Animated.Value(0));
   const [agora, setAgora] = useState(() => Date.now());
+  const [frase, setFrase] = useState<Saudacao | null>(null);
   const [topoPessoa, setTopoPessoa] = useState(altura - PESSOA.altura);
   const [lugares, setLugares] = useState<Lugar[]>([]);
   const [saudacao] = useState(() => new Animated.Value(1));
@@ -112,7 +117,10 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
   useFocusEffect(
     useCallback(() => {
       resetar();
-      emocoesDeHoje().then(setRegistros);
+      emocoesDeHoje().then((hoje) => {
+        setRegistros(hoje);
+        saudacaoDaVez(hoje[0]).then(setFrase, () => setFrase(SAUDACAO_PADRAO));
+      });
       setAgora(Date.now());
       return () => {
         // Depois de sair da Home pela primeira vez, a volta não repete o appear-in das etiquetas.
@@ -212,7 +220,9 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
     setVerTodas((v) => !v);
   };
 
-  const titulo = `${nome ? `Olá, ${nome}!` : 'Olá!'}\nComo você está hoje?`;
+  // Até a saudação chegar do banco (alguns ms), o título fica reservado e invisível; quando
+  // chega, entra com o appear-in. Trocar de frase reanima; o nome chegando depois só atualiza.
+  const titulo = textoDaSaudacao(frase ?? SAUDACAO_PADRAO, nome);
   const fimTitulo = fimDoTexto(titulo, 200);
   const SUBTITULO = 'Clique no balão e escolha uma emoção.';
   const fimSubtitulo = fimDoTexto(SUBTITULO, fimTitulo);
@@ -262,7 +272,9 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
         pointerEvents={escolhendo ? 'none' : 'auto'}
         style={[styles.saudacao, { opacity: saudacao, transform: [{ translateY: subida }] }]}
       >
-        <TextoAnimado texto={titulo} estilo="Títulos/Grande" atraso={200} />
+        <View style={{ opacity: frase ? 1 : 0 }}>
+          <TextoAnimado key={frase?.modelo ?? ''} texto={titulo} estilo="Títulos/Grande" atraso={200} />
+        </View>
         <TextoAnimado
           texto={SUBTITULO}
           estilo="Texto/Pequeno"

@@ -18,3 +18,4 @@ export * from './CampoTexto';
 export * from './Filtro';
 export * from './Folha';
 export * from './Icone';
+export * from './IconeDuracao';

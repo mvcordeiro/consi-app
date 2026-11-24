@@ -1,7 +1,9 @@
+import { router, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 
 import { Alternancia } from '@/components';
-import { Ajuste, Divisoria, SeusDados, TelaAjustes } from '@/components/ajustes';
+import { Ajuste, Divisoria, LinhaLink, SeusDados, TelaAjustes } from '@/components/ajustes';
+import { AjustesTravaDiario } from '@/components/ajustes/AjustesTravaDiario';
 import { definirColeta, pilotoCarregado } from '@/data/piloto';
 
 /** Ajustes → Privacidade e dados: o que fica onde, exportar tudo e apagar tudo. */
@@ -42,6 +44,14 @@ export default function PaginaPrivacidade() {
           }}
         />
       </Ajuste>
+      <Divisoria />
+      <AjustesTravaDiario />
+      <Divisoria />
+      <LinhaLink
+        titulo="Como o Consi cuida de você"
+        descricao="Como o app foi feito, o que é seguro e por quê, em palavras simples."
+        onPress={() => router.push('/ajustes/seguranca' as Href)}
+      />
       <Divisoria />
       <SeusDados />
     </TelaAjustes>

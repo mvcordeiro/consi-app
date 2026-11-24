@@ -44,6 +44,10 @@
     <receiver
       android:name=".LembreteDiarioReceiver"
       android:exported="false" />
+    <!-- Lembretes de atividades: só o próprio app dispara. -->
+    <receiver
+      android:name=".LembreteAtividadesReceiver"
+      android:exported="false" />
     <receiver
       android:name=".InicioReceiver"
       android:exported="false">

@@ -1,8 +1,10 @@
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
+import { router, type Href } from 'expo-router';
 import { useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { nuvemConfigurada } from '@/data/nuvem/cliente';
 import { space, useTema } from '@/theme';
 
 import { Botao } from '../Botao';
@@ -74,7 +76,16 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
       />
 
       <Divisoria />
-      <Ajuste titulo="Feito com" descricao="Expo e React Native no app, SQLite criptografado para os seus dados e Supabase só para Sugestões e Novidades." />
+      <Ajuste titulo="Feito com" descricao="Expo e React Native no app, SQLite criptografado para os seus dados e Supabase só para Sugestões, Novidades e Feedback." />
+
+      {nuvemConfigurada() ? (
+        <>
+          <Divisoria />
+          <Ajuste titulo="Achou um problema?" descricao="Conte direto para a equipe. Só a gente lê.">
+            <Botao rotulo="Mandar feedback" estilo="secundario" onPress={() => router.push('/ajustes/feedback' as Href)} />
+          </Ajuste>
+        </>
+      ) : null}
 
       {/* Por último (pedido do produto). O piloto saiu daqui: fica no rodapé da aba Ajustes. */}
       <Divisoria />

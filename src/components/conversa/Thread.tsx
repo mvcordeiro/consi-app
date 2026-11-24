@@ -1,7 +1,9 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Animated, Image, PanResponder, Platform, Pressable, StyleSheet, View, type HostInstance } from 'react-native';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, View, type HostInstance } from 'react-native';
+import { ImagemLocal } from '../ImagemLocal';
 
 import type { Comentario, ReacaoId } from '@/data/catalogo';
+import { useAutorExibido } from '@/data/perfil';
 import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Avatar } from '../Avatar';
@@ -92,7 +94,9 @@ export function Thread({ no, nivel = 0, acoes }: { no: NoConversa; nivel?: numbe
  * Um comentário. Arrastar para a esquerda revela "Responder" (vibra no limite e responde ao soltar);
  * segurar vibra e abre o painel de reações logo abaixo.
  */
-function ItemComentario({ comentario: c, acoes }: { comentario: Comentario; acoes: Acoes }) {
+function ItemComentario({ comentario, acoes }: { comentario: Comentario; acoes: Acoes }) {
+  const exibir = useAutorExibido();
+  const c = { ...comentario, autor: exibir(comentario.autor) };
   const { cores } = useTema();
   const ref = useRef<HostInstance>(null);
   const [pan] = useState(() => new Animated.Value(0));
@@ -174,7 +178,7 @@ function ItemComentario({ comentario: c, acoes }: { comentario: Comentario; acoe
             {c.texto ? <Texto estilo="Texto/Pequeno">{c.texto}</Texto> : null}
             {c.imagem ? (
               <Pressable onPress={() => acoes.onAbrirImagem(c.imagem!)} accessibilityRole="imagebutton" accessibilityLabel="Abrir imagem">
-                <Image source={{ uri: c.imagem }} style={[styles.imagem, { backgroundColor: cores.bg.raised }]} />
+                <ImagemLocal source={{ uri: c.imagem }} style={[styles.imagem, { backgroundColor: cores.bg.raised }]} />
               </Pressable>
             ) : null}
             <View style={styles.rodape}>

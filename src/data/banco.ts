@@ -118,6 +118,15 @@ const MIGRACOES: string[] = [
   // 4: o que veio depois da escolha na pausa: um check-in (o momento) ou um hobby explorado
   `ALTER TABLE resistencias ADD COLUMN checkin_em INTEGER;
    ALTER TABLE resistencias ADD COLUMN hobby TEXT;`,
+  // 5: como cada pausa terminou (para as Reflexões da Home); guardado por 30 dias
+  `CREATE TABLE pausas (
+     em INTEGER PRIMARY KEY NOT NULL,
+     grupo TEXT NOT NULL,
+     app TEXT,
+     desfecho TEXT NOT NULL,
+     checkin_em INTEGER,
+     minutos INTEGER
+   );`,
 ];
 
 async function migrar(db: SQLite.SQLiteDatabase) {
@@ -299,6 +308,57 @@ export async function listarResistencias(desde: number): Promise<ResistenciaGrav
     depoisDeUsar: l.depois_de_usar === 1,
     checkinEm: l.checkin_em ?? undefined,
     hobby: l.hobby ?? undefined,
+  }));
+}
+
+// ─── Pausas (desfechos) ─────────────────────────────────────────────────────
+/** Como a pausa terminou: abriu o app, não abriu, trocou por um hobby ou foi escrever no Diário. */
+export type DesfechoPausa = 'abriu' | 'naoAbriu' | 'hobby' | 'diario';
+
+export type PausaGravada = {
+  em: number;
+  grupo: string;
+  app?: string;
+  desfecho: DesfechoPausa;
+  /** O check-in feito na própria pausa, antes da escolha. */
+  checkinEm?: number;
+  /** Minutos liberados, quando abriu o app. */
+  minutos?: number;
+};
+
+/** Grava o desfecho e apaga os de mais de `guardarDias` dias. */
+export async function inserirPausa(p: PausaGravada, guardarDias: number) {
+  const db = await banco();
+  await db.runAsync(
+    'INSERT OR REPLACE INTO pausas (em, grupo, app, desfecho, checkin_em, minutos) VALUES (?, ?, ?, ?, ?, ?)',
+    p.em,
+    p.grupo,
+    p.app ?? null,
+    p.desfecho,
+    p.checkinEm ?? null,
+    p.minutos ?? null,
+  );
+  await db.runAsync('DELETE FROM pausas WHERE em < ?', p.em - guardarDias * 24 * 60 * 60 * 1000);
+}
+
+/** Os desfechos desde `desde` (ms), do mais recente para o mais antigo. */
+export async function listarPausas(desde: number): Promise<PausaGravada[]> {
+  const db = await banco();
+  const linhas = await db.getAllAsync<{
+    em: number;
+    grupo: string;
+    app: string | null;
+    desfecho: DesfechoPausa;
+    checkin_em: number | null;
+    minutos: number | null;
+  }>('SELECT em, grupo, app, desfecho, checkin_em, minutos FROM pausas WHERE em >= ? ORDER BY em DESC', desde);
+  return linhas.map((l) => ({
+    em: l.em,
+    grupo: l.grupo,
+    app: l.app ?? undefined,
+    desfecho: l.desfecho,
+    checkinEm: l.checkin_em ?? undefined,
+    minutos: l.minutos ?? undefined,
   }));
 }
 

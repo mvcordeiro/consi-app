@@ -1,5 +1,8 @@
 import { useFonts } from 'expo-font';
-import { Stack, useSegments } from 'expo-router';
+import { Stack, usePathname, useSegments } from 'expo-router';
+
+import { migrarAnexos } from '@/data/arquivos';
+import { useTrancarAoSairDoDiario } from '@/data/travaDiario';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, type ReactNode } from 'react';
@@ -60,6 +63,12 @@ function Pilha() {
   useWidgets();
   // APK Android, se a pessoa ligou em Ajustes: o ícone do app mostra a última emoção.
   useIconeEmocao();
+  // Trava do Diário: sair do Diário tranca; voltar pede o PIN de novo.
+  useTrancarAoSairDoDiario(usePathname());
+  // Anexos: limpa as cópias decifradas da vez anterior e cifra os anexos antigos (uma vez).
+  useEffect(() => {
+    void migrarAnexos();
+  }, []);
   // Piloto: eventos de uso anônimos (qual tela abriu, sem conteúdo) e o convite do dia 7.
   useEffect(() => {
     iniciarPiloto();

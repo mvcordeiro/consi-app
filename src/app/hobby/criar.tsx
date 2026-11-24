@@ -1,28 +1,22 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ImagemLocal } from '@/components/ImagemLocal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Alternancia, Botao, CabecalhoVoltar, CampoTexto, Filtro, Folha, Icone, Texto, type NomeIcone } from '@/components';
+import { Alternancia, Botao, CabecalhoVoltar, CampoTexto, Filtro, Folha, Icone, IconeDuracao, Texto, type NomeIcone } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { BarraBlocos, EditorBlocos, useEditorBlocos } from '@/components/blocos';
 import { CardSugestao, IconeHobby } from '@/components/hobbies';
+import { NIVEIS_DURACAO, nivelDuracao } from '@/data/duracao';
 import { catalogoHobbies, hobbyInfo, type AtividadeMinha, type HobbyId, type Permissoes, type Visibilidade } from '@/data/catalogo';
 import { guardarArquivo } from '@/data/arquivos';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { borderWidth, inset, primitivas, radius, space, tipografia, useTema } from '@/theme';
 
-const MINUTOS = [5, 10, 15, 30, 45, 60, 90, 120];
 const MAX_RESUMO = 70;
 
-/** "30 min", "1 h", "1h30", "2 h". */
-function rotuloMinutos(m: number) {
-  if (m < 60) return `${m} min`;
-  const h = Math.floor(m / 60);
-  const r = m % 60;
-  return r ? `${h}h${r}` : `${h} h`;
-}
 /** Ícones que a pessoa pode escolher: os dos hobbies e alguns gerais do Design System. */
 const ICONES: NomeIcone[] = [
   ...new Set<NomeIcone>([
@@ -152,7 +146,7 @@ function Formulario({
           <Aparecer>
             {capa ? (
               <View>
-                <Image source={{ uri: capa }} style={[styles.capa, { backgroundColor: cores.bg.raised }]} />
+                <ImagemLocal source={{ uri: capa }} style={[styles.capa, { backgroundColor: cores.bg.raised }]} />
                 <View style={styles.capaAcoes}>
                   <BotaoSobreImagem rotulo="Trocar capa" icone="anexar-imagem" onPress={escolherCapa} />
                   <BotaoSobreImagem rotulo="Remover capa" icone="excluir" onPress={() => setCapa(undefined)} />
@@ -241,13 +235,13 @@ function Formulario({
           <Aparecer atraso={220} style={styles.bloco}>
             <Texto estilo="Títulos/Pequeno">Quanto tempo leva?</Texto>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} style={styles.sangria}>
-              {MINUTOS.map((m) => (
+              {NIVEIS_DURACAO.map((n) => (
                 <Filtro
-                  key={m}
-                  rotulo={rotuloMinutos(m)}
-                  ativo={m === minutos}
-                  onPress={() => setMinutos(m)}
-                  icone={(cor) => <Icone nome="relogio" tamanho={16} cor={cor} />}
+                  key={n.id}
+                  rotulo={n.rotulo}
+                  ativo={n.id === nivelDuracao(minutos).id}
+                  onPress={() => setMinutos(n.minutos)}
+                  icone={(cor) => <IconeDuracao minutos={n.minutos} cor={cor} />}
                 />
               ))}
             </ScrollView>

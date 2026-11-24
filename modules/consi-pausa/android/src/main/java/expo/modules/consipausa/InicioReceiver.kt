@@ -12,6 +12,7 @@ class InicioReceiver : BroadcastReceiver() {
     // Os alarmes somem ao reiniciar: o convite do piloto volta a ser agendado.
     if (prefs.conviteEm > System.currentTimeMillis()) ConvitePiloto.agendar(context, prefs.conviteEm)
     if (prefs.diarioLigado) LembreteDiario.agendar(context)
+    LembreteAtividades.agendar(context)
     if ((prefs.ativa && Uso.temAcesso(context)) || prefs.lembretesTela) VigiaService.iniciar(context)
   }
 }

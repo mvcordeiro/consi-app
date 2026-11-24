@@ -8,6 +8,7 @@ import { AccessibilityInfo } from 'react-native';
 import type { Modo } from '@/theme/tokens';
 
 import { apagarEstado, gravarEstado, lerEstado } from './banco';
+import { NOMES_PADRAO, normalizarNomes, type NomesEmocoes } from './nomesEmocoes';
 
 export type Aparencia = 'sistema' | Modo;
 export type Movimento = 'sistema' | 'reduzido' | 'normal';
@@ -47,6 +48,8 @@ export type Preferencias = {
   iconePorEmocao: boolean;
   /** Ordem = posição na Home, abaixo da hero (topo e hero ficam sempre). */
   secoesHome: { id: SecaoHome; visivel: boolean }[];
+  /** Estilo dos nomes das emoções e os nomes escritos pela pessoa (data/nomesEmocoes.ts). */
+  nomesEmocoes: NomesEmocoes;
 };
 
 export const NOMES_SECOES: Record<SecaoHome, string> = {
@@ -65,6 +68,7 @@ const PADRAO: Preferencias = {
   abaInicial: 'index',
   iconePorEmocao: true,
   secoesHome: SECOES.map((id) => ({ id, visivel: true })),
+  nomesEmocoes: NOMES_PADRAO,
 };
 
 const CHAVE = 'consi:preferencias';
@@ -95,7 +99,8 @@ function normalizar(dado: unknown): Preferencias {
     }
   }
   for (const id of SECOES) if (!vistas.has(id)) secoesHome.push({ id, visivel: true });
-  return { aparencia, movimento, vibracao, tamanhoTexto, abaInicial, iconePorEmocao, secoesHome };
+  const nomesEmocoes = normalizarNomes(d.nomesEmocoes);
+  return { aparencia, movimento, vibracao, tamanhoTexto, abaInicial, iconePorEmocao, secoesHome, nomesEmocoes };
 }
 
 async function carregar() {

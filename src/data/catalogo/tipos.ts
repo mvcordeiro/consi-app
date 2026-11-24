@@ -112,7 +112,8 @@ export type Atividade = {
 
 export type Sentimento = 'leveza' | 'calma' | 'cansaco' | 'distracao';
 
-export type Lembrete = { quando: number; rotulo: string };
+/** `semanal`: repete no mesmo dia da semana e horário (issue #13). */
+export type Lembrete = { quando: number; rotulo: string; semanal?: boolean };
 
 export type AtividadeMinha = Omit<Atividade, 'quando'> & {
   /** Id da atividade do catálogo que originou esta (ausente se a pessoa criou do zero). */

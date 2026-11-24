@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
+import { ImagemLocal } from '../ImagemLocal';
 
 import { guardarArquivo } from '@/data/arquivos';
 import { novoIdBloco, type Bloco, type TipoBloco } from '@/data/catalogo';
@@ -168,7 +169,7 @@ export function EditorBlocos({ editor, placeholder = 'Escreva, ou digite "/" par
           return (
             <View key={b.id}>
               {b.imagem ? (
-                <Image
+                <ImagemLocal
                   source={typeof b.imagem === 'string' ? { uri: b.imagem } : b.imagem}
                   style={[styles.imagem, { aspectRatio: b.proporcao ?? 4 / 3, backgroundColor: cores.bg.raised }]}
                 />

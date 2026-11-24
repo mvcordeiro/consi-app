@@ -12,7 +12,7 @@ import { useEffect, useMemo } from 'react';
 
 import { ConsiWidgets, type AssuntoWidget } from '../../modules/consi-widgets';
 import { hobbyInfo } from './catalogo';
-import { horaMinuto } from './emocoes';
+import { emocoes, horaMinuto, useNomesEmocoes } from './emocoes';
 import { FRASES } from './frases';
 import { useHobbies } from './hobbiesEstado';
 import { chaveDia, emocoesDoDia, useMomentos } from './momentos';
@@ -43,13 +43,17 @@ export function useWidgets() {
   const momentos = useMomentos();
   const h = useHobbies();
   const hoje = chaveDia(new Date());
+  const nomesEmocoes = useNomesEmocoes();
 
   const dia = useMemo(() => {
     const doDia = momentos.filter((m) => chaveDia(m.em) === hoje);
     // A hora fixa ("às 10:12") e não "há 5 min": o widget não se redesenha a cada minuto.
     const recentes = doDia.slice(0, ETIQUETAS_NO_WIDGET).map((m) => ({ id: m.id, hora: horaMinuto(m.em) }));
-    return JSON.stringify({ dia: hoje, emocoes: emocoesDoDia(doDia), total: doDia.length, recentes });
-  }, [momentos, hoje]);
+    // Só os nomes trocados pela pessoa (Ajustes → Nomes das emoções); o widget já sabe os originais.
+    const nomes = Object.fromEntries(emocoes.filter((e) => e.nome !== e.nomeOriginal).map((e) => [e.id, e.nome]));
+    return JSON.stringify({ dia: hoje, emocoes: emocoesDoDia(doDia), total: doDia.length, recentes, nomes });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `e.nome` lê os nomes escolhidos por um getter
+  }, [momentos, hoje, nomesEmocoes]);
 
   const atividades = useMemo(() => {
     if (!h.carregado) return null;

@@ -12,7 +12,6 @@ import {
 import { space, useTema } from '@/theme';
 
 import { Botao } from './Botao';
-import { Icone } from './Icone';
 import { Texto } from './Texto';
 
 /**
@@ -103,7 +102,14 @@ function Permissao({
         <Texto estilo="Títulos/Pequeno" style={styles.flex}>
           {titulo}
         </Texto>
-        {ligada ? <Icone nome="selo" tamanho={16} cor={cores.feedback.success} /> : null}
+        <View
+          style={[
+            styles.ponto,
+            ligada
+              ? { backgroundColor: cores.feedback.success, borderColor: cores.feedback.success }
+              : { borderColor: cores.text.tertiary },
+          ]}
+        />
         <Texto estilo="Legenda/Pequena" cor={ligada ? cores.text.secondary : cores.text.tertiary}>
           {ligada ? 'Ligado' : 'Desligado'}
         </Texto>
@@ -125,4 +131,5 @@ const styles = StyleSheet.create({
   permissao: { gap: space[8] },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   flex: { flex: 1 },
+  ponto: { width: 8, height: 8, borderRadius: 4, borderWidth: 1.5 },
 });

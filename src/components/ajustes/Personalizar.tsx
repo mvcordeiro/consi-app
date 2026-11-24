@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Image, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
+
+import { router, type Href } from 'expo-router';
 
 import { emocaoPorId } from '@/data/emocoes';
 import { temIconePorEmocao } from '@/data/iconeEmocao';
@@ -20,11 +22,12 @@ import {
 import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Alternancia } from '../Alternancia';
+import { EscalaPassos } from '../EscalaPassos';
 import { iconesDasAbas } from '../BarraNavegacao';
 import { Filtro } from '../Filtro';
 import { BalaoEmocao } from '../home/BalaoEmocao';
 import { Texto } from '../Texto';
-import { Ajuste, Divisoria } from './Cartao';
+import { Ajuste, Divisoria, LinhaLink } from './Cartao';
 import { ListaArrastavel } from './ListaArrastavel';
 
 const iconeConsi = require('../../../assets/icon.png');
@@ -137,28 +140,11 @@ function IconeCelular({ cor }: { cor: string }) {
 }
 
 // ─── Tamanho do texto: 5 marcas ─────────────────────────────────────────────
-const LADO_PEGADOR = 24;
-
-/**
- * Controle deslizante de 5 marcas para o tamanho do texto, com um exemplo em cima que muda
- * na hora. Arrastar ou tocar numa marca escolhe; acessível como "adjustable" (deslizar para
- * cima/baixo no leitor de tela).
- */
+/** Escala de 5 marcas para o tamanho do texto, com um exemplo em cima que muda na hora. */
 function TamanhoDoTexto() {
   const { cores } = useTema();
   const { tamanhoTexto } = usePreferencias();
-  const [largura, setLargura] = useState(0);
   const indice = Math.max(0, TAMANHOS_TEXTO.indexOf(tamanhoTexto));
-  const passos = TAMANHOS_TEXTO.length - 1;
-  const util = Math.max(1, largura - LADO_PEGADOR);
-  const escolherEm = (x: number) => {
-    const i = Math.round(Math.min(1, Math.max(0, (x - LADO_PEGADOR / 2) / util)) * passos);
-    if (TAMANHOS_TEXTO[i] !== tamanhoTexto) definirPreferencias({ tamanhoTexto: TAMANHOS_TEXTO[i] });
-  };
-  const mudar = (d: number) => {
-    const i = Math.min(passos, Math.max(0, indice + d));
-    definirPreferencias({ tamanhoTexto: TAMANHOS_TEXTO[i] as TamanhoTexto });
-  };
 
   return (
     <View style={styles.tamanho}>
@@ -168,60 +154,22 @@ function TamanhoDoTexto() {
           É assim que os textos do Consi vão aparecer.
         </Texto>
       </View>
-      <View style={styles.linhaTamanho}>
-        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
-          A
-        </Texto>
-        <View
-          style={styles.trilho}
-          onLayout={(e) => setLargura(e.nativeEvent.layout.width)}
-          accessible
-          accessibilityRole="adjustable"
-          accessibilityLabel="Tamanho do texto"
-          accessibilityValue={{ min: 1, max: TAMANHOS_TEXTO.length, now: indice + 1 }}
-          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-          onAccessibilityAction={(e) => mudar(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
-          onStartShouldSetResponder={() => true}
-          onMoveShouldSetResponder={() => true}
-          // a página não rola enquanto o dedo está no controle
-          onResponderTerminationRequest={() => false}
-          onResponderGrant={(e) => escolherEm(e.nativeEvent.locationX)}
-          onResponderMove={(e) => escolherEm(e.nativeEvent.locationX)}
-        >
-          <View pointerEvents="none" style={[styles.linhaTrilho, { backgroundColor: cores.border.subtle }]} />
-          {largura > 0
-            ? TAMANHOS_TEXTO.map((t, i) => (
-                <View
-                  key={t}
-                  pointerEvents="none"
-                  style={[
-                    styles.marca,
-                    {
-                      left: LADO_PEGADOR / 2 + (util * i) / passos - 4,
-                      backgroundColor: i <= indice ? cores.action.primary.default : cores.border.focus,
-                    },
-                  ]}
-                />
-              ))
-            : null}
-          {largura > 0 ? (
-            <View
-              pointerEvents="none"
-              style={[
-                styles.pegador,
-                {
-                  left: (util * indice) / passos,
-                  backgroundColor: cores.action.primary.default,
-                  borderColor: cores.bg.base,
-                },
-              ]}
-            />
-          ) : null}
-        </View>
-        <Texto estilo="Títulos/Pequeno" cor={cores.text.secondary}>
-          A
-        </Texto>
-      </View>
+      <EscalaPassos
+        quantidade={TAMANHOS_TEXTO.length}
+        indice={indice}
+        onMudar={(i) => definirPreferencias({ tamanhoTexto: TAMANHOS_TEXTO[i] as TamanhoTexto })}
+        rotulo="Tamanho do texto"
+        inicio={
+          <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
+            A
+          </Texto>
+        }
+        fim={
+          <Texto estilo="Títulos/Pequeno" cor={cores.text.secondary}>
+            A
+          </Texto>
+        }
+      />
     </View>
   );
 }
@@ -346,6 +294,14 @@ export function Personalizar() {
 
       <Divisoria />
 
+      <LinhaLink
+        titulo="Nomes das emoções"
+        descricao="Troque o nome que aparece em cada emoção."
+        onPress={() => router.push('/ajustes/emocoes' as Href)}
+      />
+
+      <Divisoria />
+
       {temIconePorEmocao ? (
         <>
           <Ajuste titulo="Ícone do app">
@@ -457,17 +413,6 @@ const styles = StyleSheet.create({
   iconeEmocao: { alignItems: 'center', justifyContent: 'center' },
   tamanho: { gap: space[16] },
   exemplo: { gap: space[4], padding: space[16], borderRadius: radius.md, borderWidth: borderWidth.thin },
-  linhaTamanho: { flexDirection: 'row', alignItems: 'center', gap: space[12] },
-  trilho: { flex: 1, height: 40, justifyContent: 'center' },
-  linhaTrilho: { position: 'absolute', left: LADO_PEGADOR / 2, right: LADO_PEGADOR / 2, height: 2, borderRadius: 1 },
-  marca: { position: 'absolute', width: 8, height: 8, borderRadius: 4 },
-  pegador: {
-    position: 'absolute',
-    width: LADO_PEGADOR,
-    height: LADO_PEGADOR,
-    borderRadius: LADO_PEGADOR / 2,
-    borderWidth: 3,
-  },
   abrirEm: { gap: space[12] },
   barra: {
     height: 56,

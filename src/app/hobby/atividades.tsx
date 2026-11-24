@@ -48,7 +48,7 @@ export default function TodasAtividades() {
                 h.apagar(a.id);
                 mostrarAviso('Atividade apagada', { rotulo: 'Desfazer', onPress: h.desfazerApagar });
               }}
-              onConversa={() => irPara.conversa(a.id)}
+              onAtualizacoes={() => irPara.atualizacoes(a.id)}
               onFinalizar={() => irPara.finalizar(a.id)}
             />
           </Aparecer>

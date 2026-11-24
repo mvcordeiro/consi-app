@@ -1,7 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Image, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, View, type TextInputInstance } from 'react-native';
+import { KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, View, type TextInputInstance } from 'react-native';
+import { ImagemLocal } from '@/components/ImagemLocal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CabecalhoVoltar, CampoTexto, Folha, Icone, ItemFolha, Texto } from '@/components';
@@ -158,7 +159,7 @@ export default function ConversaTela() {
             ) : null}
             {imagem ? (
               <View style={styles.previa}>
-                <Image source={{ uri: imagem }} style={styles.previaImagem} />
+                <ImagemLocal source={{ uri: imagem }} style={styles.previaImagem} />
                 <Pressable
                   onPress={() => setImagem(null)}
                   accessibilityRole="button"
@@ -232,7 +233,7 @@ export default function ConversaTela() {
 
       <Modal visible={!!vendo} transparent animationType="fade" onRequestClose={() => setVendo(null)}>
         <Pressable style={[styles.visor, { backgroundColor: primitivas.overlay['black-60'] }]} onPress={() => setVendo(null)} accessibilityLabel="Fechar imagem">
-          {vendo ? <Image source={{ uri: vendo }} style={styles.visorImagem} resizeMode="contain" /> : null}
+          {vendo ? <ImagemLocal source={{ uri: vendo }} style={styles.visorImagem} resizeMode="contain" /> : null}
         </Pressable>
       </Modal>
     </SafeAreaView>

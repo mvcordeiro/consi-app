@@ -11,6 +11,7 @@ import { useAvisoPendente } from '@/components/diario/avisoPendente';
 import { TextoComDestaques } from '@/components/diario/CampoMomento';
 import { FotoAnexada, VisualizarFoto } from '@/components/diario/Fotos';
 import { Premo } from '@/components/diario/Premo';
+import { OrigemReflexao } from '@/components/diario/OrigemReflexao';
 import { emocaoPorId } from '@/data/emocoes';
 import { diaLongo, editado, emAtual, hora, useMomentos, type Momento } from '@/data/momentos';
 import { space, useTema } from '@/theme';
@@ -32,7 +33,8 @@ function origemDoMomento(m: Momento) {
  */
 export default function EntradaMomento() {
   const { cores } = useTema();
-  const { em } = useLocalSearchParams<{ em: string }>();
+  // `reflexao`: veio de uma Reflexão da Home (mostra a origem no topo).
+  const { em, reflexao } = useLocalSearchParams<{ em: string; reflexao?: string }>();
   const todos = useMomentos();
   const momento = todos.find((m) => m.em === emAtual(Number(em)));
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
@@ -63,6 +65,7 @@ export default function EntradaMomento() {
       <Cabecalho titulo={diaLongo(data)} onEditar={editar} />
 
       <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
+        {reflexao ? <OrigemReflexao titulo={reflexao} style={styles.origem} /> : null}
         <Aparecer escalaInicial={0.85} deslocamento={0} duracao={700} style={styles.premo}>
           <Premo id={momento.id} tamanho={102} flutuar />
         </Aparecer>
@@ -168,6 +171,7 @@ const styles = StyleSheet.create({
   direita: { alignItems: 'flex-end' },
   titulo: { flex: 1, textAlign: 'center' },
   conteudo: { paddingHorizontal: space[24], paddingTop: space[32], paddingBottom: space[40], gap: space[24] },
+  origem: { alignSelf: 'stretch' },
   premo: { alignItems: 'center' },
   titulos: { alignItems: 'center', gap: space[8] },
   centro: { textAlign: 'center' },

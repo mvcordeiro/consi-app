@@ -7,13 +7,15 @@ import { Platform, ScrollView, StyleSheet, View, type HostInstance } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 
-import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, Texto, useAviso } from '@/components';
+import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, IconeDuracao, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { IconeHobby } from '@/components/hobbies';
 import { vibrar } from '@/components/hobbies/Arraste';
 import { LogoConsi } from '@/components/hobbies/assets';
+import { rotuloDuracao } from '@/data/duracao';
 import { hobbyInfo, type Bloco } from '@/data/catalogo';
 import { useHobbies } from '@/data/hobbiesEstado';
+import { useAutorExibido } from '@/data/perfil';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
 
 /** Até três itens do conteúdo para o cartão (listas, tarefas ou passos). */
@@ -30,6 +32,7 @@ export default function Compartilhar() {
   const { cores } = useTema();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const h = useHobbies();
+  const exibir = useAutorExibido();
   const cartao = useRef<HostInstance>(null);
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const [ocupado, setOcupado] = useState<'copiar' | 'baixar' | 'enviar' | null>(null);
@@ -38,7 +41,7 @@ export default function Compartilhar() {
   if (!item) return null;
   const { a } = item;
   const hobby = hobbyInfo(a.hobby);
-  const autor = a.permissoes.mostrarAutor ? a.autor : null;
+  const autor = a.permissoes.mostrarAutor ? exibir(a.autor) : null;
   const itens = destaques(a.conteudo);
 
   const capturar = (result: 'base64' | 'tmpfile' | 'data-uri') =>
@@ -112,7 +115,7 @@ export default function Compartilhar() {
                 </View>
                 <View style={styles.etiquetas}>
                   <Etiqueta rotulo={hobby.nome} />
-                  <Etiqueta rotulo={`${a.minutos} min`} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
+                  <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<IconeDuracao minutos={a.minutos} />} />
                 </View>
               </View>
               <Texto estilo="Títulos/Grande">{a.titulo}</Texto>

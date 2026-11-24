@@ -9,9 +9,12 @@ import { ConsiPausa } from '../../modules/consi-pausa';
 import {
   completarResistencia,
   gravarEstado,
+  inserirPausa,
   inserirResistencia,
   lerEstado,
+  listarPausas,
   listarResistencias,
+  type PausaGravada,
   type ResistenciaGravada,
 } from './banco';
 import { DIAS_GUARDADOS, inicioDoDia } from './emocoes';
@@ -76,6 +79,50 @@ export async function resistenciasDaSemana(): Promise<Resistencia[]> {
   } catch {
     return [];
   }
+}
+
+// ─── Desfechos: como cada pausa terminou (para as Reflexões) ────────────────
+/** Por quantos dias os desfechos ficam guardados no aparelho. */
+export const DIAS_DESFECHOS = 30;
+
+export type DesfechoGravado = PausaGravada;
+
+/** Grava como a pausa terminou. Nunca falha: sem armazenamento, só não entra nas Reflexões. */
+export async function registrarDesfecho(p: Omit<PausaGravada, 'em'>) {
+  try {
+    await inserirPausa({ ...p, em: Date.now() }, DIAS_DESFECHOS);
+  } catch {
+    // sem banco (web/teste)
+  }
+  avisarDesfechos();
+}
+
+/** Os desfechos dos últimos 30 dias, do mais recente para o mais antigo. */
+export async function desfechosGuardados(): Promise<PausaGravada[]> {
+  try {
+    return await listarPausas(inicioDoDia(DIAS_DESFECHOS - 1).getTime());
+  } catch {
+    return [];
+  }
+}
+
+const ouvintesDesfechos = new Set<() => void>();
+const avisarDesfechos = () => ouvintesDesfechos.forEach((o) => o());
+
+/** Os desfechos guardados, recarregados a cada pausa nova. */
+export function useDesfechos(): PausaGravada[] | null {
+  const [lista, setLista] = useState<PausaGravada[] | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    const carregar = () => desfechosGuardados().then((l) => vivo && setLista(l));
+    carregar();
+    ouvintesDesfechos.add(carregar);
+    return () => {
+      vivo = false;
+      ouvintesDesfechos.delete(carregar);
+    };
+  }, []);
+  return lista;
 }
 
 // ─── Liberações: saber se a pausa chegou depois de um tempo no app ──────────

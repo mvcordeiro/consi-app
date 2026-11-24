@@ -44,11 +44,15 @@ import {
   type Momento,
   type OrigemMomento,
 } from './momentos';
+import { resolverNome } from './nomesEmocoes';
+import { preferenciasAtuais, usePreferencias } from './preferencias';
 
 export type Emocao = {
   id: string;
+  /** O nome que aparece no app: o escolhido em Ajustes → Nomes das emoções, ou o original. */
+  readonly nome: string;
   /** Nome como está na camada do Figma. */
-  nome: string;
+  nomeOriginal: string;
   /** Contorno e rosto (por cima). */
   Svg: IconeSvg;
   /** Textura do fundo, recortada no círculo abaixo (no lugar da máscara do Figma). */
@@ -60,7 +64,7 @@ export type Emocao = {
   y: number;
 };
 
-export const emocoes: Emocao[] = [
+const BASE: (Omit<Emocao, 'nome' | 'nomeOriginal'> & { nome: string })[] = [
   { id: 'satisfeito', nome: 'Satisfeito', Svg: Satisfeito, Textura: SatisfeitoTextura, circulo: { cx: 43.4922, cy: 44.8477 }, x: 204, y: 89 },
   { id: 'alegria', nome: 'Alegria', Svg: Alegria, Textura: AlegriaTextura, circulo: { cx: 44, cy: 44.8477 }, x: 308, y: 146 },
   { id: 'tristeza', nome: 'Tristeza', Svg: Tristeza, Textura: TristezaTextura, circulo: { cx: 43.4922, cy: 44.8477 }, x: 116, y: 159 },
@@ -76,6 +80,22 @@ export const emocoes: Emocao[] = [
   { id: 'esperanca', nome: 'Esperança', Svg: Esperanca, Textura: EsperancaTextura, circulo: { cx: 43.4922, cy: 44.8481 }, x: 324, y: 483 },
   { id: 'desejo', nome: 'Desejo', Svg: Desejo, Textura: DesejoTextura, circulo: { cx: 43.4932, cy: 44.8477 }, x: 197, y: 501 },
 ];
+
+export const emocoes: Emocao[] = BASE.map(({ nome, ...e }) => ({
+  ...e,
+  nomeOriginal: nome,
+  get nome() {
+    return resolverNome(preferenciasAtuais().nomesEmocoes, e.id, nome);
+  },
+}));
+
+/**
+ * Assina os nomes das emoções: quem mostra `emocao.nome` chama este hook para se redesenhar
+ * quando a pessoa troca um nome em Ajustes.
+ */
+export function useNomesEmocoes() {
+  return usePreferencias().nomesEmocoes;
+}
 
 /** Balão "?" do estado inicial. */
 export const BalaoVazio = Vazio;

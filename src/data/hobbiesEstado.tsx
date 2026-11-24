@@ -15,6 +15,7 @@ import {
   type Visibilidade,
 } from './catalogo';
 import { gravarEstado, lerEstado } from './banco';
+import { sincronizarLembretesAtividades } from './lembretesAtividades';
 import { respostasSalvas } from './onboarding';
 import { registrar } from './piloto';
 
@@ -141,6 +142,11 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
     if (!pronto.current) return;
     gravarEstado(CHAVE, JSON.stringify(estado)).catch(() => {});
   }, [estado]);
+
+  // Lembretes das atividades vão para o Android sempre que a lista muda (e uma vez ao carregar).
+  useEffect(() => {
+    if (carregado) void sincronizarLembretesAtividades(estado.atividades);
+  }, [carregado, estado.atividades]);
 
   const hobbies = useMemo<HobbyId[]>(() => {
     if (estado.hobbies?.length) return estado.hobbies;

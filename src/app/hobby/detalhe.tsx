@@ -1,15 +1,20 @@
+import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ImagemLocal } from '@/components/ImagemLocal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, Texto, useAviso } from '@/components';
+import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, IconeDuracao, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { Blocos } from '@/components/blocos';
 import { ChevronDireita } from '@/components/home/assets';
 import { IconeHobby, irPara, useAcoesAtividade } from '@/components/hobbies';
+import { rotuloDuracao } from '@/data/duracao';
 import { hobbyInfo, sentimentos } from '@/data/catalogo';
 import { emocaoPorId } from '@/data/emocoes';
 import { dataCurta, useHobbies } from '@/data/hobbiesEstado';
+import { useAutorExibido } from '@/data/perfil';
+import { Atualizacoes } from '@/components/hobbies/Atualizacoes';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
 
 /**
@@ -20,8 +25,11 @@ import { borderWidth, inset, radius, space, useTema } from '@/theme';
  */
 export default function Detalhe() {
   const { cores } = useTema();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  // `visao`: abre direto em "Suas atualizações" (botão do meio do card de Suas atividades).
+  const { id, visao: visaoInicial } = useLocalSearchParams<{ id?: string; visao?: string }>();
   const h = useHobbies();
+  const exibir = useAutorExibido();
+  const [visao, setVisao] = useState<'atividade' | 'atualizacoes'>(visaoInicial === 'atualizacoes' ? 'atualizacoes' : 'atividade');
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const acoes = useAcoesAtividade({
     aoApagar: () => router.back(),
@@ -37,7 +45,7 @@ export default function Detalhe() {
   const minha = item.minha;
   const naPilha = item.tipo === 'catalogo' && h.pilha(a.hobby).some((s) => s.id === a.id);
   const editavel = minha ? h.podeEditar(minha) : false;
-  const autor = a.permissoes.mostrarAutor ? a.autor : { usuario: 'Alguém da comunidade', iniciais: '·' };
+  const autor = a.permissoes.mostrarAutor ? exibir(a.autor) : { usuario: 'Alguém da comunidade', iniciais: '·' };
   const total = h.totalComentarios(a.id);
   const capa = a.capa;
 
@@ -59,10 +67,43 @@ export default function Detalhe() {
           }
         />
       </View>
+      {minha ? (
+        <View style={[styles.margem, styles.visoes]} accessibilityRole="tablist">
+          {(
+            [
+              ['atividade', 'Atividade'],
+              ['atualizacoes', 'Suas atualizações'],
+            ] as const
+          ).map(([v, rotulo]) => {
+            const ativo = visao === v;
+            return (
+              <Pressable
+                key={v}
+                onPress={() => setVisao(v)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: ativo }}
+                style={[
+                  styles.aba,
+                  { backgroundColor: ativo ? cores.bg.selected : 'transparent', borderColor: ativo ? cores.border.focus : cores.border.subtle },
+                ]}
+              >
+                <Texto estilo="Texto/Botões e rótulos" cor={ativo ? cores.text.primary : cores.text.secondary}>
+                  {rotulo}
+                </Texto>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+      {minha && visao === 'atualizacoes' ? (
+        <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Atualizacoes atividadeId={minha.id} />
+        </ScrollView>
+      ) : (
       <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
         {capa ? (
           <Aparecer>
-            <Image
+            <ImagemLocal
               source={typeof capa === 'string' ? { uri: capa } : capa}
               style={[styles.capa, { backgroundColor: cores.bg.raised }]}
               resizeMode="cover"
@@ -70,23 +111,6 @@ export default function Detalhe() {
           </Aparecer>
         ) : null}
 
-        <Aparecer style={styles.etiquetas}>
-          <Etiqueta
-            rotulo={hobbyInfo(a.hobby).nome}
-            iconeNode={<IconeHobby hobby={a.hobby} icone={a.icone} caixa={16} cor={cores.text.primary} />}
-          />
-          <Etiqueta rotulo={`${a.minutos} min`} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
-          {minha?.lembrete && minha.status === 'andamento' ? (
-            <Etiqueta rotulo={minha.lembrete.rotulo} tom="info" iconeNode={<Icone nome="calendario" tamanho={16} />} />
-          ) : null}
-          {minha?.status === 'concluida' ? <Etiqueta rotulo="Concluída" tom="sucesso" /> : null}
-          {a.permissoes.remix ? (
-            <Etiqueta rotulo="Remix liberado" iconeNode={<Icone nome="repetir" tamanho={16} />} />
-          ) : null}
-          {minha?.visibilidade === 'privada' && minha.criadaPorMim ? (
-            <Etiqueta rotulo="Só você vê" iconeNode={<Icone nome="cadeado" tamanho={16} />} />
-          ) : null}
-        </Aparecer>
 
         <Aparecer atraso={80} style={styles.bloco}>
           <Texto estilo="Títulos/Grande">{a.titulo}</Texto>
@@ -155,8 +179,29 @@ export default function Detalhe() {
             </View>
           )}
         </Aparecer>
+        {/* Etiquetas no fim da página, em bg/raised para contrastar com o fundo. */}
+        <Aparecer atraso={280} style={styles.etiquetas}>
+          <Etiqueta
+            fundo={cores.bg.raised}
+            rotulo={hobbyInfo(a.hobby).nome}
+            iconeNode={<IconeHobby hobby={a.hobby} icone={a.icone} caixa={16} cor={cores.text.primary} />}
+          />
+          <Etiqueta fundo={cores.bg.raised} rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<IconeDuracao minutos={a.minutos} />} />
+          {minha?.lembrete && minha.status === 'andamento' ? (
+            <Etiqueta fundo={cores.bg.raised} rotulo={minha.lembrete.rotulo} tom="info" iconeNode={<Icone nome="calendario" tamanho={16} />} />
+          ) : null}
+          {minha?.status === 'concluida' ? <Etiqueta fundo={cores.bg.raised} rotulo="Concluída" tom="sucesso" /> : null}
+          {a.permissoes.remix ? (
+            <Etiqueta fundo={cores.bg.raised} rotulo="Remix liberado" iconeNode={<Icone nome="repetir" tamanho={16} />} />
+          ) : null}
+          {minha?.visibilidade === 'privada' && minha.criadaPorMim ? (
+            <Etiqueta fundo={cores.bg.raised} rotulo="Só você vê" iconeNode={<Icone nome="cadeado" tamanho={16} />} />
+          ) : null}
+        </Aparecer>
       </ScrollView>
+      )}
 
+      {visao === 'atualizacoes' && minha ? null : (
       <View style={[styles.rodape, { borderTopColor: cores.border.subtle }]}>
         {naPilha && item.tipo === 'catalogo' ? (
           <View style={styles.botoes}>
@@ -211,6 +256,7 @@ export default function Detalhe() {
           </Texto>
         ) : null}
       </View>
+      )}
       {acoes.folhas}
       {aviso}
     </SafeAreaView>
@@ -220,6 +266,8 @@ export default function Detalhe() {
 const styles = StyleSheet.create({
   tela: { flex: 1 },
   margem: { paddingHorizontal: inset.md },
+  visoes: { flexDirection: 'row', gap: space[8], paddingBottom: space[8] },
+  aba: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full, borderWidth: borderWidth.thin },
   conteudo: { padding: inset.lg, gap: space[32] },
   capa: { width: '100%', aspectRatio: 16 / 9, borderRadius: radius.card },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },

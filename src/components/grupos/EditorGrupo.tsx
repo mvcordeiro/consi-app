@@ -17,7 +17,6 @@ import {
   PAUSA_MINIMA,
   PAUSAS,
   salvarGrupo,
-  TEMPOS_NO_APP,
   type AoIgnorar,
   type Grupo,
 } from '@/data/gruposHome';
@@ -475,17 +474,18 @@ function Chips({
   );
 }
 
-/** Prévia (só visual) da tela de pausa: mensagem, contagem e a escolha do tempo no app. */
+/** Prévia (só visual) da tela de pausa: o rótulo acima do quadro, e nele a contagem e a mensagem. */
 function PreviaPausa({ grupo }: { grupo: Grupo }) {
   const { cores } = useTema();
   // Com as frases filosóficas, a prévia mostra uma do período escolhido (outra a cada troca).
   const periodo = grupo.periodoFilosofico ?? null;
   const exemplo = useMemo(() => sortearFrase(periodo), [periodo]);
   return (
+    <View style={styles.previaBloco}>
+    <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+      PRÉVIA DA PAUSA
+    </Texto>
     <View style={[styles.previa, { backgroundColor: cores.bg.sunken, borderColor: cores.border.subtle }]}>
-      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
-        PRÉVIA DA PAUSA
-      </Texto>
       <View style={[styles.contagem, { borderColor: cores.border.focus }]}>
         <Texto estilo="Títulos/Médio">{grupo.pausaSegundos}s</Texto>
       </View>
@@ -497,16 +497,7 @@ function PreviaPausa({ grupo }: { grupo: Grupo }) {
           {exemplo.autor}
         </Texto>
       ) : null}
-      <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.centro}>
-        Quanto tempo você precisa nesse app?
-      </Texto>
-      <View style={styles.temposNoApp}>
-        {TEMPOS_NO_APP.map((t) => (
-          <View key={t} style={[styles.tempo, { backgroundColor: cores.bg.raised }]}>
-            <Texto estilo="Legenda/Pequena">{t} min</Texto>
-          </View>
-        ))}
-      </View>
+    </View>
     </View>
   );
 }
@@ -860,6 +851,7 @@ const styles = StyleSheet.create({
     paddingVertical: space[8],
     borderRadius: radius.card,
   },
+  previaBloco: { gap: space[8] },
   previa: {
     alignItems: 'center',
     gap: space[12],
@@ -870,8 +862,6 @@ const styles = StyleSheet.create({
   },
   contagem: { width: 64, height: 64, borderRadius: 32, borderWidth: borderWidth.thick, alignItems: 'center', justifyContent: 'center' },
   centro: { textAlign: 'center', alignSelf: 'stretch' },
-  temposNoApp: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[8] },
-  tempo: { paddingHorizontal: space[12], paddingVertical: space[4], borderRadius: radius.full },
   desfazer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space[8], paddingVertical: space[8] },
   rodape: { paddingHorizontal: inset.lg, paddingTop: space[12], paddingBottom: space[8] },
   listaMensagens: { maxHeight: 460 },

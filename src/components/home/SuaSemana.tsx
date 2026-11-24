@@ -15,6 +15,7 @@ import {
   mesmoDia,
   type Emocao,
   type RegistroEmocao,
+  useNomesEmocoes,
 } from '@/data/emocoes';
 import { appPorId, useGrupos } from '@/data/gruposHome';
 import { hobbyInfo, type HobbyId } from '@/data/catalogo';
@@ -37,7 +38,7 @@ import { BalaoEmocao } from './BalaoEmocao';
 const SEMANA = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 /** Momentos por dia antes do "Ver mais" (e quantos cada toque mostra a mais). */
 const POR_VEZ = 7;
-const LADO_MARCADOR = 32;
+const LADO_MARCADOR = 38;
 
 type Dia = { id: string; data: Date };
 type FiltroSemana = 'tudo' | 'emocoes' | 'escolhas';
@@ -97,6 +98,7 @@ export function SuaSemana({
   onAviso: (texto: string, acao?: { rotulo: string; onPress: () => void }) => void;
 }) {
   const { cores } = useTema();
+  useNomesEmocoes();
   const [registros, setRegistros] = useState<RegistroEmocao[]>([]);
   // "Dessa vez não abro" na pausa (só leitura aqui).
   const [resistencias, setResistencias] = useState<Resistencia[]>([]);
@@ -374,6 +376,7 @@ function CardCheckin({
   onEditar: () => void;
 }) {
   const { cores } = useTema();
+  useNomesEmocoes();
   const largura = useLarguraTela();
   const [altura, setAltura] = useState(0);
   const hora = horaMinuto(registro.em);
@@ -446,6 +449,7 @@ function CardCheckin({
  */
 function CardEscolha({ escolha, checkin, linha }: { escolha: Resistencia; checkin?: RegistroEmocao; linha: boolean }) {
   const { cores } = useTema();
+  useNomesEmocoes();
   const grupos = useGrupos();
   const hora = horaMinuto(escolha.em);
   const app = escolha.app ? appPorId(escolha.app) : undefined;

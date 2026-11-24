@@ -36,9 +36,14 @@ import {
   pausaDepoisDeUsar,
   perguntaTempoNoApp,
   regraDaPausa,
+  registrarDesfecho,
   registrarResistencia,
 } from '@/data/pausa';
+import type { DesfechoPausa } from '@/data/banco';
 import { registrar } from '@/data/piloto';
+import { registrarAbertura } from '@/data/aberturasFrequentes';
+import { appPorId } from '@/data/apps';
+import { respostasSalvas } from '@/data/onboarding';
 import { seguirParaOApp } from '@/data/vigia';
 import { duration, easing, spaceFixo as space, useTema } from '@/theme';
 
@@ -102,6 +107,26 @@ export default function Pausa() {
     };
   }, [grupo, params.app, doVigia]);
 
+  // Abertura excessiva (issue #14): 3+ pausas do mesmo app na última hora trocam a mensagem
+  // por um convite para escrever ou explorar atividades.
+  const [abreMuito, setAbreMuito] = useState<{ nome: string; app: string } | null>(null);
+  useEffect(() => {
+    if (!params.app) return;
+    let vivo = true;
+    registrarAbertura(params.app).then(async (avisar) => {
+      if (!avisar || !vivo) return;
+      const { nome } = await respostasSalvas().catch(() => ({ nome: '' }));
+      if (!vivo) return;
+      setAbreMuito({ nome, app: appPorId(params.app!)?.nome ?? 'esse aplicativo' });
+      registrar('pausa_abre_muito', { via: doVigia ? 'vigia' : 'manual' });
+    });
+    return () => {
+      vivo = false;
+    };
+    // uma vez por pausa
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();
   const [altura, setAltura] = useState(0);
@@ -142,8 +167,16 @@ export default function Pausa() {
 
   // ─── Saídas ───────────────────────────────────────────────────────────────
   // Pausa do vigia: libera o app e volta para ele, deixando o Consi na Home por trás.
+  // Como a pausa terminou (uma vez por pausa), para as Reflexões da Home.
+  const desfechoGravado = useRef(false);
+  const gravarDesfecho = (desfecho: DesfechoPausa, minutos?: number) => {
+    if (desfechoGravado.current) return;
+    desfechoGravado.current = true;
+    void registrarDesfecho({ grupo: grupo.id, app: params.app, desfecho, checkinEm: momentoEm ?? undefined, minutos });
+  };
   const irParaOApp = (minutos: number) => {
     registrar('pausa_seguiu', { via: doVigia ? 'vigia' : 'manual', minutos });
+    gravarDesfecho('abriu', minutos);
     if (doVigia && seguirParaOApp(params.app, minutos)) {
       marcarLiberacao(params.app, minutos);
       router.dismissTo('/');
@@ -152,7 +185,13 @@ export default function Pausa() {
   };
   const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : irParaOApp(0));
   // "Diário" abre direto um novo momento (escolher a emoção e escrever), no lugar da pausa.
-  const escreverNoDiario = () => router.replace('/diario/novo');
+  // Com o aviso de abertura excessiva, o momento já começa com o app como contexto.
+  const escreverNoDiario = () => {
+    gravarDesfecho('diario');
+    return abreMuito
+      ? router.replace({ pathname: '/diario/novo', params: { pergunta: `Por que tenho aberto tanto o ${abreMuito.app}?` } })
+      : router.replace('/diario/novo');
+  };
   // Abre o momento do check-in no Diário para escrever (no lugar da pausa).
   const explorarEmocao = () =>
     router.replace({
@@ -166,6 +205,7 @@ export default function Pausa() {
   // Explorar um hobby no lugar do app também é não abrir: vira "não abriu … e explorou Música".
   const explorarHobby = () => {
     registrar('pausa_hobby', { via: doVigia ? 'vigia' : 'manual' });
+    gravarDesfecho('hobby');
     if (doVigia) void bloquearDepoisDeNaoAbrir(params.app);
     registrarResistencia({
       grupo: grupo.id,
@@ -178,6 +218,7 @@ export default function Pausa() {
   };
   const naoAbro = () => {
     registrar('pausa_nao_abri', { via: doVigia ? 'vigia' : 'manual' });
+    gravarDesfecho('naoAbriu');
     // o app fica fechado por alguns minutos (Ajustes → Pausa e lembretes)
     if (doVigia) void bloquearDepoisDeNaoAbrir(params.app);
     // Um check-in já feito nesta pausa entra junto; um feito depois é ligado em `soltar`.
@@ -337,9 +378,17 @@ export default function Pausa() {
             >
               <Animated.View style={{ opacity: titulo }}>
                 <Texto estilo="Títulos/Grande" style={styles.textoCentro}>
-                  {grupo.mensagemFilosofica ? frase.texto : grupo.mensagem}
+                  {abreMuito
+                    ? `${abreMuito.nome ? `${abreMuito.nome}, p` : 'P'}ercebemos que você abre bastante o ${abreMuito.app}.`
+                    : grupo.mensagemFilosofica
+                      ? frase.texto
+                      : grupo.mensagem}
                 </Texto>
-                {grupo.mensagemFilosofica ? (
+                {abreMuito ? (
+                  <Texto estilo="Texto/Médio" cor={cores.text.secondary} style={[styles.textoCentro, styles.autor]}>
+                    Que tal escrever sobre isso ou explorar alguma atividade?
+                  </Texto>
+                ) : grupo.mensagemFilosofica ? (
                   <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={[styles.textoCentro, styles.autor]}>
                     {frase.autor}
                   </Texto>
@@ -412,7 +461,7 @@ export default function Pausa() {
               <View style={styles.dupla}>
                 <View style={styles.metade}>
                   <Botao
-                    rotulo="Hobbies"
+                    rotulo={abreMuito ? 'Atividades' : 'Hobbies'}
                     corRotulo={cores.icon.primary}
                     icone={(cor) => <Icone nome="dado-peao" cor={cor} />}
                     onPress={abrirHobbies}
@@ -420,7 +469,7 @@ export default function Pausa() {
                 </View>
                 <View style={styles.metade}>
                   <Botao
-                    rotulo="Diário"
+                    rotulo={abreMuito ? 'Escrever' : 'Diário'}
                     corRotulo={cores.icon.primary}
                     icone={(cor) => <Icone nome="livro-marcador" cor={cor} />}
                     onPress={escreverNoDiario}
