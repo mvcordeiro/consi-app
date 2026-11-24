@@ -19,6 +19,7 @@ import {
   BalaoVazio,
   emocaoPorId,
   emocoes,
+  useNomesEmocoes,
   emocoesDeHoje,
   quandoFoi,
   salvarEmocao,
@@ -80,6 +81,7 @@ type Props = {
  */
 export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onArrastando, onEscolher }: Props) {
   const { cores } = useTema();
+  useNomesEmocoes();
   const { width } = useWindowDimensions();
   const { top, bottom } = useSafeAreaInsets();
   const { setImersivo } = useModoImersivo();

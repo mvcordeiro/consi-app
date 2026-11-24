@@ -2,7 +2,10 @@ import { type ReactNode } from 'react';
 import { Image, LayoutAnimation, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 
+import { router, type Href } from 'expo-router';
+
 import { emocaoPorId } from '@/data/emocoes';
+import { ESTILOS_NOMES } from '@/data/nomesEmocoes';
 import { temIconePorEmocao } from '@/data/iconeEmocao';
 import {
   alternarSecao,
@@ -25,7 +28,7 @@ import { iconesDasAbas } from '../BarraNavegacao';
 import { Filtro } from '../Filtro';
 import { BalaoEmocao } from '../home/BalaoEmocao';
 import { Texto } from '../Texto';
-import { Ajuste, Divisoria } from './Cartao';
+import { Ajuste, Divisoria, LinhaLink } from './Cartao';
 import { ListaArrastavel } from './ListaArrastavel';
 
 const iconeConsi = require('../../../assets/icon.png');
@@ -288,6 +291,15 @@ export function Personalizar() {
         acessorio={
           <Alternancia rotulo="Vibração" ligado={prefs.vibracao} onMudar={(vibracao) => definirPreferencias({ vibracao })} />
         }
+      />
+
+      <Divisoria />
+
+      <LinhaLink
+        titulo="Nomes das emoções"
+        descricao="Troque o nome que aparece em cada emoção."
+        valor={ESTILOS_NOMES.find((e) => e.id === prefs.nomesEmocoes.estilo)?.nome}
+        onPress={() => router.push('/ajustes/emocoes' as Href)}
       />
 
       <Divisoria />

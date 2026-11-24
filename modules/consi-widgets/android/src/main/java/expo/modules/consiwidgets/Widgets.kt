@@ -109,8 +109,15 @@ internal object Widgets {
     null
   }
 
+  /** Nomes escolhidos pela pessoa (Ajustes → Nomes das emoções), por id; vêm junto com o dia. */
+  private var nomes: Map<String, String> = emptyMap()
+
+  /** O nome que a pessoa vê no app. */
+  private fun nome(e: Emocao) = nomes[e.id] ?: e.nome
+
   fun lerDia(c: Context): Dia {
     val j = json(c, DADOS_DIA) ?: return Dia(emptyList(), 0)
+    nomes = j.optJSONObject("nomes")?.let { o -> o.keys().asSequence().associateWith { o.optString(it) }.filterValues { it.isNotEmpty() } } ?: emptyMap()
     if (j.optString("dia") != hoje()) return Dia(emptyList(), 0)
     val lista = j.optJSONArray("emocoes") ?: JSONArray()
     val ids = (0 until lista.length()).map { lista.optString(it) }.filter { emocaoPorId(it) != null }
@@ -284,7 +291,7 @@ internal object Widgets {
         v.setViewVisibility(vista, View.VISIBLE)
       }
     }
-    v.setContentDescription(R.id.nuvem, "Hoje: " + d.emocoes.mapNotNull { emocaoPorId(it)?.nome }.joinToString(", "))
+    v.setContentDescription(R.id.nuvem, "Hoje: " + d.emocoes.mapNotNull { emocaoPorId(it)?.let(::nome) }.joinToString(", "))
   }
 
   /** Tocar no dia: o Diário; sem registros, o novo momento para escrever. */
@@ -349,7 +356,7 @@ internal object Widgets {
           } else {
             v.setViewVisibility(vista, View.VISIBLE)
             v.setImageViewResource(balao, emo.balao)
-            v.setTextViewText(texto, "${emo.nome} · às ${r.hora}")
+            v.setTextViewText(texto, "${nome(emo)} · às ${r.hora}")
             v.setOnClickPendingIntent(vista, abrir(c, "consi://diario", codigo(id, 20 + i)))
           }
         }
@@ -365,20 +372,22 @@ internal object Widgets {
         v.setOnClickPendingIntent(R.id.inicio_balao, acao(c, id, ACAO_ESCOLHER, null, codigo(id, 1)))
       }
       R.id.escolha -> {
+        lerDia(c) // carrega os nomes escolhidos
         v.setOnClickPendingIntent(R.id.fechar, acao(c, id, ACAO_VOLTAR, null, codigo(id, 2)))
         espalhar(v, largura, altura - 48f)
         ESCOLHA.forEachIndexed { i, vista ->
           val emo = EMOCOES[i]
           v.setImageViewResource(vista, emo.balao)
-          v.setContentDescription(vista, emo.nome)
+          v.setContentDescription(vista, nome(emo))
           v.setOnClickPendingIntent(vista, acao(c, id, ACAO_EMOCAO, emo.id, codigo(id, 40 + i)))
         }
       }
       else -> {
+        lerDia(c) // carrega os nomes escolhidos
         val emo = escolhida!!
         v.setImageViewResource(R.id.confirmar_balao, emo.balao)
-        v.setContentDescription(R.id.confirmar_balao, emo.nome)
-        v.setTextViewText(R.id.confirmar_nome, emo.nome)
+        v.setContentDescription(R.id.confirmar_balao, nome(emo))
+        v.setTextViewText(R.id.confirmar_nome, nome(emo))
         // Nome e pergunta (~48 dp) e os botões com a margem (60 dp).
         val lado = (altura - 48f - 60f).coerceIn(48f, 112f)
         medir(v, R.id.confirmar_balao, lado, lado)

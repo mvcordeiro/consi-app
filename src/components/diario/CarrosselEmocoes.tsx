@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, type ScrollViewInstance } from 'react-native';
 
-import { emocoes } from '@/data/emocoes';
+import { emocoes, useNomesEmocoes } from '@/data/emocoes';
 
 import { vibrar } from '../hobbies/Arraste';
 import { Premo } from './Premo';
@@ -29,6 +29,7 @@ export function CarrosselEmocoes({
   valor: string | null;
   onMudar: (id: string | null) => void;
 }) {
+  useNomesEmocoes();
   const rolagem = useRef<ScrollViewInstance | null>(null);
   const [x] = useState(() => new Animated.Value(ITENS.indexOf(valor) * PASSO));
   const atual = useRef(ITENS.indexOf(valor));

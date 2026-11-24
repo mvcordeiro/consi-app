@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, StyleSheet } from 'react-native';
 
-import type { Emocao } from '@/data/emocoes';
+import { useNomesEmocoes, type Emocao } from '@/data/emocoes';
 import { duration, easing, spaceFixo as space, useCoresSvg } from '@/theme';
 
 import { Texto } from '../Texto';
@@ -96,6 +96,7 @@ export function BalaoArrastavel({
   onArrastando,
   onSoltarNaCabeca,
 }: Props) {
+  useNomesEmocoes();
   const svg = useCoresSvg();
   const [pan] = useState(() => new Animated.ValueXY({ x: 0, y: 0 }));
   // 0 = onde começou o arraste, 1 = em cima da cabeça. O balão cresce conforme se aproxima.

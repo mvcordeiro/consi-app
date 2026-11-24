@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { emocaoPorId } from '@/data/emocoes';
+import { emocaoPorId, useNomesEmocoes } from '@/data/emocoes';
 import { DIAS_CURTOS, diasAtras, hora, MESES, type Momento } from '@/data/momentos';
 import { borderWidth, radius, space, useTema } from '@/theme';
 
@@ -89,6 +89,7 @@ function quandoNoIndice(em: number) {
  */
 export function ItemIndice({ momento, recente, onPress }: { momento: Momento; recente?: boolean; onPress: () => void }) {
   const { cores } = useTema();
+  useNomesEmocoes();
   const nome = emocaoPorId(momento.id)?.nome ?? 'Momento';
   const resumo = momento.texto?.trim() || (momento.anexos?.length ? 'Momento com anexos' : 'Check-in sem texto. Toque para escrever.');
   return (

@@ -1,7 +1,7 @@
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { sentimentos, type AtividadeMinha } from '@/data/catalogo';
-import { emocaoPorId } from '@/data/emocoes';
+import { emocaoPorId, useNomesEmocoes } from '@/data/emocoes';
 import { dataCurta } from '@/data/hobbiesEstado';
 import { radius, space, useTema } from '@/theme';
 
@@ -49,6 +49,7 @@ export function CardAtividade({
   margem,
 }: Props) {
   const { cores } = useTema();
+  useNomesEmocoes();
   const largura = useLarguraTela();
   const concluida = atividade.status === 'concluida';
   const arraste = useArrasteLateral({
