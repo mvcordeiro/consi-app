@@ -64,18 +64,8 @@ export function AjustesLembretesTela() {
             onMudar={(i) => void mudar({ ...estado, minutos: INTERVALOS_TELA[i] })}
             rotulo="Lembrar depois de"
             valorAcessivel={`${INTERVALOS_TELA[passoDoIntervalo(estado.minutos)]} minutos`}
+            rotulos={INTERVALOS_TELA.map((m) => `${m} min`)}
           />
-          <View style={styles.rotulos}>
-            {INTERVALOS_TELA.map((m) => (
-              <Texto
-                key={m}
-                estilo="Legenda/Pequena"
-                cor={INTERVALOS_TELA[passoDoIntervalo(estado.minutos)] === m ? cores.text.primary : cores.text.tertiary}
-              >
-                {m} min
-              </Texto>
-            ))}
-          </View>
         </View>
       ) : null}
       {estado.ligados && !permissoes.notificacoes ? (
@@ -101,6 +91,5 @@ const styles = StyleSheet.create({
   secao: { gap: space[12], paddingVertical: space[16] },
   permissao: { gap: space[8] },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
-  rotulos: { flexDirection: 'row', justifyContent: 'space-between' },
   flex: { flex: 1 },
 });
