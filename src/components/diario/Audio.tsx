@@ -8,7 +8,7 @@ import {
   useAudioRecorderState,
 } from 'expo-audio';
 import { useEffect, useState } from 'react';
-import { guardarArquivo } from '@/data/arquivos';
+import { guardarArquivo, useArquivoAberto } from '@/data/arquivos';
 import { Animated, Easing, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { radius, space, useTema } from '@/theme';
@@ -31,7 +31,13 @@ export function minutos(seg: number) {
  * Áudio anexado (Figma 760:6226): pílula bg/raised com o botão de tocar em action/primary,
  * a onda em text/secondary (o trecho já tocado em text/accent), a duração e o "×" opcional.
  */
-export function PlayerAudio({ uri, duracao, onRemover }: { uri: string; duracao: number; onRemover?: () => void }) {
+export function PlayerAudio(props: { uri: string; duracao: number; onRemover?: () => void }) {
+  // O áudio guardado é cifrado (data/arquivos.ts): toca a cópia decifrada.
+  const aberto = useArquivoAberto(props.uri);
+  return <PlayerAudioAberto key={aberto ?? 'abrindo'} {...props} uri={aberto} />;
+}
+
+function PlayerAudioAberto({ uri, duracao, onRemover }: { uri: string | null; duracao: number; onRemover?: () => void }) {
   const { cores } = useTema();
   const player = useAudioPlayer(uri);
   const status = useAudioPlayerStatus(player);

@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { ImagemLocal } from '@/components/ImagemLocal';
 
 import { Botao, CampoTexto, Texto } from '@/components';
 import { TelaAjustes } from '@/components/ajustes';
@@ -103,7 +104,7 @@ export default function Perfil() {
     >
       <View style={styles.foto}>
         <View style={[styles.circulo, { backgroundColor: cores.bg.raised, borderColor: cores.border.subtle }]}>
-          {foto ? <Image source={{ uri: foto }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityLabel="Sua foto" /> : null}
+          {foto ? <ImagemLocal source={{ uri: foto }} style={StyleSheet.absoluteFill} resizeMode="cover" accessibilityLabel="Sua foto" /> : null}
         </View>
         <View style={styles.acoes}>
           <Botao rotulo="Tirar uma selfie" estilo="secundario" onPress={() => void trocarFotoPerfil('selfie')} />

@@ -4,7 +4,7 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { guardarArquivo } from '@/data/arquivos';
+import { guardarArquivo, useArquivoAberto } from '@/data/arquivos';
 import { LIMITES_MIDIA, REGEX_LINK, useAtualizacoes, type Atualizacao, type MidiaAtualizacao } from '@/data/atualizacoes';
 import { horaMinuto, inicioDoDia } from '@/data/emocoes';
 import { borderWidth, radius, space, useTema } from '@/theme';
@@ -258,6 +258,12 @@ function Midia({ midia, onAbrirFoto }: { midia: MidiaAtualizacao; onAbrirFoto: (
 }
 
 function Video({ uri }: { uri: string }) {
+  // O vídeo guardado é cifrado (data/arquivos.ts): toca a cópia decifrada.
+  const aberto = useArquivoAberto(uri);
+  return aberto ? <VideoAberto uri={aberto} /> : <View style={styles.video} />;
+}
+
+function VideoAberto({ uri }: { uri: string }) {
   const player = useVideoPlayer(uri);
   return <VideoView player={player} style={styles.video} nativeControls contentFit="cover" />;
 }

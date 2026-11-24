@@ -1,5 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
-import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ImagemLocal } from '../ImagemLocal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { guardarArquivo } from '@/data/arquivos';
@@ -32,7 +33,7 @@ export function FotoAnexada({ uri, tamanho = 52, onPress }: { uri: string; taman
       accessibilityLabel="Ver foto"
       style={[styles.foto, { width: tamanho, height: tamanho, backgroundColor: cores.bg.raised }]}
     >
-      <Image source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <ImagemLocal source={{ uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
     </Pressable>
   );
 }
@@ -47,7 +48,7 @@ export function VisualizarFoto({ uri, onFechar, onRemover }: { uri: string | nul
         <Pressable onPress={onFechar} hitSlop={10} accessibilityRole="button" accessibilityLabel="Fechar" style={styles.fechar}>
           <Fechar width={24} height={24} corTraco={cores.icon.primary} />
         </Pressable>
-        {uri ? <Image source={{ uri }} style={styles.imagem} resizeMode="contain" /> : null}
+        {uri ? <ImagemLocal source={{ uri }} style={styles.imagem} resizeMode="contain" /> : null}
         {onRemover ? (
           <View style={styles.rodape}>
             <Botao rotulo="Remover foto" estilo="secundario" estado="erro" onPress={onRemover} />

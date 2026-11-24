@@ -1,4 +1,5 @@
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { ImagemLocal } from '../ImagemLocal';
 
 import type { Bloco } from '@/data/catalogo';
 import { borderWidth, inset, radius, space, useTema, type EstiloDeTexto } from '@/theme';
@@ -66,7 +67,7 @@ function BlocoVisivel({ bloco: b, numero, onAlternar }: { bloco: Bloco; numero?:
       return <View style={[styles.divisor, { backgroundColor: cores.border.subtle }]} />;
     case 'imagem':
       return b.imagem ? (
-        <Image
+        <ImagemLocal
           source={typeof b.imagem === 'string' ? { uri: b.imagem } : b.imagem}
           style={[styles.imagem, { aspectRatio: b.proporcao ?? 4 / 3, backgroundColor: cores.bg.raised }]}
           resizeMode="cover"

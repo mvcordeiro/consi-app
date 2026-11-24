@@ -1,7 +1,8 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Image, Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ImagemLocal } from '@/components/ImagemLocal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Alternancia, Botao, CabecalhoVoltar, CampoTexto, Filtro, Folha, Icone, IconeDuracao, Texto, type NomeIcone } from '@/components';
@@ -145,7 +146,7 @@ function Formulario({
           <Aparecer>
             {capa ? (
               <View>
-                <Image source={{ uri: capa }} style={[styles.capa, { backgroundColor: cores.bg.raised }]} />
+                <ImagemLocal source={{ uri: capa }} style={[styles.capa, { backgroundColor: cores.bg.raised }]} />
                 <View style={styles.capaAcoes}>
                   <BotaoSobreImagem rotulo="Trocar capa" icone="anexar-imagem" onPress={escolherCapa} />
                   <BotaoSobreImagem rotulo="Remover capa" icone="excluir" onPress={() => setCapa(undefined)} />

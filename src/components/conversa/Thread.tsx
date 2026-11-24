@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { Animated, Image, PanResponder, Platform, Pressable, StyleSheet, View, type HostInstance } from 'react-native';
+import { Animated, PanResponder, Platform, Pressable, StyleSheet, View, type HostInstance } from 'react-native';
+import { ImagemLocal } from '../ImagemLocal';
 
 import type { Comentario, ReacaoId } from '@/data/catalogo';
 import { useAutorExibido } from '@/data/perfil';
@@ -177,7 +178,7 @@ function ItemComentario({ comentario, acoes }: { comentario: Comentario; acoes: 
             {c.texto ? <Texto estilo="Texto/Pequeno">{c.texto}</Texto> : null}
             {c.imagem ? (
               <Pressable onPress={() => acoes.onAbrirImagem(c.imagem!)} accessibilityRole="imagebutton" accessibilityLabel="Abrir imagem">
-                <Image source={{ uri: c.imagem }} style={[styles.imagem, { backgroundColor: cores.bg.raised }]} />
+                <ImagemLocal source={{ uri: c.imagem }} style={[styles.imagem, { backgroundColor: cores.bg.raised }]} />
               </Pressable>
             ) : null}
             <View style={styles.rodape}>

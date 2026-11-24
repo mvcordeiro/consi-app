@@ -1,5 +1,6 @@
 import { router, type Href } from 'expo-router';
-import { Image, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
+import { ImagemLocal } from './ImagemLocal';
 
 import { useFotoPerfil, useHandle } from '@/data/perfil';
 import { borderWidth, radius, useTema } from '@/theme';
@@ -30,7 +31,7 @@ export function FotoPerfil({ tamanho = 40 }: { tamanho?: number }) {
         },
       ]}
     >
-      {foto ? <Image source={{ uri: foto }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
+      {foto ? <ImagemLocal source={{ uri: foto }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : null}
     </Pressable>
   );
 }

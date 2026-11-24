@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ImagemLocal } from '@/components/ImagemLocal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Filtro, Icone, IconeDuracao, Texto, useAviso } from '@/components';
@@ -79,7 +80,7 @@ export default function Detalhe() {
       <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
         {capa ? (
           <Aparecer>
-            <Image
+            <ImagemLocal
               source={typeof capa === 'string' ? { uri: capa } : capa}
               style={[styles.capa, { backgroundColor: cores.bg.raised }]}
               resizeMode="cover"
