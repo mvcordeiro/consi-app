@@ -36,8 +36,10 @@ import {
   pausaDepoisDeUsar,
   perguntaTempoNoApp,
   regraDaPausa,
+  registrarDesfecho,
   registrarResistencia,
 } from '@/data/pausa';
+import type { DesfechoPausa } from '@/data/banco';
 import { registrar } from '@/data/piloto';
 import { registrarAbertura } from '@/data/aberturasFrequentes';
 import { appPorId } from '@/data/apps';
@@ -165,8 +167,16 @@ export default function Pausa() {
 
   // ─── Saídas ───────────────────────────────────────────────────────────────
   // Pausa do vigia: libera o app e volta para ele, deixando o Consi na Home por trás.
+  // Como a pausa terminou (uma vez por pausa), para as Reflexões da Home.
+  const desfechoGravado = useRef(false);
+  const gravarDesfecho = (desfecho: DesfechoPausa, minutos?: number) => {
+    if (desfechoGravado.current) return;
+    desfechoGravado.current = true;
+    void registrarDesfecho({ grupo: grupo.id, app: params.app, desfecho, checkinEm: momentoEm ?? undefined, minutos });
+  };
   const irParaOApp = (minutos: number) => {
     registrar('pausa_seguiu', { via: doVigia ? 'vigia' : 'manual', minutos });
+    gravarDesfecho('abriu', minutos);
     if (doVigia && seguirParaOApp(params.app, minutos)) {
       marcarLiberacao(params.app, minutos);
       router.dismissTo('/');
@@ -176,10 +186,12 @@ export default function Pausa() {
   const continuar = () => (perguntaTempoNoApp(grupo) ? setEtapa('tempo') : irParaOApp(0));
   // "Diário" abre direto um novo momento (escolher a emoção e escrever), no lugar da pausa.
   // Com o aviso de abertura excessiva, o momento já começa com o app como contexto.
-  const escreverNoDiario = () =>
-    abreMuito
+  const escreverNoDiario = () => {
+    gravarDesfecho('diario');
+    return abreMuito
       ? router.replace({ pathname: '/diario/novo', params: { pergunta: `Por que tenho aberto tanto o ${abreMuito.app}?` } })
       : router.replace('/diario/novo');
+  };
   // Abre o momento do check-in no Diário para escrever (no lugar da pausa).
   const explorarEmocao = () =>
     router.replace({
@@ -193,6 +205,7 @@ export default function Pausa() {
   // Explorar um hobby no lugar do app também é não abrir: vira "não abriu … e explorou Música".
   const explorarHobby = () => {
     registrar('pausa_hobby', { via: doVigia ? 'vigia' : 'manual' });
+    gravarDesfecho('hobby');
     if (doVigia) void bloquearDepoisDeNaoAbrir(params.app);
     registrarResistencia({
       grupo: grupo.id,
@@ -205,6 +218,7 @@ export default function Pausa() {
   };
   const naoAbro = () => {
     registrar('pausa_nao_abri', { via: doVigia ? 'vigia' : 'manual' });
+    gravarDesfecho('naoAbriu');
     // o app fica fechado por alguns minutos (Ajustes → Pausa e lembretes)
     if (doVigia) void bloquearDepoisDeNaoAbrir(params.app);
     // Um check-in já feito nesta pausa entra junto; um feito depois é ligado em `soltar`.
