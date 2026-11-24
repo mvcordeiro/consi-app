@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, Texto, useAviso } from '@/components';
+import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, IconeDuracao, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { Blocos } from '@/components/blocos';
 import { ChevronDireita } from '@/components/home/assets';
@@ -76,7 +76,7 @@ export default function Detalhe() {
             rotulo={hobbyInfo(a.hobby).nome}
             iconeNode={<IconeHobby hobby={a.hobby} icone={a.icone} caixa={16} cor={cores.text.primary} />}
           />
-          <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
+          <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<IconeDuracao minutos={a.minutos} />} />
           {minha?.lembrete && minha.status === 'andamento' ? (
             <Etiqueta rotulo={minha.lembrete.rotulo} tom="info" iconeNode={<Icone nome="calendario" tamanho={16} />} />
           ) : null}

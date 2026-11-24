@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Image, Keyboard, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Alternancia, Botao, CabecalhoVoltar, CampoTexto, Filtro, Folha, Icone, Texto, type NomeIcone } from '@/components';
+import { Alternancia, Botao, CabecalhoVoltar, CampoTexto, Filtro, Folha, Icone, IconeDuracao, Texto, type NomeIcone } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { BarraBlocos, EditorBlocos, useEditorBlocos } from '@/components/blocos';
 import { CardSugestao, IconeHobby } from '@/components/hobbies';
@@ -240,7 +240,7 @@ function Formulario({
                   rotulo={n.rotulo}
                   ativo={n.id === nivelDuracao(minutos).id}
                   onPress={() => setMinutos(n.minutos)}
-                  icone={(cor) => <Icone nome="relogio" tamanho={16} cor={cor} />}
+                  icone={(cor) => <IconeDuracao minutos={n.minutos} cor={cor} />}
                 />
               ))}
             </ScrollView>

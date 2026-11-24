@@ -420,9 +420,12 @@ internal object Widgets {
   /** Mesmos limites de src/data/duracao.ts: sem número, só o rótulo. */
   private fun duracao(minutos: Int) = when {
     minutos <= 0 -> ""
+    minutos <= 5 -> "Num instante"
     minutos <= 15 -> "É rápido"
-    minutos <= 45 -> "Leva um tempinho"
-    else -> "Pode demorar"
+    minutos <= 30 -> "Leva um tempinho"
+    minutos <= 60 -> "Pede um tempo com calma"
+    minutos <= 120 -> "Pode demorar"
+    else -> "Para um dia sem pressa"
   }
 
   private fun atividades(c: Context, id: Int, t: SizeF): RemoteViews {

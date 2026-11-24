@@ -7,7 +7,7 @@ import { Platform, ScrollView, StyleSheet, View, type HostInstance } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { captureRef } from 'react-native-view-shot';
 
-import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, Texto, useAviso } from '@/components';
+import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, IconeDuracao, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { IconeHobby } from '@/components/hobbies';
 import { vibrar } from '@/components/hobbies/Arraste';
@@ -113,7 +113,7 @@ export default function Compartilhar() {
                 </View>
                 <View style={styles.etiquetas}>
                   <Etiqueta rotulo={hobby.nome} />
-                  <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
+                  <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<IconeDuracao minutos={a.minutos} />} />
                 </View>
               </View>
               <Texto estilo="Títulos/Grande">{a.titulo}</Texto>
