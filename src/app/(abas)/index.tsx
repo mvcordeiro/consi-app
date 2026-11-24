@@ -8,7 +8,6 @@ import {
   Drops,
   Grupos,
   HeroEmocoes,
-  Reflexoes,
   SuaSemana,
   TopoHome,
 } from '@/components/home';
@@ -91,8 +90,6 @@ export default function Inicio() {
           />
         </View>
       </View>
-      {/* Reflexões: logo abaixo das emoções, só quando há o que mostrar (fora da ordem das seções). */}
-      <Reflexoes margem={space[24]} />
       {/* Seções abaixo da hero: ordem e visibilidade vêm de Ajustes → Personalizar. */}
       {secoesHome
         .filter((s) => s.visivel)
