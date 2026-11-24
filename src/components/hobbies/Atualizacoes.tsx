@@ -1,13 +1,13 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { guardarArquivo } from '@/data/arquivos';
 import { LIMITES_MIDIA, REGEX_LINK, useAtualizacoes, type Atualizacao, type MidiaAtualizacao } from '@/data/atualizacoes';
-import { horaMinuto } from '@/data/emocoes';
-import { radius, space, useTema } from '@/theme';
+import { horaMinuto, inicioDoDia } from '@/data/emocoes';
+import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { CampoTexto } from '../CampoTexto';
 import { FotoAnexada, VisualizarFoto } from '../diario/Fotos';
@@ -16,10 +16,29 @@ import { Folha, ItemFolha } from '../Folha';
 import { Icone, type NomeIcone } from '../Icone';
 import { Texto } from '../Texto';
 
+const LADO_MARCADOR = 28;
+
+/** "Hoje", "Ontem" ou "22 de nov." */
+function rotuloDia(em: number) {
+  const dia = inicioDoDia(0, new Date(em)).getTime();
+  if (dia === inicioDoDia(0).getTime()) return 'Hoje';
+  if (dia === inicioDoDia(1).getTime()) return 'Ontem';
+  return new Date(em).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+}
+
+const ICONE: Record<MidiaAtualizacao['tipo'] | 'texto', NomeIcone> = {
+  texto: 'pena-escrita',
+  foto: 'inserir-imagem',
+  video: 'claquete',
+  audio: 'microfone',
+};
+
 /**
- * "Suas atualizações" no detalhe de uma atividade salva (issue #6): linha do tempo privada,
- * como um chat. Texto (links tocáveis), foto, vídeo (até 60 s) e áudio (até 5 min). Segurar uma
- * atualização abre Editar e Apagar. Tudo fica só no aparelho.
+ * "Suas atualizações" (issue #6), a segunda visão do detalhe de uma atividade salva: no topo o
+ * compositor (texto com links tocáveis, foto, vídeo até 60 s, áudio até 5 min) e, abaixo, a
+ * linha do tempo como a de "Sua semana": dias do mais recente ao mais antigo, a hora à esquerda,
+ * o marcador do tipo ligado ao próximo por um traço e o conteúdo num card. Segurar um card abre
+ * Editar e Apagar. Tudo fica só no aparelho.
  */
 export function Atualizacoes({ atividadeId }: { atividadeId: string }) {
   const { cores } = useTema();
@@ -73,31 +92,17 @@ export function Atualizacoes({ atividadeId }: { atividadeId: string }) {
 
   const pode = !!texto.trim() || !!midia;
 
+  // Do mais recente para o mais antigo, agrupado por dia.
+  const dias: { rotulo: string; itens: Atualizacao[] }[] = [];
+  for (const a of [...lista].sort((x, y) => y.em - x.em)) {
+    const r = rotuloDia(a.em);
+    const ultimo = dias[dias.length - 1];
+    if (ultimo?.rotulo === r) ultimo.itens.push(a);
+    else dias.push({ rotulo: r, itens: [a] });
+  }
+
   return (
     <View style={styles.secao}>
-      <Texto estilo="Títulos/Pequeno" accessibilityRole="header">
-        Suas atualizações
-      </Texto>
-      <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-        Uma linha do tempo só sua: como foi, um link, uma foto, um vídeo ou um áudio.
-      </Texto>
-
-      {lista.map((a) => (
-        <Pressable
-          key={a.id}
-          onLongPress={() => setMenu(a)}
-          delayLongPress={320}
-          accessibilityHint="Segure para editar ou apagar"
-          style={({ pressed }) => [styles.balao, { backgroundColor: pressed ? cores.bg.sunken : cores.bg.raised }]}
-        >
-          {a.midia ? <Midia midia={a.midia} onAbrirFoto={setFotoAberta} /> : null}
-          {a.texto ? <TextoComLinks texto={a.texto} /> : null}
-          <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
-            {`${new Date(a.em).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} · ${horaMinuto(a.em)}${a.editadaEm ? ' · editada' : ''}`}
-          </Texto>
-        </Pressable>
-      ))}
-
       {/* Compositor */}
       <View style={[styles.compositor, { borderColor: cores.border.subtle }]}>
         {editando ? (
@@ -126,7 +131,7 @@ export function Atualizacoes({ atividadeId }: { atividadeId: string }) {
           <GravandoAudio segundos={gravador.segundos} onParar={() => void pararAudio()} />
         ) : (
           <CampoTexto
-            placeholder="Escreva uma atualização…"
+            placeholder="Como foi? Um link, uma ideia, um passo…"
             value={texto}
             onChangeText={setTexto}
             maxLength={LIMITES_MIDIA.textoMax}
@@ -147,6 +152,42 @@ export function Atualizacoes({ atividadeId }: { atividadeId: string }) {
           <BotaoIcone icone="aviao-papel" rotulo={editando ? 'Salvar edição' : 'Adicionar atualização'} onPress={() => void enviar()} desligado={!pode} />
         </View>
       </View>
+
+      {/* Linha do tempo */}
+      {dias.length ? (
+        dias.map((d) => (
+          <View key={d.rotulo} style={styles.dia}>
+            <Texto estilo="Títulos/Pequeno" accessibilityRole="header" style={styles.rotuloDia}>
+              {d.rotulo}
+            </Texto>
+            {d.itens.map((a, i) => (
+              <LinhaDoTempo key={a.id} hora={horaMinuto(a.em)} icone={ICONE[a.midia?.tipo ?? 'texto']} linha={i < d.itens.length - 1}>
+                <Pressable
+                  onLongPress={() => setMenu(a)}
+                  delayLongPress={320}
+                  accessibilityHint="Segure para editar ou apagar"
+                  style={({ pressed }) => [
+                    styles.card,
+                    { borderColor: cores.border.subtle, backgroundColor: pressed ? cores.bg.sunken : cores.bg.base },
+                  ]}
+                >
+                  {a.midia ? <Midia midia={a.midia} onAbrirFoto={setFotoAberta} /> : null}
+                  {a.texto ? <TextoComLinks texto={a.texto} /> : null}
+                  {a.editadaEm ? (
+                    <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+                      editada
+                    </Texto>
+                  ) : null}
+                </Pressable>
+              </LinhaDoTempo>
+            ))}
+          </View>
+        ))
+      ) : (
+        <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.centro}>
+          Ainda não há atualizações. Conte como foi, guarde um link, uma foto, um vídeo ou um áudio: só você vê.
+        </Texto>
+      )}
 
       <Folha visivel={!!menu} onFechar={() => setMenu(null)} titulo="Atualização">
         <View>
@@ -172,6 +213,25 @@ export function Atualizacoes({ atividadeId }: { atividadeId: string }) {
         </View>
       </Folha>
       <VisualizarFoto uri={fotoAberta} onFechar={() => setFotoAberta(null)} />
+    </View>
+  );
+}
+
+/** Uma linha da linha do tempo, como em "Sua semana": hora, marcador ligado ao próximo e o card. */
+function LinhaDoTempo({ hora, icone, linha, children }: { hora: string; icone: NomeIcone; linha: boolean; children: ReactNode }) {
+  const { cores } = useTema();
+  return (
+    <View style={styles.linhaTempo}>
+      <Texto estilo="Texto/Botões e rótulos" style={styles.hora}>
+        {hora}
+      </Texto>
+      <View style={styles.trilho}>
+        <View style={[styles.marcador, { backgroundColor: cores.bg.sunken }]}>
+          <Icone nome={icone} tamanho={16} cor={cores.text.primary} />
+        </View>
+        {linha ? <View style={[styles.traco, { backgroundColor: cores.border.subtle }]} /> : null}
+      </View>
+      <View style={[styles.conteudoLinha, linha && styles.comEspaco]}>{children}</View>
     </View>
   );
 }
@@ -228,11 +288,27 @@ function TextoComLinks({ texto }: { texto: string }) {
 }
 
 const styles = StyleSheet.create({
-  secao: { gap: space[12] },
-  balao: { padding: space[12], borderRadius: radius.lg, gap: space[8] },
-  compositor: { gap: space[8], paddingTop: space[8], borderTopWidth: 1 },
+  secao: { gap: space[24] },
+  compositor: { gap: space[8], paddingBottom: space[8], borderBottomWidth: borderWidth.thin },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   flex: { flex: 1 },
+  centro: { textAlign: 'center' },
+  dia: { gap: space[12] },
+  rotuloDia: { marginBottom: space[4] },
+  linhaTempo: { flexDirection: 'row', gap: space[12] },
+  hora: { width: 44, paddingTop: 6, fontVariant: ['tabular-nums'] },
+  trilho: { width: LADO_MARCADOR, alignItems: 'center' },
+  marcador: { width: LADO_MARCADOR, height: LADO_MARCADOR, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  traco: { flex: 1, width: borderWidth.thin, marginVertical: space[4] },
+  conteudoLinha: { flex: 1, minWidth: 0 },
+  comEspaco: { paddingBottom: space[12] },
+  card: {
+    gap: space[8],
+    paddingHorizontal: space[12] - borderWidth.thin,
+    paddingVertical: space[8],
+    borderRadius: radius.md,
+    borderWidth: borderWidth.thin,
+  },
   botaoIcone: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   video: { width: '100%', aspectRatio: 16 / 9, borderRadius: radius.md, overflow: 'hidden' },
   link: { textDecorationLine: 'underline' },

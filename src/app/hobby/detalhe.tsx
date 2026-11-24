@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, IconeDuracao, Texto, useAviso } from '@/components';
+import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Filtro, Icone, IconeDuracao, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { Blocos } from '@/components/blocos';
 import { ChevronDireita } from '@/components/home/assets';
@@ -26,6 +27,7 @@ export default function Detalhe() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const h = useHobbies();
   const exibir = useAutorExibido();
+  const [visao, setVisao] = useState<'atividade' | 'atualizacoes'>('atividade');
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const acoes = useAcoesAtividade({
     aoApagar: () => router.back(),
@@ -63,6 +65,17 @@ export default function Detalhe() {
           }
         />
       </View>
+      {minha ? (
+        <View style={[styles.margem, styles.visoes]} accessibilityRole="tablist">
+          <Filtro rotulo="Atividade" ativo={visao === 'atividade'} onPress={() => setVisao('atividade')} />
+          <Filtro rotulo="Suas atualizações" ativo={visao === 'atualizacoes'} onPress={() => setVisao('atualizacoes')} />
+        </View>
+      ) : null}
+      {minha && visao === 'atualizacoes' ? (
+        <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Atualizacoes atividadeId={minha.id} />
+        </ScrollView>
+      ) : (
       <ScrollView contentContainerStyle={styles.conteudo} showsVerticalScrollIndicator={false}>
         {capa ? (
           <Aparecer>
@@ -112,12 +125,6 @@ export default function Detalhe() {
           <Blocos blocos={a.conteudo} onAlternarTarefa={minha ? (bid) => h.alternarTarefa(minha.id, bid) : undefined} />
         </Aparecer>
 
-        {minha ? (
-          <Aparecer atraso={180}>
-            <Atualizacoes atividadeId={minha.id} />
-          </Aparecer>
-        ) : null}
-
         {minha?.status === 'concluida' ? (
           <Aparecer atraso={200} style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
             <Texto estilo="Títulos/Pequeno">
@@ -166,7 +173,9 @@ export default function Detalhe() {
           )}
         </Aparecer>
       </ScrollView>
+      )}
 
+      {visao === 'atualizacoes' && minha ? null : (
       <View style={[styles.rodape, { borderTopColor: cores.border.subtle }]}>
         {naPilha && item.tipo === 'catalogo' ? (
           <View style={styles.botoes}>
@@ -221,6 +230,7 @@ export default function Detalhe() {
           </Texto>
         ) : null}
       </View>
+      )}
       {acoes.folhas}
       {aviso}
     </SafeAreaView>
@@ -230,6 +240,7 @@ export default function Detalhe() {
 const styles = StyleSheet.create({
   tela: { flex: 1 },
   margem: { paddingHorizontal: inset.md },
+  visoes: { flexDirection: 'row', gap: space[8], paddingBottom: space[8] },
   conteudo: { padding: inset.lg, gap: space[32] },
   capa: { width: '100%', aspectRatio: 16 / 9, borderRadius: radius.card },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
