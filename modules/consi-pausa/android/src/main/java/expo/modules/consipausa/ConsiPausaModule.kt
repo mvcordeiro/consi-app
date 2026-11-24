@@ -133,6 +133,13 @@ class ConsiPausaModule : Module() {
       LembreteDiario.agendar(context)
     }
 
+    // ─── Lembretes de atividades ────────────────────────────────────────────
+    /** `lista`: JSON [{ id, titulo, quando (epoch ms), semanal }]; "[]" desliga tudo. */
+    Function("definirLembretesAtividades") { lista: String ->
+      prefs.atividadesLembretes = lista
+      LembreteAtividades.agendar(context)
+    }
+
     // ─── Saídas da pausa ────────────────────────────────────────────────────
     /** Vai para a tela inicial do celular (não a do Consi), deixando o Consi por trás. */
     Function("irParaInicio") {

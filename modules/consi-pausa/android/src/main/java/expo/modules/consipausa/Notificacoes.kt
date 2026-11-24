@@ -31,6 +31,9 @@ internal object Notificacoes {
   const val CANAL_CONVITE = "consi-piloto-2"
   const val ID_DIARIO = 4206
   const val CANAL_DIARIO = "consi-diario"
+  /** Lembretes de atividades: um id por atividade, a partir daqui. */
+  const val ID_ATIVIDADE_BASE = 50000
+  const val CANAL_ATIVIDADES = "consi-atividades"
   private val CANAIS_ANTIGOS = listOf("consi-lembretes", "consi-cuidado-tela", "consi-piloto")
   /** A pessoa arrastou a fixa para o lado (Android 14+ deixa): o serviço publica de novo. */
   const val ACAO_REPOR = "expo.modules.consipausa.REPOR_NOTIFICACAO"
@@ -59,6 +62,7 @@ internal object Notificacoes {
     nm.createNotificationChannel(alto(CANAL_CUIDADO_TELA, "Cuidado com o tempo de tela", "Uma sugestão de pausa depois de muito tempo seguido no celular."))
     nm.createNotificationChannel(alto(CANAL_CONVITE, "Piloto de teste", "O convite para contar como foi a semana de teste do Consi."))
     nm.createNotificationChannel(alto(CANAL_DIARIO, "Lembrete do Diário", "Uma pergunta para escrever no Diário, nos dias e no horário que você escolheu."))
+    nm.createNotificationChannel(alto(CANAL_ATIVIDADES, "Lembretes de atividades", "Um aviso no horário que você marcou para uma atividade."))
   }
 
   /** Convite do piloto (dia 7). Tocar abre o Consi, onde a folha leva ao formulário. */
@@ -251,6 +255,29 @@ internal object Notificacoes {
         .setDefaults(NotificationCompat.DEFAULT_ALL)
         .setCategory(NotificationCompat.CATEGORY_REMINDER)
         .setContentIntent(PendingIntent.getActivity(context, 9, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+        .build(),
+    )
+  }
+
+  /** Lembrete de uma atividade salva (LembreteAtividades.kt). Tocar abre o detalhe dela. */
+  fun lembreteAtividade(context: Context, id: String, titulo: String) {
+    criarCanais(context)
+    val abrir = Intent(Intent.ACTION_VIEW, Uri.parse("consi://hobby/detalhe?id=${Uri.encode(id)}"))
+      .setPackage(context.packageName)
+      .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val n = ID_ATIVIDADE_BASE + (id.hashCode() and 0xFFFF)
+    publicar(
+      context,
+      n,
+      NotificationCompat.Builder(context, CANAL_ATIVIDADES)
+        .setSmallIcon(R.drawable.consi_notificacao)
+        .setContentTitle(titulo)
+        .setContentText("Um tempinho para a sua atividade? Sem pressa, se hoje não der.")
+        .setAutoCancel(true)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_ALL)
+        .setCategory(NotificationCompat.CATEGORY_REMINDER)
+        .setContentIntent(PendingIntent.getActivity(context, n, abrir, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
         .build(),
     )
   }

@@ -52,6 +52,8 @@ type ModuloConsiPausa = {
   /** A partir do APK versionCode 12: */
   /** Lembrete diário de escrita (dias: bits de domingo = 0 a sábado = 6; perguntas em JSON). */
   definirLembreteDiario?(ligado: boolean, hora: number, minuto: number, dias: number, perguntas: string): void;
+  /** A partir do APK com a 1.2.0: lembretes de atividades, JSON [{ id, titulo, quando, semanal }]. */
+  definirLembretesAtividades?(lista: string): void;
   /** Tela inicial do celular (não a do Consi). */
   irParaInicio?(): boolean;
   /** Depois do "Dessa vez não abro": o app fica fechado por `minutos`. */

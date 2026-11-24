@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { AtividadeMinha } from '@/data/catalogo';
 import { useHobbies } from '@/data/hobbiesEstado';
+import { pedirNotificacoes } from '@/data/vigia';
 import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Alternancia } from '../Alternancia';
@@ -30,6 +31,9 @@ export const irPara = {
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const HORARIOS = ['08:00', '12:30', '18:00', '20:00', '21:30'];
+/** "Toda segunda", "Todo sábado": o rótulo do lembrete semanal. */
+const NOMES_DIAS_ROTULO = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+const todo = (dia: number) => `${dia === 0 || dia === 6 ? 'Todo' : 'Toda'} ${NOMES_DIAS_ROTULO[dia]}`;
 
 /** Próximos 7 dias: "Hoje", "Amanhã" e depois "Sáb 22". */
 function proximosDias() {
@@ -66,6 +70,7 @@ export function useAcoesAtividade(opcoes?: {
   const [dia, setDia] = useState(1);
   const [hora, setHora] = useState('20:00');
   const [dias] = useState(proximosDias);
+  const [semanal, setSemanal] = useState(false);
 
   const abrirMenu = (a: AtividadeMinha) => {
     setUltimo(a);
@@ -73,6 +78,7 @@ export function useAcoesAtividade(opcoes?: {
   };
   const abrirAgenda = (a: AtividadeMinha) => {
     setUltimo(a);
+    setSemanal(!!a.lembrete?.semanal);
     setAgendando(a);
   };
   const depoisDoMenu = (fn: () => void) => {
@@ -94,8 +100,9 @@ export function useAcoesAtividade(opcoes?: {
     const [hh, mm] = hora.split(':').map(Number);
     const d = new Date(dias[dia].data);
     d.setHours(hh, mm);
-    const rotulo = `${dias[dia].rotulo} · ${hora}`;
-    h.agendar(agendando.id, { quando: d.getTime(), rotulo });
+    const rotulo = semanal ? `${todo(d.getDay())} · ${hora}` : `${dias[dia].rotulo} · ${hora}`;
+    h.agendar(agendando.id, { quando: d.getTime(), rotulo, semanal });
+    void pedirNotificacoes();
     setAgendando(null);
     opcoes?.aoAgendar?.(rotulo);
   };
@@ -188,6 +195,15 @@ export function useAcoesAtividade(opcoes?: {
               ))}
             </ScrollView>
           </View>
+          <View style={styles.linhaRepetir}>
+            <View style={styles.flex}>
+              <Texto estilo="Texto/Botões e rótulos">Repetir toda semana</Texto>
+              <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+                {`${todo(dias[dia].data.getDay())}, no mesmo horário.`}
+              </Texto>
+            </View>
+            <Alternancia ligado={semanal} onMudar={setSemanal} rotulo="Repetir toda semana" />
+          </View>
           {/* Sincronização: ainda não configurada (pedido de 18/11/2026, Google Agenda depois). */}
           <View style={[styles.sincronizar, { borderColor: cores.border.subtle }]}>
             <Icone nome="calendario" />
@@ -229,6 +245,7 @@ const styles = StyleSheet.create({
   grupo: { gap: space[8] },
   chips: { gap: space[8] },
   flex: { flex: 1, minWidth: 0 },
+  linhaRepetir: { flexDirection: 'row', alignItems: 'center', gap: space[12] },
   sincronizar: {
     flexDirection: 'row',
     alignItems: 'center',
