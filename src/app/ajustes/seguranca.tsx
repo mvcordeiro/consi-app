@@ -28,67 +28,66 @@ const SECOES: Secao[] = [
   {
     titulo: 'Em poucas palavras',
     paragrafos: [
-      'O que você escreve e sente no Consi fica no seu celular, trancado. Não existe conta, não existe senha nossa, não existe anúncio e ninguém lê o seu diário: nem nós.',
-      'Abaixo explicamos como o app foi feito, o que fica onde, o que sai do celular (e só quando você usa algo que precisa de internet) e como você mesmo pode conferir tudo isso.',
+      'O que você escreve e sente no Consi fica no seu celular. Não existe conta nem senha, não existe anúncio, e ninguém além de você lê o seu diário.',
+      'Abaixo está explicado como o app foi feito, o que fica guardado onde, o que sai do celular e como você mesmo pode conferir tudo isso.',
     ],
   },
   {
     titulo: 'Como o Consi foi feito',
     paragrafos: [
-      'O Consi é pensado, desenhado e decidido por uma pessoa. Para escrever o código, ela trabalha com a ajuda do Claude, uma inteligência artificial da Anthropic. Funciona como uma dupla: a pessoa diz o que o app deve fazer e por quê, a IA escreve, e cada mudança é revisada e testada antes de chegar até você.',
+      'O Consi é pensado, desenhado e decidido por uma pessoa. O código é escrito com a ajuda do Claude, uma inteligência artificial da Anthropic, e cada mudança é revisada e testada antes de chegar até você.',
       'Usar IA para programar não quer dizer que existe IA dentro do app. O Consi não manda nada do que você escreve, sente ou usa para nenhuma inteligência artificial.',
-      'Todo o código é aberto. Qualquer pessoa pode ler, linha por linha, o que o app faz. É como uma cozinha com parede de vidro: você não precisa confiar na nossa palavra, dá para olhar.',
+      'Todo o código é aberto: qualquer pessoa pode ler o que o app faz.',
     ],
   },
   {
     titulo: 'Onde ficam os seus registros',
     paragrafos: [
-      'Diário, check-ins de emoção, hobbies, atividades, grupos de apps e preferências ficam guardados dentro do seu celular, num banco de dados criptografado. Criptografado quer dizer embaralhado: sem a chave, o arquivo é só um monte de letras sem sentido.',
-      'A chave fica no cofre do próprio Android, o mesmo lugar onde o sistema guarda as chaves de banco e de senhas. Outro app instalado no celular não consegue pegar essa chave.',
-      'Se você ligar a trava do Diário, o PIN também não fica guardado como você digitou: guardamos só uma "impressão digital" dele, que serve para conferir se o PIN está certo, mas não deixa descobrir qual é.',
-      'Fotos, áudios e vídeos que você anexa ficam na pasta do próprio Consi, que outros apps não acessam.',
+      'Diário, check-ins de emoção, hobbies, atividades, grupos de apps e preferências ficam guardados dentro do seu celular, num banco de dados criptografado. Criptografado quer dizer embaralhado: sem a chave, o arquivo não pode ser lido.',
+      'A chave fica no armazenamento seguro do próprio Android. Outros apps instalados no celular não têm acesso a ela.',
+      'Fotos, áudios e vídeos que você anexa ficam na pasta privada do Consi, que o Android isola dos outros apps. Eles não passam pela mesma criptografia do banco de dados.',
+      'Se você ligar a trava do Diário, o PIN não fica guardado como foi digitado: fica só uma versão embaralhada, que serve para conferir se o PIN está certo, mas não permite descobrir qual é.',
     ],
   },
   {
-    titulo: 'O que sai do celular, e só se você usar',
+    titulo: 'O que sai do celular',
     paragrafos: [
-      'Algumas partes do Consi precisam de internet. Elas falam com um servidor nosso, sem o seu nome e sem login: o app cria uma identidade anônima, só um código aleatório.',
-      'Sugestões e votos: o texto da ideia que você envia e os seus votos. Outras pessoas veem a sugestão sem saber que foi você.',
-      'Feedback: o que você escreve, o print se você anexar, a versão do app e o modelo do celular. Só a equipe lê.',
-      'Seu @: só o @ que você escolher, para ninguém mais usar o mesmo. A sua foto não sai do celular.',
-      'Dados de uso do piloto: durante o teste, avisos como "fez uma pausa" ou "abriu o Diário", ligados a um código aleatório. Nunca o que você escreve, nunca o nome dos seus apps ou hobbies. Dá para desligar aqui mesmo, em Privacidade e dados.',
-      'O servidor tem regras que valem para cada linha guardada: cada pessoa só mexe no que é dela, e o que é privado (feedback, prints) só a equipe consegue ler.',
+      'Algumas partes do Consi usam a internet. Nenhuma delas pede o seu nome ou e-mail: o app usa um código aleatório no lugar de uma conta.',
+      'Sugestões e votos: o texto da ideia e os seus votos. Depois de aprovada, a sugestão fica visível para quem usa o Consi, sem mostrar quem enviou. Não coloque informações pessoais numa sugestão.',
+      'Feedback: o que você escreve, o print se você anexar, a versão do app e o modelo do celular. Fica visível só para quem administra o Consi.',
+      'Seu @: só o @ que você escolher, para que ninguém mais use o mesmo. A sua foto não sai do celular.',
+      'Dados de uso do piloto: durante o teste, o app envia avisos como "abriu o app", "visitou a tela do Diário" ou "registrou um momento", junto com um código aleatório deste celular, a versão do app e o dia. Sobre os momentos, vai só a informação de que havia texto ou não; o texto em si nunca é enviado, nem os nomes dos seus apps ou hobbies. Dá para desligar em Privacidade e dados, e os avisos que ainda não tinham sido enviados são apagados.',
+      'Atualizações e relógio: ao abrir, o app verifica se há uma versão nova para baixar. Durante o piloto, também confere a hora no servidor, para contar os dias do teste certo. Nenhuma dessas verificações leva os seus registros.',
+      'O servidor tem regras para cada registro guardado: cada pessoa só mexe no que é dela, e o que é privado, como feedback e prints, só quem administra o Consi consegue ler.',
     ],
   },
   {
     titulo: 'O que o Consi nunca faz',
     paragrafos: [
-      'Não mostra anúncios. Não vende nem compartilha dados com ninguém. Não tem rastreadores de empresas de publicidade. Não lê o conteúdo dos outros apps. Não manda o seu diário para servidor nenhum, nem para uma IA.',
+      'Não mostra anúncios. Não vende nem compartilha dados. Não usa serviços de rastreamento de empresas de publicidade ou de análise. Não lê o conteúdo dos outros apps. Não manda o seu diário, as suas emoções, fotos ou áudios para servidor nenhum, nem para uma IA.',
     ],
   },
   {
     titulo: 'Por que o app pede algumas permissões',
     paragrafos: [
-      'Acesso de uso: para saber qual app você está abrindo e mostrar a pausa antes dele. O Consi vê só o nome do app, nunca o que tem dentro.',
+      'Acesso de uso: para saber qual app você está abrindo e mostrar a pausa antes dele. Com essa permissão, o Consi sabe quais apps você abre e quando, mas não vê o que tem dentro deles. Essa informação fica no celular.',
       'Sobrepor a outros apps: para a pausa aparecer por cima do app que você abriu.',
-      'Notificações: para os lembretes que você escolher (pausa, Diário, atividades).',
+      'Notificações: para os lembretes que você escolher e para o aviso de que a pausa está ativa.',
       'Microfone e câmera: só quando você toca para gravar um áudio, tirar uma selfie ou uma foto.',
-      'Iniciar com o celular: para os seus lembretes continuarem marcados depois que o celular reinicia.',
-      'Digital ou rosto: só se você ligar essa opção na trava do Diário. Quem confere é o próprio Android; o Consi recebe apenas um "é você" ou "não é".',
+      'Iniciar com o celular: para os lembretes continuarem marcados depois que o celular reinicia.',
+      'Digital ou rosto: só se você ligar essa opção na trava do Diário. Quem confere é o próprio Android; o Consi recebe apenas a resposta de que é você ou não.',
     ],
   },
   {
-    titulo: 'O que testamos',
+    titulo: 'Revisão de segurança',
     paragrafos: [
-      'Em novembro de 2026 revisamos o app inteiro procurando falhas: as bibliotecas que o app usa, se havia alguma chave secreta esquecida no código, as regras do servidor, a criptografia no celular e cada permissão do Android.',
-      'Encontramos três pontos ligados à trava do Diário e corrigimos todos: exportar os dados com o Diário trancado, apagar tudo sem apagar o PIN e trocar a trava sem provar que era você. Hoje, com o Diário trancado, essas três coisas pedem o bloqueio do celular.',
-      'Essa revisão foi feita com ajuda de IA e conferida por gente. Ainda não houve uma auditoria de uma empresa independente; quando houver, ela aparece aqui.',
+      'Ainda essa semana revisamos o app inteiro em busca de falhas: as bibliotecas que ele usa, o código, as regras do servidor, a criptografia no celular e as permissões do Android. Nenhum problema foi encontrado.',
     ],
   },
   {
     titulo: 'O que ainda pode melhorar',
     paragrafos: [
-      'Preferimos contar: os widgets da tela inicial mostram as emoções da semana mesmo com o Diário trancado (nunca o que você escreveu). Um PIN de 4 números protege bem no dia a dia, mas é mais fraco que o bloqueio do próprio celular, então mantenha o seu celular com senha. E, se o celular não tiver nenhum bloqueio e você esquecer o PIN, não há como abrir o Diário pelo app.',
+      'Os widgets da tela inicial mostram as emoções da semana mesmo com o Diário trancado, nunca o que você escreveu. Um PIN curto é mais fraco que o bloqueio do próprio celular, então mantenha o celular com senha. E, se o celular não tiver nenhum bloqueio e você esquecer o PIN, não há como abrir o Diário pelo app.',
     ],
   },
 ];
