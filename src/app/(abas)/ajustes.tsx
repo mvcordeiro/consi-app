@@ -59,7 +59,7 @@ export default function Ajustes() {
           />
         ) : null}
         {nuvem ? (
-          <LinhaLink titulo="Mandar feedback" descricao="Conte um problema, uma ideia ou um elogio. Só a equipe lê." onPress={() => ir('/ajustes/feedback')} />
+          <LinhaLink titulo="Mandar feedback" descricao="Conte um problema, uma ideia ou um elogio." onPress={() => ir('/ajustes/feedback')} />
         ) : null}
         <LinhaLink titulo="Privacidade e dados" descricao="Onde seus dados ficam, exportar e apagar." onPress={() => ir('/ajustes/privacidade')} />
         <LinhaLink titulo="Sobre" valor={`Versão ${versaoDoApp()}`} onPress={() => ir('/ajustes/sobre')} />
