@@ -74,7 +74,8 @@
         {
           "faceIDPermission": "Permita que o $(PRODUCT_NAME) use o Face ID para abrir o Diário."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "scheme": "consi",
     "experiments": {

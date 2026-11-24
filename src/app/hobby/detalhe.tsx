@@ -11,6 +11,8 @@ import { rotuloDuracao } from '@/data/duracao';
 import { hobbyInfo, sentimentos } from '@/data/catalogo';
 import { emocaoPorId } from '@/data/emocoes';
 import { dataCurta, useHobbies } from '@/data/hobbiesEstado';
+import { useAutorExibido } from '@/data/perfil';
+import { Atualizacoes } from '@/components/hobbies/Atualizacoes';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
 
 /**
@@ -23,6 +25,7 @@ export default function Detalhe() {
   const { cores } = useTema();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const h = useHobbies();
+  const exibir = useAutorExibido();
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const acoes = useAcoesAtividade({
     aoApagar: () => router.back(),
@@ -38,7 +41,7 @@ export default function Detalhe() {
   const minha = item.minha;
   const naPilha = item.tipo === 'catalogo' && h.pilha(a.hobby).some((s) => s.id === a.id);
   const editavel = minha ? h.podeEditar(minha) : false;
-  const autor = a.permissoes.mostrarAutor ? a.autor : { usuario: 'Alguém da comunidade', iniciais: '·' };
+  const autor = a.permissoes.mostrarAutor ? exibir(a.autor) : { usuario: 'Alguém da comunidade', iniciais: '·' };
   const total = h.totalComentarios(a.id);
   const capa = a.capa;
 
@@ -108,6 +111,12 @@ export default function Detalhe() {
         <Aparecer atraso={160}>
           <Blocos blocos={a.conteudo} onAlternarTarefa={minha ? (bid) => h.alternarTarefa(minha.id, bid) : undefined} />
         </Aparecer>
+
+        {minha ? (
+          <Aparecer atraso={180}>
+            <Atualizacoes atividadeId={minha.id} />
+          </Aparecer>
+        ) : null}
 
         {minha?.status === 'concluida' ? (
           <Aparecer atraso={200} style={[styles.cartao, { backgroundColor: cores.bg.raised }]}>
