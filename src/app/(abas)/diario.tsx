@@ -1,3 +1,4 @@
+import { ProtegerDiario } from '@/components/diario/ProtegerDiario';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
@@ -33,7 +34,15 @@ import { radius, space, useTema } from '@/theme';
  * Depois de guardar um momento, chega aqui com `guardado` e mostra "Sua linha do tempo"
  * (760:6257) com o momento novo destacado e o aviso com "Desfazer".
  */
-export default function Diario() {
+export default function AbaDiario() {
+  return (
+    <ProtegerDiario>
+      <Diario />
+    </ProtegerDiario>
+  );
+}
+
+function Diario() {
   const { cores } = useTema();
   const { width } = useWindowDimensions();
   const espacoBarra = useEspacoBarra();

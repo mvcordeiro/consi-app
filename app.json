@@ -68,7 +68,13 @@
         }
       ],
       "expo-secure-store",
-      "./plugins/withIconeEmocao"
+      "./plugins/withIconeEmocao",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permita que o $(PRODUCT_NAME) use o Face ID para abrir o Diário."
+        }
+      ]
     ],
     "scheme": "consi",
     "experiments": {

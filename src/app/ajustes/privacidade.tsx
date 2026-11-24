@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Alternancia } from '@/components';
 import { Ajuste, Divisoria, SeusDados, TelaAjustes } from '@/components/ajustes';
+import { AjustesTravaDiario } from '@/components/ajustes/AjustesTravaDiario';
 import { definirColeta, pilotoCarregado } from '@/data/piloto';
 
 /** Ajustes → Privacidade e dados: o que fica onde, exportar tudo e apagar tudo. */
@@ -42,6 +43,8 @@ export default function PaginaPrivacidade() {
           }}
         />
       </Ajuste>
+      <Divisoria />
+      <AjustesTravaDiario />
       <Divisoria />
       <SeusDados />
     </TelaAjustes>

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { DevSettings, View } from 'react-native';
 
 import { apagarTudo, exportarTudo } from '@/data/banco';
+import { desligarTrava, destravarComAparelho, useTravaDiario } from '@/data/travaDiario';
 import { chaveDia } from '@/data/momentos';
 import { useTema } from '@/theme';
 
@@ -22,8 +23,11 @@ export function SeusDados() {
   const [confirmar, setConfirmar] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
+  const trava = useTravaDiario();
 
   const exportar = async () => {
+    // O arquivo leva o Diário: com ele trancado, exportar pede o bloqueio do celular (issue #12).
+    if (trava.trancado && !(await destravarComAparelho(true))) return;
     setOcupado(true);
     setAviso(null);
     try {
@@ -47,6 +51,7 @@ export function SeusDados() {
   const apagar = async () => {
     setOcupado(true);
     await apagarTudo();
+      await desligarTrava().catch(() => {});
     // Recomeça o app do zero (as telas guardam estado em memória).
     try {
       await Updates.reloadAsync();
