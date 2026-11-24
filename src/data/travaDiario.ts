@@ -164,3 +164,13 @@ export function useTravaDiario(): EstadoTrava {
   }, []);
   return e;
 }
+
+/**
+ * Tranca assim que a pessoa sai do Diário (qualquer rota fora de /diario): voltar ao Diário
+ * sempre pede o PIN. Usado uma vez, no layout raiz.
+ */
+export function useTrancarAoSairDoDiario(caminho: string) {
+  useEffect(() => {
+    if (caminho !== '/diario' && !caminho.startsWith('/diario/')) trancar();
+  }, [caminho]);
+}

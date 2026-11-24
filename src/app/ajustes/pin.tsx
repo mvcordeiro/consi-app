@@ -9,24 +9,26 @@ import { definirPin, PIN_MAX, PIN_MIN } from '@/data/travaDiario';
 import { space, useTema } from '@/theme';
 
 /**
- * Criar ou trocar o PIN do Diário (issue #12): digita de 4 a 6 dígitos, toca em Continuar e
- * repete. Também é o destino do "Esqueci o PIN", depois do bloqueio do celular.
+ * Criar ou trocar o PIN do Diário (issue #12), em dois passos com o passo à vista:
+ * 1. escolher de 4 a 6 números; 2. digitar de novo para confirmar. Se não bater, explica e
+ * volta ao passo 1. Também é o destino do "Esqueci o PIN", depois do bloqueio do celular.
  */
 export default function DefinirPin() {
   const { cores } = useTema();
   const [primeiro, setPrimeiro] = useState<string | null>(null);
   const [pin, setPin] = useState('');
   const [erro, setErro] = useState<string | null>(null);
+  const confirmando = primeiro !== null;
 
   const continuar = async () => {
     if (pin.length < PIN_MIN) return;
-    if (primeiro === null) {
+    if (!confirmando) {
       setPrimeiro(pin);
       setPin('');
       return;
     }
     if (pin !== primeiro) {
-      setErro('Os PINs não batem. Comece de novo.');
+      setErro('Os dois PINs ficaram diferentes. Escolha o PIN de novo e repita igual.');
       setPrimeiro(null);
       setPin('');
       return;
@@ -37,12 +39,24 @@ export default function DefinirPin() {
 
   return (
     <TelaAjustes
-      titulo={primeiro === null ? 'Crie um PIN' : 'Repita o PIN'}
+      titulo={confirmando ? 'Confirme o PIN' : 'Escolha um PIN'}
       voltar="Voltar"
-      rodape={<Botao rotulo="Continuar" onPress={() => void continuar()} estado={pin.length >= PIN_MIN ? 'normal' : 'desabilitado'} />}
+      rodape={
+        <Botao
+          rotulo={confirmando ? 'Confirmar PIN' : 'Continuar'}
+          onPress={() => void continuar()}
+          estado={pin.length >= PIN_MIN ? 'normal' : 'desabilitado'}
+        />
+      }
     >
-      <Texto cor={erro ? cores.feedback.error : cores.text.secondary}>
-        {erro ?? `De ${PIN_MIN} a ${PIN_MAX} números. Ele fica só neste celular; se esquecer, o bloqueio do celular abre o Diário.`}
+      <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
+        {confirmando ? 'PASSO 2 DE 2' : 'PASSO 1 DE 2'}
+      </Texto>
+      <Texto cor={erro ? cores.feedback.error : cores.text.secondary} accessibilityLiveRegion="polite">
+        {erro ??
+          (confirmando
+            ? 'Digite o mesmo PIN mais uma vez, para ter certeza de que você lembra dele.'
+            : `Escolha de ${PIN_MIN} a ${PIN_MAX} números e toque em Continuar. Depois você vai digitar de novo para confirmar. Ele fica só neste celular; se esquecer, o bloqueio do celular abre o Diário.`)}
       </Texto>
       <View style={styles.pin}>
         <PontosPin quantos={pin.length} />
