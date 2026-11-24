@@ -1,5 +1,5 @@
-import { router, type Href } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { router, useFocusEffect, type Href } from 'expo-router';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -36,13 +36,19 @@ function TelaTrancada({ biometria, tamanho }: { biometria: boolean; tamanho: num
   const pediu = useRef(false);
   const esperando = esperarAte > agora;
 
-  // Com biometria ligada, ela abre sozinha ao chegar na tela.
-  useEffect(() => {
-    if (biometria && !pediu.current) {
-      pediu.current = true;
-      void destravarComAparelho();
-    }
-  }, [biometria]);
+  // Com biometria ligada, ela abre sozinha só quando o Diário está na frente. A aba do Diário
+  // fica montada por trás das outras: sem o foco, a trava pediria a digital em qualquer tela.
+  useFocusEffect(
+    useCallback(() => {
+      if (biometria && !pediu.current) {
+        pediu.current = true;
+        void destravarComAparelho();
+      }
+      return () => {
+        pediu.current = false;
+      };
+    }, [biometria]),
+  );
 
   useEffect(() => {
     if (!esperando) return;

@@ -24,7 +24,8 @@ export default function Perfil() {
   // null: ainda não mexeu (mostra o @ salvo).
   const [editado, setTexto] = useState<string | null>(null);
   const texto = editado ?? salvo ?? '';
-  const [livre, setLivre] = useState<boolean | null>(null);
+  // null: conferindo; 'erro': o servidor não respondeu (sem internet, ou a migration 0005 não rodou).
+  const [livre, setLivre] = useState<boolean | 'erro' | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const nuvem = nuvemConfigurada();
@@ -40,7 +41,7 @@ export default function Perfil() {
     const t = setTimeout(() => {
       handleDisponivel(h)
         .then((d) => vivo && setLivre(d))
-        .catch(() => vivo && setLivre(null));
+        .catch(() => vivo && setLivre('erro'));
     }, ESPERA_BUSCA);
     return () => {
       vivo = false;
@@ -79,7 +80,9 @@ export default function Perfil() {
       ? 'Use de 3 a 20 letras minúsculas, números, ponto ou _.'
       : !mudou
         ? 'Esse é o seu @.'
-        : livre === false
+        : livre === 'erro'
+          ? 'Não deu para conferir agora. Confira a internet e tente de novo.'
+          : livre === false
           ? 'Esse @ já é de outra pessoa.'
           : livre
             ? 'Disponível.'
