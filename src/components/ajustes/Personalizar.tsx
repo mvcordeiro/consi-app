@@ -5,7 +5,6 @@ import Svg, { Circle, Line, Path, Rect } from 'react-native-svg';
 import { router, type Href } from 'expo-router';
 
 import { emocaoPorId } from '@/data/emocoes';
-import { ESTILOS_NOMES } from '@/data/nomesEmocoes';
 import { temIconePorEmocao } from '@/data/iconeEmocao';
 import {
   alternarSecao,
@@ -298,7 +297,6 @@ export function Personalizar() {
       <LinhaLink
         titulo="Nomes das emoções"
         descricao="Troque o nome que aparece em cada emoção."
-        valor={ESTILOS_NOMES.find((e) => e.id === prefs.nomesEmocoes.estilo)?.nome}
         onPress={() => router.push('/ajustes/emocoes' as Href)}
       />
 

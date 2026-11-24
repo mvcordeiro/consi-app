@@ -5,20 +5,16 @@ import { TelaAjustes } from '@/components/ajustes';
 import { useAviso } from '@/components/Aviso';
 import { Botao } from '@/components/Botao';
 import { CampoTexto } from '@/components/CampoTexto';
-import { Filtro } from '@/components/Filtro';
 import { Folha } from '@/components/Folha';
 import { BalaoEmocao } from '@/components/home/BalaoEmocao';
 import { Texto } from '@/components/Texto';
 import { emocoes, useNomesEmocoes, type Emocao } from '@/data/emocoes';
 import { vibrarSucesso } from '@/data/haptica';
 import {
-  ESTILOS_NOMES,
   LIMITE_NOME_EMOCAO,
   limparNome,
   NOMES_PADRAO,
   nomeNoEstilo,
-  sugestoesDeNome,
-  type EstiloNomes,
   type NomesEmocoes,
 } from '@/data/nomesEmocoes';
 import { definirPreferencias } from '@/data/preferencias';
@@ -27,9 +23,9 @@ import { space, useTema } from '@/theme';
 const gravar = (nomesEmocoes: NomesEmocoes) => definirPreferencias({ nomesEmocoes });
 
 /**
- * Ajustes → Personalizar → Nomes das emoções (Figma: "Nomes das emoções · variação C").
- * Os estilos trocam todos os nomes de uma vez; tocar numa emoção abre a folha para escrever um
- * nome só dela, que vale por cima do estilo. O nome novo aparece em todo o app e nos widgets.
+ * Ajustes → Personalizar → Nomes das emoções (Figma: "Nomes das emoções · grade").
+ * Tocar numa emoção abre a folha para escrever o nome dela. O nome novo aparece em todo o app e
+ * nos widgets. No fim da página, um link volta todos aos nomes padrão.
  */
 export default function PaginaNomesEmocoes() {
   const { cores } = useTema();
@@ -38,8 +34,6 @@ export default function PaginaNomesEmocoes() {
   // A emoção da folha continua montada enquanto a folha desce.
   const [folha, setFolha] = useState<{ emocao: Emocao; visivel: boolean } | null>(null);
   const mudou = nomes.estilo !== 'padrao' || Object.keys(nomes.proprios).length > 0;
-
-  const escolherEstilo = (estilo: EstiloNomes) => gravar({ ...nomes, estilo });
 
   const restaurar = () => {
     const antes = nomes;
@@ -51,14 +45,8 @@ export default function PaginaNomesEmocoes() {
     <TelaAjustes titulo="Nomes das emoções" voltar="Personalizar" aviso={aviso}>
       <View style={styles.conteudo}>
         <Texto estilo="Texto/Pequeno" cor={cores.text.secondary}>
-          Escolha um estilo ou toque numa emoção para dar outro nome. O nome novo aparece em todo o app.
+          Toque numa emoção para dar outro nome. O nome novo aparece em todo o app.
         </Texto>
-
-        <View style={styles.estilos} accessibilityRole="radiogroup" accessibilityLabel="Estilo dos nomes">
-          {ESTILOS_NOMES.map((e) => (
-            <Filtro key={e.id} rotulo={e.nome} ativo={nomes.estilo === e.id} onPress={() => escolherEstilo(e.id)} />
-          ))}
-        </View>
 
         <View style={styles.grade}>
           {emocoes.map((e) => {
@@ -91,7 +79,13 @@ export default function PaginaNomesEmocoes() {
           })}
         </View>
 
-        {mudou ? <Botao estilo="secundario" rotulo="Restaurar os nomes padrão" onPress={restaurar} /> : null}
+        {mudou ? (
+          <Pressable onPress={restaurar} accessibilityRole="button" hitSlop={8} style={styles.restaurar}>
+            <Texto estilo="Texto/Botões e rótulos" cor={cores.text.link} style={styles.centro}>
+              Voltar todos aos nomes padrão
+            </Texto>
+          </Pressable>
+        ) : null}
       </View>
 
       {folha ? (
@@ -163,23 +157,14 @@ function FolhaNome({
           onChangeText={setValor}
           maxLength={LIMITE_NOME_EMOCAO}
           autoCapitalize="sentences"
+          autoFocus
+          selectTextOnFocus
           returnKeyType="done"
           onSubmitEditing={salvar}
         />
         <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>
           {`${valor.length} de ${LIMITE_NOME_EMOCAO} letras`}
         </Texto>
-      </View>
-
-      <View style={styles.campo}>
-        <Texto estilo="Legenda/Pequena" cor={cores.text.secondary}>
-          Sugestões
-        </Texto>
-        <View style={styles.estilos}>
-          {sugestoesDeNome(e.id, e.nomeOriginal).map((s) => (
-            <Filtro key={s} rotulo={s} ativo={limpo === s} onPress={() => setValor(s)} />
-          ))}
-        </View>
       </View>
 
       <View style={styles.botoes}>
@@ -192,7 +177,7 @@ function FolhaNome({
 
 const styles = StyleSheet.create({
   conteudo: { gap: space[24] },
-  estilos: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  restaurar: { paddingVertical: space[8] },
   grade: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space[20] },
   celula: { width: '25%', paddingHorizontal: space[2], alignItems: 'center', gap: space[4] },
   centro: { textAlign: 'center' },
