@@ -11,6 +11,7 @@ export default function LayoutAjustes() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: cores.bg.base } }}>
       <Stack.Screen name="sugestoes/nova" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="feedback" options={{ presentation: 'modal' }} />
       <Stack.Screen name="admin-entrar" options={{ presentation: 'modal' }} />
       <Stack.Screen name="moderacao/versao" options={{ presentation: 'modal' }} />
     </Stack>
