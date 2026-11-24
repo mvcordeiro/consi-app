@@ -273,7 +273,7 @@ export function HeroEmocoes({ nome, altura, alturaTopo, alturaTela: height, onAr
         style={[styles.saudacao, { opacity: saudacao, transform: [{ translateY: subida }] }]}
       >
         <View style={{ opacity: frase ? 1 : 0 }}>
-          <TextoAnimado key={frase?.modelo ?? ''} texto={titulo} estilo="Títulos/Grande" atraso={200} />
+          <TextoAnimado key={frase?.modelo ?? ''} texto={titulo} estilo="Títulos/Grande" atraso={200} equilibrado />
         </View>
         <TextoAnimado
           texto={SUBTITULO}
