@@ -44,6 +44,7 @@ export default function Hobbies() {
   const [arrastando, setArrastando] = useState(false);
   // null = "Todos": sugestões de todos os hobbies da pessoa, intercaladas (o filtro padrão).
   const [filtro, setFiltro] = useState<HobbyId | null>(null);
+  // null = "Todas": as atividades de todos os hobbies (a aba padrão).
   const [aba, setAba] = useState<HobbyId | null>(null);
 
   // Vindo da pausa ("Quero explorar esse hobby"), abre no hobby escolhido na roda.
@@ -73,7 +74,7 @@ export default function Hobbies() {
   useFocusEffect(useCallback(() => sincronizarOnboarding(), [sincronizarOnboarding]));
 
   const hobbyFiltro = filtro && h.hobbies.includes(filtro) ? filtro : null;
-  const hobbyAba = aba && h.hobbies.includes(aba) ? aba : h.hobbies[0];
+  const hobbyAba = aba && h.hobbies.includes(aba) ? aba : null;
 
   // "Todos": uma de cada hobby por vez, para a pilha não começar com 20 de um hobby só.
   const pilha = hobbyFiltro ? h.pilha(hobbyFiltro) : intercalar(h.hobbies.map((hb) => h.pilha(hb)));
@@ -81,7 +82,7 @@ export default function Hobbies() {
   const reverIgnoradas = () =>
     hobbyFiltro ? h.reverIgnoradas(hobbyFiltro) : h.hobbies.forEach((hb) => h.reverIgnoradas(hb));
   const sugerir = () => irPara.criar('comunidade', hobbyFiltro ?? undefined);
-  const naAba = h.atividades.filter((a) => a.hobby === hobbyAba && a.status === 'andamento');
+  const naAba = h.atividades.filter((a) => (!hobbyAba || a.hobby === hobbyAba) && a.status === 'andamento');
 
   const decidir = (s: Atividade, d: Decisao) => {
     if (d === 'ignorar') {
@@ -89,7 +90,8 @@ export default function Hobbies() {
       return;
     }
     h.aceitar(s);
-    setAba(s.hobby);
+    // Em "Todas" a atividade já aparece; numa aba de hobby, vai para a aba dela.
+    setAba((atual) => (atual ? s.hobby : atual));
     mostrarAviso(`Adicionada em Suas atividades · ${hobbyInfo(s.hobby).nome}`);
   };
 
@@ -232,7 +234,7 @@ export default function Hobbies() {
                 </Aparecer>
               ))
             ) : (
-              <AbaVazia hobby={hobbyAba} onCriar={() => irPara.criar('privada', hobbyAba)} />
+              <AbaVazia hobby={hobbyAba} onCriar={() => irPara.criar('privada', hobbyAba ?? undefined)} />
             )}
             {naAba.length ? (
               <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.centro}>
@@ -241,7 +243,7 @@ export default function Hobbies() {
             ) : null}
           </View>
 
-          <Botao rotulo="Ver tudo" corRotulo={cores.text['on-primary']} onPress={() => irPara.atividades(hobbyAba)} />
+          <Botao rotulo="Ver tudo" corRotulo={cores.text['on-primary']} onPress={() => irPara.atividades(hobbyAba ?? undefined)} />
         </View>
       </ScrollView>
       {acoes.folhas}
@@ -250,9 +252,9 @@ export default function Hobbies() {
       <Folha visivel={adicionar} onFechar={() => setAdicionar(false)} titulo="O que você quer adicionar?">
         <View>
           <ItemFolha
-            rotulo={`Nova atividade de ${hobbyInfo(hobbyAba).nome}`}
+            rotulo={hobbyAba ? `Nova atividade de ${hobbyInfo(hobbyAba).nome}` : 'Nova atividade'}
             icone={(cor) => <Icone nome="lista-tarefas" cor={cor} />}
-            onPress={() => depoisDaFolha(() => irPara.criar('privada', hobbyAba))}
+            onPress={() => depoisDaFolha(() => irPara.criar('privada', hobbyAba ?? undefined))}
           />
           <ItemFolha
             rotulo="Novo hobby"
@@ -319,13 +321,13 @@ function PilhaVazia({
   );
 }
 
-function AbaVazia({ hobby, onCriar }: { hobby: HobbyId; onCriar: () => void }) {
+function AbaVazia({ hobby, onCriar }: { hobby: HobbyId | null; onCriar: () => void }) {
   const { cores } = useTema();
   return (
     <Pressable onPress={onCriar} accessibilityRole="button" style={[styles.abaVazia, { borderColor: cores.border.subtle }]}>
       <Icone nome="adicionar" />
       <Texto estilo="Títulos/Pequeno" style={styles.centro}>
-        {`Nenhuma atividade de ${hobbyInfo(hobby).nome} ainda`}
+        {hobby ? `Nenhuma atividade de ${hobbyInfo(hobby).nome} ainda` : 'Nenhuma atividade ainda'}
       </Texto>
       <Texto estilo="Texto/Pequeno" cor={cores.text.secondary} style={styles.centro}>
         Aceite uma sugestão em Para você ou toque aqui para criar a sua.

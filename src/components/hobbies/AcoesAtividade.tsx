@@ -21,7 +21,7 @@ export const irPara = {
   finalizar: (id: string) => router.push({ pathname: '/hobby/finalizar', params: { id } }),
   compartilhar: (id: string) => router.push({ pathname: '/hobby/compartilhar', params: { id } }),
   editar: () => router.push('/hobby/editar'),
-  atividades: (hobby: string) => router.push({ pathname: '/hobby/atividades', params: { hobby } }),
+  atividades: (hobby?: string) => router.push({ pathname: '/hobby/atividades', params: hobby ? { hobby } : {} }),
   novoHobby: () => router.push('/hobby/novo'),
   /** Criar do zero: "privada" (+ de Suas atividades) ou "comunidade" (Sugerir atividade). */
   criar: (visibilidade: 'privada' | 'comunidade', hobby?: string) =>

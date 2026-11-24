@@ -9,6 +9,7 @@ import { Texto } from '../Texto';
 /**
  * Abas de "Suas atividades" (Figma 671:5350): rótulos em Texto/Médio, 40 px entre eles;
  * a aba ativa ganha o sublinhado border/focus de 2 px. Rola na horizontal até a borda da tela.
+ * A primeira aba, "Todas" (`ativo = null`), mostra as atividades de todos os hobbies.
  */
 export function AbasHobbies({
   hobbies,
@@ -17,8 +18,8 @@ export function AbasHobbies({
   margem,
 }: {
   hobbies: Hobby[];
-  ativo: Hobby;
-  onEscolher: (h: Hobby) => void;
+  ativo: Hobby | null;
+  onEscolher: (h: Hobby | null) => void;
   margem: number;
 }) {
   const { cores } = useTema();
@@ -29,11 +30,11 @@ export function AbasHobbies({
       style={{ marginHorizontal: -margem }}
       contentContainerStyle={[styles.trilho, { paddingHorizontal: margem }]}
     >
-      {hobbies.map((h) => {
+      {([null, ...hobbies] as (Hobby | null)[]).map((h) => {
         const sel = h === ativo;
         return (
           <Pressable
-            key={h}
+            key={h ?? 'todas'}
             onPress={() => onEscolher(h)}
             accessibilityRole="tab"
             accessibilityState={{ selected: sel }}
@@ -41,7 +42,7 @@ export function AbasHobbies({
           >
             <View style={[styles.aba, { borderBottomColor: sel ? cores.border.focus : 'transparent' }]}>
               <Texto estilo="Texto/Médio" style={styles.rotulo}>
-                {catalogo[h].nome}
+                {h ? catalogo[h].nome : 'Todas'}
               </Texto>
             </View>
           </Pressable>
