@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Animated, Easing, Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { easing, tipografia, useTema, type EstiloDeTexto } from '@/theme';
@@ -27,40 +27,6 @@ export function fimDoTexto(texto: string, inicioMs: number) {
   return inicioMs + palavras * PASSO_PALAVRA_MS + DURACAO_PALAVRA_MS / 2;
 }
 
-/** Quebra as palavras (pelas larguras) em linhas de no máximo `limite`. */
-function quebrar(larguras: number[], espaco: number, limite: number) {
-  const linhas: number[][] = [];
-  let atual = 0;
-  larguras.forEach((w, i) => {
-    const ultima = linhas[linhas.length - 1];
-    if (ultima && atual + espaco + w <= limite + 0.5) {
-      ultima.push(i);
-      atual += espaco + w;
-    } else {
-      linhas.push([i]);
-      atual = w;
-    }
-  });
-  return linhas;
-}
-
-/**
- * Quebra equilibrada (como `text-wrap: balance`): o mesmo número de linhas que caberia na
- * largura toda, mas com a menor largura possível, para as linhas ficarem parecidas.
- */
-export function equilibrar(larguras: number[], espaco: number, maxima: number): number[][] {
-  const base = quebrar(larguras, espaco, maxima);
-  if (base.length < 2) return base;
-  let lo = Math.max(...larguras);
-  let hi = maxima;
-  for (let k = 0; k < 20; k++) {
-    const meio = (lo + hi) / 2;
-    if (quebrar(larguras, espaco, meio).length <= base.length) hi = meio;
-    else lo = meio;
-  }
-  return quebrar(larguras, espaco, hi);
-}
-
 type Props = {
   texto: string;
   estilo?: EstiloDeTexto;
@@ -70,11 +36,6 @@ type Props = {
   /** Padrão: true. Use false para alinhar à esquerda. */
   centralizado?: boolean;
   style?: StyleProp<ViewStyle>;
-  /**
-   * Quebra equilibrada (como `text-wrap: balance`): mantém o número de linhas, mas evita uma
-   * linha cheia e uma palavra sozinha embaixo. A primeira passada só mede as palavras.
-   */
-  equilibrado?: boolean;
 };
 
 export function TextoAnimado({
@@ -84,79 +45,50 @@ export function TextoAnimado({
   atraso = 0,
   centralizado = true,
   style,
-  equilibrado = false,
 }: Props) {
   const { cores } = useTema();
-  const [largura, setLargura] = useState(0);
-  const [medidas, setMedidas] = useState<Record<string, number>>({});
   const tipo = tipografia[estilo];
   const tamanho = tipo.fontSize ?? 16;
   const tracking = tipo.letterSpacing ?? 0;
   const espaco = tamanho * (ESPACO_EM[tipo.fontFamily ?? ''] ?? 0.27) + tracking;
-  const corte = tracking < 0 ? -tracking : 0;
-  const linhas = texto.split('\n').map((linha) => linha.split(' ').filter(Boolean));
-  // Índice da primeira palavra de cada linha (a ordem do aparecimento atravessa as linhas).
-  const inicios = linhas.map((_, l) => linhas.slice(0, l).reduce((n, p) => n + p.length, 0));
-
-  const medir = (chave: string, w: number) =>
-    setMedidas((m) => (Math.abs((m[chave] ?? -1) - w) < 0.5 ? m : { ...m, [chave]: w }));
+  const linhas = texto.split('\n');
+  let indice = 0;
 
   return (
-    <View
-      style={style}
-      accessible
-      accessibilityRole="text"
-      accessibilityLabel={texto}
-      onLayout={equilibrado ? (e) => setLargura(e.nativeEvent.layout.width) : undefined}
-    >
-      {linhas.map((palavras, l) => {
-        const primeira = inicios[l];
-        const chave = (i: number) => `${l}-${i}-${palavras[i]}`;
-        const larguras = palavras.map((_, i) => medidas[chave(i)]);
-        const grupos =
-          equilibrado && largura && larguras.every((w) => w !== undefined)
-            ? equilibrar(larguras as number[], espaco, largura)
-            : [palavras.map((_, i) => i)];
-        const fixo = grupos.length > 1 || (equilibrado && !!largura);
-        return grupos.map((grupo, g) => (
-          <View key={`${l}-${g}`} style={[fixo ? styles.linhaFixa : styles.linha, centralizado && styles.centro]}>
-            {grupo.map((i, k) => (
-              <Palavra
-                key={`${l}-${i}`}
-                texto={palavras[i]}
-                atraso={atraso + (primeira + i) * PASSO_PALAVRA_MS}
-                onLargura={equilibrado ? (w) => medir(chave(i), w) : undefined}
-                estilo={[
-                  tipo,
-                  {
-                    color: cor ?? cores.text.primary,
-                    // tracking negativo encolhe a caixa medida e o Android corta a última
-                    // letra; devolvemos esse pedaço como padding e tiramos da margem
-                    paddingRight: corte,
-                    marginRight: k === grupo.length - 1 ? 0 : espaco - corte,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-        ));
-      })}
+    <View style={style} accessible accessibilityRole="text" accessibilityLabel={texto}>
+      {linhas.map((linha, l) => (
+        <View key={l} style={[styles.linha, centralizado && styles.centro]}>
+          {linha
+            .split(' ')
+            .filter(Boolean)
+            .map((palavra, i, todas) => {
+              const ordem = indice++;
+              const ultima = i === todas.length - 1;
+              return (
+                <Palavra
+                  key={`${l}-${i}`}
+                  texto={palavra}
+                  atraso={atraso + ordem * PASSO_PALAVRA_MS}
+                  estilo={[
+                    tipo,
+                    {
+                      color: cor ?? cores.text.primary,
+                      // tracking negativo encolhe a caixa medida e o Android corta a última
+                      // letra; devolvemos esse pedaço como padding e tiramos da margem
+                      paddingRight: tracking < 0 ? -tracking : 0,
+                      marginRight: ultima ? 0 : espaco - (tracking < 0 ? -tracking : 0),
+                    },
+                  ]}
+                />
+              );
+            })}
+        </View>
+      ))}
     </View>
   );
 }
 
-function Palavra({
-  texto,
-  atraso,
-  estilo,
-  onLargura,
-}: {
-  texto: string;
-  atraso: number;
-  estilo: object;
-  /** Largura da palavra (sem a margem), para a quebra equilibrada. */
-  onLargura?: (w: number) => void;
-}) {
+function Palavra({ texto, atraso, estilo }: { texto: string; atraso: number; estilo: object }) {
   const v = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -174,7 +106,6 @@ function Palavra({
   return (
     <Animated.Text
       importantForAccessibility="no"
-      onLayout={onLargura ? (e) => onLargura(e.nativeEvent.layout.width) : undefined}
       style={[
         estilo,
         {
@@ -190,7 +121,5 @@ function Palavra({
 
 const styles = StyleSheet.create({
   linha: { flexDirection: 'row', flexWrap: 'wrap' },
-  // Linha já equilibrada: sem quebra automática.
-  linhaFixa: { flexDirection: 'row' },
   centro: { justifyContent: 'center' },
 });
