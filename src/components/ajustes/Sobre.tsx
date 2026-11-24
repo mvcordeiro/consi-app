@@ -87,6 +87,11 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
         </>
       ) : null}
 
+      <Divisoria />
+      <Ajuste titulo="Feito com IA, testado por gente" descricao="Como a inteligência artificial ajudou a fazer o Consi e o que testamos.">
+        <Botao rotulo="Saber mais" estilo="secundario" onPress={() => router.push('/ajustes/transparencia' as Href)} />
+      </Ajuste>
+
       {/* Por último (pedido do produto). O piloto saiu daqui: fica no rodapé da aba Ajustes. */}
       <Divisoria />
       <Ajuste
