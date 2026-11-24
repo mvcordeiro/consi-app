@@ -175,10 +175,21 @@ function Painel({ r, onResponder }: { r: Reflexao; onResponder: (opcao: string) 
       );
     case 'pergunta':
       return (
-        <View style={styles.opcoes}>
-          {r.opcoes.map((o) => (
-            <Filtro key={o} rotulo={o} ativo={r.escolhidas.includes(o)} onPress={() => onResponder(o)} />
-          ))}
+        <View style={styles.textos}>
+          <View style={styles.opcoes} accessibilityLabel="Escolha uma ou mais opções">
+            {r.opcoes.map((o) => (
+              <Filtro key={o} rotulo={o} ativo={r.escolhidas.includes(o)} onPress={() => onResponder(o)} />
+            ))}
+          </View>
+          {/* Resposta dada: confirma na hora, para o toque não parecer sem efeito. */}
+          {r.escolhidas.length ? (
+            <View style={[styles.confirmacao, { backgroundColor: cores.bg['success-subtle'] }]} accessibilityLiveRegion="polite">
+              <Icone nome="selo" tamanho={18} cor={cores.feedback.success} />
+              <Texto estilo="Texto/Pequeno" style={styles.flex}>
+                {`Resposta guardada: ${r.escolhidas.join(', ')}. Ela volta como reflexão nos próximos dias.`}
+              </Texto>
+            </View>
+          ) : null}
         </View>
       );
   }
@@ -206,4 +217,5 @@ const styles = StyleSheet.create({
   linha: { width: 1, flex: 1, minHeight: 12 },
   passoTexto: { gap: space[2], paddingBottom: space[12] },
   opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
+  confirmacao: { flexDirection: 'row', alignItems: 'center', gap: space[8], padding: space[12], borderRadius: radius.md },
 });

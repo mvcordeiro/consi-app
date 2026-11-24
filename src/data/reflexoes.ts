@@ -323,7 +323,7 @@ function pergunta(d: DadosReflexoes): Reflexao {
     pergunta: PERGUNTA,
     opcoes: OPCOES_PERGUNTA,
     escolhidas: d.respostas,
-    acao: { rotulo: 'Escrever minha resposta', icone: 'lapis', destino: { tipo: 'escrever', pergunta: PERGUNTA } },
+    acao: { rotulo: d.respostas.length ? 'Escrever mais sobre isso' : 'Escrever minha resposta', icone: 'lapis', destino: { tipo: 'escrever', pergunta: PERGUNTA } },
   };
 }
 
