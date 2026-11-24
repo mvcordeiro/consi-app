@@ -7,6 +7,7 @@ import { Aparecer } from '@/components/animacao';
 import { Blocos } from '@/components/blocos';
 import { ChevronDireita } from '@/components/home/assets';
 import { IconeHobby, irPara, useAcoesAtividade } from '@/components/hobbies';
+import { rotuloDuracao } from '@/data/duracao';
 import { hobbyInfo, sentimentos } from '@/data/catalogo';
 import { emocaoPorId } from '@/data/emocoes';
 import { dataCurta, useHobbies } from '@/data/hobbiesEstado';
@@ -75,7 +76,7 @@ export default function Detalhe() {
             rotulo={hobbyInfo(a.hobby).nome}
             iconeNode={<IconeHobby hobby={a.hobby} icone={a.icone} caixa={16} cor={cores.text.primary} />}
           />
-          <Etiqueta rotulo={`${a.minutos} min`} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
+          <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
           {minha?.lembrete && minha.status === 'andamento' ? (
             <Etiqueta rotulo={minha.lembrete.rotulo} tom="info" iconeNode={<Icone nome="calendario" tamanho={16} />} />
           ) : null}

@@ -415,7 +415,15 @@ internal object Widgets {
   }
 
   // ─── Suas atividades ────────────────────────────────────────────────────
-  private fun detalhe(a: Atividade) = listOf(a.hobby, if (a.minutos > 0) "${a.minutos} min" else "").filter { it.isNotEmpty() }.joinToString(" · ")
+  private fun detalhe(a: Atividade) = listOf(a.hobby, duracao(a.minutos)).filter { it.isNotEmpty() }.joinToString(" · ")
+
+  /** Mesmos limites de src/data/duracao.ts: sem número, só o rótulo. */
+  private fun duracao(minutos: Int) = when {
+    minutos <= 0 -> ""
+    minutos <= 15 -> "É rápido"
+    minutos <= 45 -> "Leva um tempinho"
+    else -> "Pode demorar"
+  }
 
   private fun atividades(c: Context, id: Int, t: SizeF): RemoteViews {
     val v = RemoteViews(c.packageName, R.layout.consi_widget_atividades)
@@ -475,7 +483,7 @@ internal object Widgets {
     v.setTextViewText(R.id.sugestao_titulo, s.titulo)
     v.setTextViewText(R.id.sugestao_resumo, s.resumo)
     v.setViewVisibility(R.id.sugestao_resumo, if (baixo || s.resumo.isEmpty()) View.GONE else View.VISIBLE)
-    v.setTextViewText(R.id.sugestao_minutos, if (s.minutos > 0) "${s.minutos} min" else "")
+    v.setTextViewText(R.id.sugestao_minutos, duracao(s.minutos))
     v.setViewVisibility(R.id.sugestao_minutos, if (s.minutos > 0) View.VISIBLE else View.GONE)
     v.setOnClickPendingIntent(R.id.sugestao_sim, abrir(c, "consi://hobby/detalhe?id=${Uri.encode(s.id)}", codigo(id, 2)))
     v.setOnClickPendingIntent(R.id.sugestao_nao, abrir(c, "consi://hobbies?ignorar=${Uri.encode(s.id)}", codigo(id, 3)))

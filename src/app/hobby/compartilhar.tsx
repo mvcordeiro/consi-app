@@ -12,6 +12,7 @@ import { Aparecer } from '@/components/animacao';
 import { IconeHobby } from '@/components/hobbies';
 import { vibrar } from '@/components/hobbies/Arraste';
 import { LogoConsi } from '@/components/hobbies/assets';
+import { rotuloDuracao } from '@/data/duracao';
 import { hobbyInfo, type Bloco } from '@/data/catalogo';
 import { useHobbies } from '@/data/hobbiesEstado';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
@@ -112,7 +113,7 @@ export default function Compartilhar() {
                 </View>
                 <View style={styles.etiquetas}>
                   <Etiqueta rotulo={hobby.nome} />
-                  <Etiqueta rotulo={`${a.minutos} min`} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
+                  <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<Icone nome="relogio" tamanho={16} />} />
                 </View>
               </View>
               <Texto estilo="Títulos/Grande">{a.titulo}</Texto>
