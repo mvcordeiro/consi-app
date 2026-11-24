@@ -228,7 +228,7 @@ export default function Hobbies() {
                     onMenu={() => acoes.abrirMenu(a)}
                     onApagar={() => acoes.confirmarApagar(a)}
                     onArrastarApagar={() => apagarArrastando(a.id)}
-                    onConversa={() => irPara.conversa(a.id)}
+                    onAtualizacoes={() => irPara.atualizacoes(a.id)}
                     onFinalizar={() => irPara.finalizar(a.id)}
                   />
                 </Aparecer>

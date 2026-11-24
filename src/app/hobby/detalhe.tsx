@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ImagemLocal } from '@/components/ImagemLocal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Filtro, Icone, IconeDuracao, Texto, useAviso } from '@/components';
+import { Avatar, Botao, CabecalhoVoltar, Etiqueta, Icone, IconeDuracao, Texto, useAviso } from '@/components';
 import { Aparecer } from '@/components/animacao';
 import { Blocos } from '@/components/blocos';
 import { ChevronDireita } from '@/components/home/assets';
@@ -25,10 +25,11 @@ import { borderWidth, inset, radius, space, useTema } from '@/theme';
  */
 export default function Detalhe() {
   const { cores } = useTema();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  // `visao`: abre direto em "Suas atualizações" (botão do meio do card de Suas atividades).
+  const { id, visao: visaoInicial } = useLocalSearchParams<{ id?: string; visao?: string }>();
   const h = useHobbies();
   const exibir = useAutorExibido();
-  const [visao, setVisao] = useState<'atividade' | 'atualizacoes'>('atividade');
+  const [visao, setVisao] = useState<'atividade' | 'atualizacoes'>(visaoInicial === 'atualizacoes' ? 'atualizacoes' : 'atividade');
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const acoes = useAcoesAtividade({
     aoApagar: () => router.back(),
@@ -68,8 +69,30 @@ export default function Detalhe() {
       </View>
       {minha ? (
         <View style={[styles.margem, styles.visoes]} accessibilityRole="tablist">
-          <Filtro rotulo="Atividade" ativo={visao === 'atividade'} onPress={() => setVisao('atividade')} />
-          <Filtro rotulo="Suas atualizações" ativo={visao === 'atualizacoes'} onPress={() => setVisao('atualizacoes')} />
+          {(
+            [
+              ['atividade', 'Atividade'],
+              ['atualizacoes', 'Suas atualizações'],
+            ] as const
+          ).map(([v, rotulo]) => {
+            const ativo = visao === v;
+            return (
+              <Pressable
+                key={v}
+                onPress={() => setVisao(v)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: ativo }}
+                style={[
+                  styles.aba,
+                  { backgroundColor: ativo ? cores.bg.selected : 'transparent', borderColor: ativo ? cores.border.focus : cores.border.subtle },
+                ]}
+              >
+                <Texto estilo="Texto/Botões e rótulos" cor={ativo ? cores.text.primary : cores.text.secondary}>
+                  {rotulo}
+                </Texto>
+              </Pressable>
+            );
+          })}
         </View>
       ) : null}
       {minha && visao === 'atualizacoes' ? (
@@ -88,23 +111,6 @@ export default function Detalhe() {
           </Aparecer>
         ) : null}
 
-        <Aparecer style={styles.etiquetas}>
-          <Etiqueta
-            rotulo={hobbyInfo(a.hobby).nome}
-            iconeNode={<IconeHobby hobby={a.hobby} icone={a.icone} caixa={16} cor={cores.text.primary} />}
-          />
-          <Etiqueta rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<IconeDuracao minutos={a.minutos} />} />
-          {minha?.lembrete && minha.status === 'andamento' ? (
-            <Etiqueta rotulo={minha.lembrete.rotulo} tom="info" iconeNode={<Icone nome="calendario" tamanho={16} />} />
-          ) : null}
-          {minha?.status === 'concluida' ? <Etiqueta rotulo="Concluída" tom="sucesso" /> : null}
-          {a.permissoes.remix ? (
-            <Etiqueta rotulo="Remix liberado" iconeNode={<Icone nome="repetir" tamanho={16} />} />
-          ) : null}
-          {minha?.visibilidade === 'privada' && minha.criadaPorMim ? (
-            <Etiqueta rotulo="Só você vê" iconeNode={<Icone nome="cadeado" tamanho={16} />} />
-          ) : null}
-        </Aparecer>
 
         <Aparecer atraso={80} style={styles.bloco}>
           <Texto estilo="Títulos/Grande">{a.titulo}</Texto>
@@ -172,6 +178,25 @@ export default function Detalhe() {
               </Texto>
             </View>
           )}
+        </Aparecer>
+        {/* Etiquetas no fim da página, em bg/raised para contrastar com o fundo. */}
+        <Aparecer atraso={280} style={styles.etiquetas}>
+          <Etiqueta
+            fundo={cores.bg.raised}
+            rotulo={hobbyInfo(a.hobby).nome}
+            iconeNode={<IconeHobby hobby={a.hobby} icone={a.icone} caixa={16} cor={cores.text.primary} />}
+          />
+          <Etiqueta fundo={cores.bg.raised} rotulo={rotuloDuracao(a.minutos)} tom="info" iconeNode={<IconeDuracao minutos={a.minutos} />} />
+          {minha?.lembrete && minha.status === 'andamento' ? (
+            <Etiqueta fundo={cores.bg.raised} rotulo={minha.lembrete.rotulo} tom="info" iconeNode={<Icone nome="calendario" tamanho={16} />} />
+          ) : null}
+          {minha?.status === 'concluida' ? <Etiqueta fundo={cores.bg.raised} rotulo="Concluída" tom="sucesso" /> : null}
+          {a.permissoes.remix ? (
+            <Etiqueta fundo={cores.bg.raised} rotulo="Remix liberado" iconeNode={<Icone nome="repetir" tamanho={16} />} />
+          ) : null}
+          {minha?.visibilidade === 'privada' && minha.criadaPorMim ? (
+            <Etiqueta fundo={cores.bg.raised} rotulo="Só você vê" iconeNode={<Icone nome="cadeado" tamanho={16} />} />
+          ) : null}
         </Aparecer>
       </ScrollView>
       )}
@@ -242,6 +267,7 @@ const styles = StyleSheet.create({
   tela: { flex: 1 },
   margem: { paddingHorizontal: inset.md },
   visoes: { flexDirection: 'row', gap: space[8], paddingBottom: space[8] },
+  aba: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full, borderWidth: borderWidth.thin },
   conteudo: { padding: inset.lg, gap: space[32] },
   capa: { width: '100%', aspectRatio: 16 / 9, borderRadius: radius.card },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },

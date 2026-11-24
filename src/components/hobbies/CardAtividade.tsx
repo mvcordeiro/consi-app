@@ -9,7 +9,6 @@ import { Etiqueta } from '../Etiqueta';
 import { Icone } from '../Icone';
 import { Texto } from '../Texto';
 import { ABA_A, AbaArraste, BordasArraste, sairPeloLado, useArrasteLateral, useLarguraTela, voltarAoLugar } from './Arraste';
-import { Ponto } from './assets';
 import { BotaoCard } from './BotaoCard';
 import { IconeHobby } from './IconeHobby';
 
@@ -21,7 +20,8 @@ type Props = {
   onApagar: () => void;
   /** Arrastar para a esquerda: apaga na hora (com "Desfazer" no aviso). */
   onArrastarApagar?: () => void;
-  onConversa: () => void;
+  /** Abre o detalhe já em "Suas atualizações". */
+  onAtualizacoes: () => void;
   onFinalizar: () => void;
   onArrastando?: (a: boolean) => void;
   /** Margem lateral da página: as abas de feedback vão até a borda da tela. */
@@ -33,7 +33,7 @@ const ALTURA_CARD = 276;
 
 /**
  * Card / Suas atividades (Figma 671:5710): ícone do hobby e menu "•••", título (Títulos/Pequeno),
- * prévia com "mais" e as ações Apagar, Conversa (com o ponto de mensagem nova) e Finalizar.
+ * prévia com "mais" e as ações Apagar, Suas atualizações e Finalizar.
  * Tem o mesmo gesto de "Para você": arrastar para a esquerda apaga, para a direita finaliza.
  * Concluída, troca as ações pela data e pelo sentimento e não arrasta.
  */
@@ -43,7 +43,7 @@ export function CardAtividade({
   onMenu,
   onApagar,
   onArrastarApagar,
-  onConversa,
+  onAtualizacoes,
   onFinalizar,
   onArrastando,
   margem,
@@ -119,23 +119,15 @@ export function CardAtividade({
             acessibilidade={`Apagar ${atividade.titulo}`}
             onPress={onApagar}
           />
-          {atividade.permissoes.comentarios ? (
-            <BotaoCard
-              esticar={false}
-              style={styles.conversa}
-              fundo={cores.bg.base}
-              icone={<Icone nome="conversa" />}
-              acessibilidade={atividade.novidade ? 'Conversa, mensagem nova' : 'Conversa'}
-              onPress={onConversa}
-              sobreposicao={
-                atividade.novidade ? (
-                  <View pointerEvents="none" style={styles.ponto}>
-                    <Ponto width={16} height={16} corAlerta={cores.feedback.error} />
-                  </View>
-                ) : null
-              }
-            />
-          ) : null}
+          {/* Meio: as atualizações da pessoa nesta atividade (a conversa fica no detalhe). */}
+          <BotaoCard
+            esticar={false}
+            style={styles.conversa}
+            fundo={cores.bg.base}
+            icone={<Icone nome="texto-quadrado" />}
+            acessibilidade={`Suas atualizações de ${atividade.titulo}`}
+            onPress={onAtualizacoes}
+          />
           <BotaoCard
             fundo={cores.bg['success-subtle']}
             icone={<Icone nome="rosto-positivo" />}
@@ -193,7 +185,5 @@ const styles = StyleSheet.create({
   textos: { gap: space[12] },
   acoes: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   conversa: { width: 64 },
-  // No Figma o ponto (Ellipse 8) fica 4 px acima do botão, encostado na borda direita.
-  ponto: { position: 'absolute', top: -4, right: 0 },
   etiquetas: { flexDirection: 'row', flexWrap: 'wrap', gap: space[8] },
 });

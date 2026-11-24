@@ -17,6 +17,7 @@ import { Texto } from '../Texto';
 /** Rotas das telas secundárias dos Hobbies. */
 export const irPara = {
   detalhe: (id: string) => router.push({ pathname: '/hobby/detalhe', params: { id } }),
+  atualizacoes: (id: string) => router.push({ pathname: '/hobby/detalhe', params: { id, visao: 'atualizacoes' } }),
   conversa: (id: string) => router.push({ pathname: '/hobby/conversa', params: { id } }),
   finalizar: (id: string) => router.push({ pathname: '/hobby/finalizar', params: { id } }),
   compartilhar: (id: string) => router.push({ pathname: '/hobby/compartilhar', params: { id } }),
