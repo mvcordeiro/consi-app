@@ -15,6 +15,7 @@ import { LogoConsi } from '@/components/hobbies/assets';
 import { rotuloDuracao } from '@/data/duracao';
 import { hobbyInfo, type Bloco } from '@/data/catalogo';
 import { useHobbies } from '@/data/hobbiesEstado';
+import { useAutorExibido } from '@/data/perfil';
 import { borderWidth, inset, radius, space, useTema } from '@/theme';
 
 /** Até três itens do conteúdo para o cartão (listas, tarefas ou passos). */
@@ -31,6 +32,7 @@ export default function Compartilhar() {
   const { cores } = useTema();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const h = useHobbies();
+  const exibir = useAutorExibido();
   const cartao = useRef<HostInstance>(null);
   const [aviso, mostrarAviso] = useAviso({ comBarra: false });
   const [ocupado, setOcupado] = useState<'copiar' | 'baixar' | 'enviar' | null>(null);
@@ -39,7 +41,7 @@ export default function Compartilhar() {
   if (!item) return null;
   const { a } = item;
   const hobby = hobbyInfo(a.hobby);
-  const autor = a.permissoes.mostrarAutor ? a.autor : null;
+  const autor = a.permissoes.mostrarAutor ? exibir(a.autor) : null;
   const itens = destaques(a.conteudo);
 
   const capturar = (result: 'base64' | 'tmpfile' | 'data-uri') =>

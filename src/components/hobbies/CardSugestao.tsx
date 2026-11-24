@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import type { Atividade } from '@/data/catalogo';
+import { useAutorExibido } from '@/data/perfil';
 import { radius, space, useTema } from '@/theme';
 
 import { Avatar } from '../Avatar';
@@ -28,8 +29,9 @@ type Props = {
  */
 export function CardSugestao({ sugestao, totalComentarios, onIgnorar, onConversa, onAceitar, onMais }: Props) {
   const { cores } = useTema();
+  const exibir = useAutorExibido();
   const autor = sugestao.permissoes.mostrarAutor
-    ? sugestao.autor
+    ? exibir(sugestao.autor)
     : { usuario: 'Alguém da comunidade', iniciais: '·' };
   return (
     <View style={styles.conteudo}>

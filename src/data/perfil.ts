@@ -69,3 +69,58 @@ export async function trocarFotoPerfil(deOnde: 'selfie' | 'galeria'): Promise<bo
 }
 
 export const removerFotoPerfil = () => gravar(null);
+
+// ─── @handle (issue #3) ─────────────────────────────────────────────────────
+// Reservado no Supabase (data/nuvem/perfis.ts); aqui fica a cópia local para mostrar offline.
+const CHAVE_HANDLE = 'consi:perfil:handle';
+let handleAtual: string | null | undefined;
+const ouvintesHandle = new Set<(h: string | null) => void>();
+
+async function lerHandle(): Promise<string | null> {
+  if (handleAtual !== undefined) return handleAtual;
+  try {
+    handleAtual = (await lerEstado(CHAVE_HANDLE)) || null;
+  } catch {
+    handleAtual = null;
+  }
+  return handleAtual;
+}
+
+/** Grava a cópia local (chamar depois de reservar no servidor). */
+export async function gravarHandleLocal(h: string | null) {
+  handleAtual = h;
+  ouvintesHandle.forEach((f) => f(h));
+  await gravarEstado(CHAVE_HANDLE, h ?? '').catch(() => {});
+}
+
+export function useHandle(): string | null {
+  const [h, setH] = useState<string | null>(handleAtual ?? null);
+  useEffect(() => {
+    let vivo = true;
+    lerHandle().then((x) => vivo && setH(x));
+    ouvintesHandle.add(setH);
+    return () => {
+      vivo = false;
+      ouvintesHandle.delete(setH);
+    };
+  }, []);
+  return h;
+}
+
+/** Autor "Você" gravado nas atividades e comentários da pessoa (data/hobbiesEstado.tsx). */
+export const ehEu = (a: { usuario: string; iniciais: string }) => a.usuario === 'Você' && a.iniciais === 'EU';
+
+/**
+ * Troca o autor "Você" pelo @handle e a foto da pessoa em toda superfície social. Sem handle,
+ * fica o nome do onboarding (ou "Você").
+ */
+export function useAutorExibido(nome?: string) {
+  const handle = useHandle();
+  const foto = useFotoPerfil();
+  return <A extends { usuario: string; iniciais: string; foto?: unknown }>(a: A): A => {
+    if (!ehEu(a)) return a;
+    const base = handle ? `@${handle}` : nome || 'Você';
+    const iniciais = (handle ?? nome ?? 'EU').replace(/[^a-zA-Z]/g, '').slice(0, 2).toUpperCase() || 'EU';
+    return { ...a, usuario: base, iniciais, foto: foto ? { uri: foto } : a.foto };
+  };
+}
