@@ -14,6 +14,8 @@
  *   POST /atividades/:id/comentarios          → comentar (com paiId para responder, imagem opcional)
  *   PUT  /comentarios/:id/reacao              → reagir (null remove)
  */
+import { listarAtividadesComunidade, publicarAtividadeComunidade } from '@/data/nuvem/atividades';
+
 import { atividadesCatalogo } from './atividades';
 import { catalogoHobbies, categorias } from './hobbies';
 import type { Atividade, Categoria, Comentario, HobbyId, HobbyInfo, ReacaoId } from './tipos';
@@ -62,5 +64,23 @@ export const fonteLocal: FonteCatalogo = {
   async reagir() {},
 };
 
-export const fonte: FonteCatalogo = fonteLocal;
+/**
+ * Catálogo do app + atividades que a comunidade publicou (Supabase, migration 0006). As da
+ * comunidade vêm na primeira página, mais novas antes; sem rede, fica só o catálogo local.
+ */
+export const fonteComComunidade: FonteCatalogo = {
+  ...fonteLocal,
+  async listarAtividades(hobby, cursor) {
+    const local = await fonteLocal.listarAtividades(hobby, cursor);
+    if (cursor) return local;
+    const daComunidade = await listarAtividadesComunidade(hobby).catch(() => []);
+    return { ...local, itens: [...daComunidade, ...local.itens] };
+  },
+  async publicarAtividade(a) {
+    await publicarAtividadeComunidade(a);
+    return a;
+  },
+};
+
+export const fonte: FonteCatalogo = fonteComComunidade;
 

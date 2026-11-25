@@ -267,7 +267,8 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
 
   const criar = useCallback((d: DadosAtividade) => {
     registrar('atividade_criada');
-    const id = `c${Date.now().toString(36)}`;
+    // Publicada, a atividade vai para todos: o sufixo aleatório evita colidir com a de outro aparelho.
+    const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
     const publicar = d.visibilidade === 'comunidade';
     const nova: AtividadeMinha = {
       ...d,
