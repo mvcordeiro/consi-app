@@ -11,7 +11,7 @@
  * - Os textos ficam todos aqui, num lugar só, para a tradução (issue #8).
  */
 import { gravarEstado, lerEstado } from './banco';
-import type { RegistroEmocao } from './emocoes';
+import { emocaoPorId, type RegistroEmocao } from './emocoes';
 
 type Contexto =
   | 'retorno'
@@ -222,8 +222,12 @@ export async function saudacaoDaVez(ultimaEmocao?: RegistroEmocao, agora = new D
 
 /** Monta o texto com o nome e a emoção. */
 export function textoDaSaudacao({ modelo, emocao }: Saudacao, nome: string) {
-  const comEmocao = EMOCAO_NA_FRASE[emocao ?? ''] ?? 'essa emoção';
-  const daEmocao = comEmocao.replace(/^a /, 'da ').replace(/^o /, 'do ');
+  // Nome trocado em Ajustes (estilo ou nome próprio): entra o nome escolhido, sem artigo,
+  // porque não dá para saber o gênero dele.
+  const e = emocaoPorId(emocao);
+  const renomeada = !!e && e.nome !== e.nomeOriginal;
+  const comEmocao = renomeada ? e.nome.toLowerCase() : (EMOCAO_NA_FRASE[emocao ?? ''] ?? 'essa emoção');
+  const daEmocao = renomeada ? `de ${comEmocao}` : comEmocao.replace(/^a /, 'da ').replace(/^o /, 'do ');
   return modelo
     .replace('{, nome}', nome ? `, ${nome}` : '')
     .replace('{A emoção}', comEmocao[0].toUpperCase() + comEmocao.slice(1))
