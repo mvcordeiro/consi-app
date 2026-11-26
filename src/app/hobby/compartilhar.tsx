@@ -149,7 +149,7 @@ export default function Compartilhar() {
             <View style={styles.marca}>
               <LogoConsi width={68} height={25} corTraco={cores.icon.primary} />
               <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary} style={styles.direita}>
-                Menos tela no automático,{'\n'}mais tempo para o que importa.
+                Você consigo,{'\n'}no seu ritmo.
               </Texto>
             </View>
           </View>
