@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import {
@@ -32,6 +33,8 @@ type Gravado = {
   atividades: AtividadeMinha[];
   /** Atividades que a pessoa publicou para a comunidade. */
   publicadas: Atividade[];
+  /** Ids das publicadas que ainda não chegaram ao servidor (sem rede, erro): tenta de novo depois. */
+  naoEnviadas: string[];
   meusComentarios: Comentario[];
   /** Reação da pessoa em cada comentário. */
   minhasReacoes: Record<string, ReacaoId>;
@@ -45,6 +48,7 @@ const inicial: Gravado = {
   // Começa sem atividades: elas entram quando a pessoa aceita uma sugestão ou cria a sua.
   atividades: [],
   publicadas: [],
+  naoEnviadas: [],
   meusComentarios: [],
   minhasReacoes: {},
 };
@@ -53,6 +57,9 @@ const exemplos = new Map(atividadesIniciais.map((a) => [a.id, a.criadaEm]));
 const ehExemplo = (a: AtividadeMinha) => exemplos.has(a.id) && exemplos.get(a.id) === a.criadaEm;
 
 const eu = { usuario: 'Você', iniciais: 'EU' };
+/** Sem buscar de novo as atividades da comunidade antes disso (voltar ao app várias vezes seguidas). */
+const BUSCA_MIN_MS = 60_000;
+
 const HOBBIES_PADRAO: HobbyId[] = ['musica', 'cinema', 'leitura', 'escrita'];
 
 /** O que a pessoa preenche ao criar ou editar uma atividade. */
@@ -126,7 +133,11 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
       setDoOnboarding(respostas.hobbies);
       if (bruto) {
         try {
-          const lido = { ...inicial, ...JSON.parse(bruto) } as Gravado;
+          const json = JSON.parse(bruto) as Partial<Gravado>;
+          const lido = { ...inicial, ...json } as Gravado;
+          // Gravado antes de existir naoEnviadas: as publicadas podem nunca ter chegado ao
+          // servidor, então tenta todas (as que já estão lá voltam como chave repetida).
+          if (!Array.isArray(json.naoEnviadas)) lido.naoEnviadas = (lido.publicadas ?? []).map((p) => p.id);
           // Tira as atividades de exemplo gravadas pelas versões antigas (mesmo id e data de criação).
           setEstado({ ...lido, atividades: lido.atividades.filter((a) => !ehExemplo(a)) });
         } catch {
@@ -153,21 +164,75 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
     return doOnboarding.length ? doOnboarding : HOBBIES_PADRAO;
   }, [estado.hobbies, doOnboarding]);
 
-  // Pede à fonte as sugestões dos hobbies da pessoa (com o servidor, chegam aqui).
+  // Pede à fonte as sugestões dos hobbies da pessoa (com o servidor, chegam aqui). Busca de novo
+  // sempre que o app volta para a frente: antes, só na abertura, e quem publicava depois (ou com
+  // a rede fora na abertura) só aparecia reiniciando o app.
+  const ultimaBusca = useRef(0);
   useEffect(() => {
     let vivo = true;
-    Promise.all(hobbies.map((h) => fonte.listarAtividades(h))).then((paginas) => {
-      if (!vivo) return;
-      setCatalogo((atual) => {
-        const ids = new Set(atual.map((x) => x.id));
-        const novas = paginas.flatMap((p) => p.itens).filter((x) => !ids.has(x.id));
-        return novas.length ? [...atual, ...novas] : atual;
-      });
+    const buscar = (forcar = false) => {
+      if (!forcar && Date.now() - ultimaBusca.current < BUSCA_MIN_MS) return;
+      ultimaBusca.current = Date.now();
+      Promise.all(hobbies.map((h) => fonte.listarAtividades(h).catch(() => ({ itens: [] as Atividade[] })))).then(
+        (paginas) => {
+          if (!vivo) return;
+          setCatalogo((atual) => {
+            const ids = new Set(atual.map((x) => x.id));
+            // As novas da comunidade vêm na frente, como na primeira página da fonte.
+            const novas = paginas.flatMap((p) => p.itens).filter((x) => !ids.has(x.id));
+            return novas.length ? [...novas, ...atual] : atual;
+          });
+        },
+      );
+    };
+    buscar(true);
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') buscar();
     });
     return () => {
       vivo = false;
+      sub.remove();
     };
   }, [hobbies]);
+
+  // Publicadas que não chegaram ao servidor: tenta ao carregar e sempre que o app volta.
+  const enviando = useRef(new Set<string>());
+  const enviar = useCallback((a: Atividade) => {
+    if (enviando.current.has(a.id)) return;
+    enviando.current.add(a.id);
+    fonte
+      .publicarAtividade(a)
+      .then(
+        () => true,
+        (e: unknown) => {
+          // Já está lá (23505, chave repetida): conta como enviada.
+          const codigo = (e as { causa?: { code?: string } })?.causa?.code;
+          if (codigo === '23505') return true;
+          console.warn('[hobbies] publicar atividade falhou', e);
+          return false;
+        },
+      )
+      .then((ok) => {
+        enviando.current.delete(a.id);
+        if (ok) setEstado((e) => ({ ...e, naoEnviadas: e.naoEnviadas.filter((id) => id !== a.id) }));
+      });
+  }, []);
+  const estadoRef = useRef(estado);
+  useEffect(() => {
+    estadoRef.current = estado;
+  }, [estado]);
+  useEffect(() => {
+    if (!carregado) return;
+    const reenviar = () => {
+      const { naoEnviadas, publicadas } = estadoRef.current;
+      publicadas.filter((p) => naoEnviadas.includes(p.id)).forEach(enviar);
+    };
+    reenviar();
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active') reenviar();
+    });
+    return () => sub.remove();
+  }, [carregado, enviar]);
 
   const minhasPublicadas = useMemo(() => new Set(estado.publicadas.map((p) => p.id)), [estado.publicadas]);
 
@@ -284,14 +349,15 @@ export function HobbiesProvider({ children }: { children: ReactNode }) {
     const publicada: Atividade | null = publicar
       ? { ...d, id, autor: eu, quando: 'agora', totalComentarios: 0 }
       : null;
-    if (publicada) fonte.publicarAtividade(publicada).catch(() => {});
+    if (publicada) enviar(publicada);
     setEstado((e) => ({
       ...e,
       atividades: [nova, ...e.atividades],
       publicadas: publicada ? [publicada, ...e.publicadas] : e.publicadas,
+      naoEnviadas: publicada ? [publicada.id, ...e.naoEnviadas] : e.naoEnviadas,
     }));
     return nova;
-  }, []);
+  }, [enviar]);
 
   const atualizar = useCallback((id: string, d: DadosAtividade) => {
     setEstado((e) => ({
