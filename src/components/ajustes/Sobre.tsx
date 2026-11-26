@@ -9,6 +9,7 @@ import { space, useTema } from '@/theme';
 
 import { Botao } from '../Botao';
 import { Texto } from '../Texto';
+import { AtualizacaoApp } from './AtualizacaoApp';
 import { Ajuste, Divisoria } from './Cartao';
 
 const TOQUES_ADMIN = 7;
@@ -50,6 +51,8 @@ export function Sobre({ onAdmin }: { onAdmin?: () => void }) {
         <Texto estilo="Títulos/Médio">Consi</Texto>
         <Texto cor={cores.text.secondary}>Versão {versaoDoApp()}</Texto>
       </Pressable>
+
+      <AtualizacaoApp />
 
       <Divisoria />
       <Ajuste
