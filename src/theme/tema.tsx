@@ -1,5 +1,5 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { AppState, Appearance } from 'react-native';
 
 import { coresPorModo, elevacaoPorModo, type Cores, type Elevacao, type Modo } from './tokens';
 
@@ -16,8 +16,48 @@ const ContextoTema = createContext<Tema>({
   elevacao: elevacaoPorModo.dark,
 });
 
+/**
+ * O tema do celular, sem os "pulos" do useColorScheme. Em alguns Android (One UI, MIUI) o sistema
+ * avisa claro→escuro→claro toda vez que o app vai para o fundo (para a miniatura dos recentes) ou
+ * quando o vigia abre a pausa por cima. Cada aviso redesenhava o app inteiro com as cores do outro
+ * modo, e esse era o travamento do "Do celular". Aqui só vale o tema com o app na frente, e uma
+ * troca só entra depois de 300 ms parada.
+ */
+const ESPERA_TEMA_MS = 300;
+
+type Esquema = ReturnType<typeof Appearance.getColorScheme>;
+
+function useTemaDoCelular(ligado: boolean): Esquema {
+  const [esquema, setEsquema] = useState<Esquema>(() => Appearance.getColorScheme());
+  useEffect(() => {
+    if (!ligado) return;
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    const conferir = () => {
+      clearTimeout(espera);
+      espera = setTimeout(() => {
+        if (AppState.currentState !== 'active') return;
+        const agora = Appearance.getColorScheme();
+        setEsquema((antes) => (antes === agora ? antes : agora));
+      }, ESPERA_TEMA_MS);
+    };
+    conferir();
+    const tema = Appearance.addChangeListener(conferir);
+    const app = AppState.addEventListener('change', (st) => {
+      if (st === 'active') conferir();
+      else clearTimeout(espera);
+    });
+    return () => {
+      clearTimeout(espera);
+      tema.remove();
+      app.remove();
+    };
+  }, [ligado]);
+  return esquema;
+}
+
 export function ModoDeCor({ modo, children }: { modo?: Modo; children: ReactNode }) {
-  const doCelular = useColorScheme();
+  // Blocos internos com modo fixo não precisam ouvir o sistema.
+  const doCelular = useTemaDoCelular(modo === undefined);
   const efetivo: Modo = modo ?? (doCelular === 'light' ? 'light' : 'dark');
   const valor = useMemo(
     () => ({ modo: efetivo, cores: coresPorModo[efetivo], elevacao: elevacaoPorModo[efetivo] }),
