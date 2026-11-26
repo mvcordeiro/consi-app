@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Animated, Easing, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, Easing, KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Botao, CabecalhoVoltar, CampoTexto, Filtro, Texto } from '@/components';
@@ -70,7 +70,7 @@ export default function Finalizar() {
 
   return (
     <SafeAreaView style={[styles.tela, { backgroundColor: cores.bg.base }]} edges={['top', 'bottom', 'left', 'right']}>
-      <KeyboardAvoidingView style={styles.tela} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.tela} behavior="padding">
         <View style={styles.margemTopo}>
           <CabecalhoVoltar rotulo="Finalizar atividade" />
         </View>

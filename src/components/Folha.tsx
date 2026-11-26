@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Animated, Easing, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Keyboard, Modal, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { duration, easing, inset, radius, space, useTema } from '@/theme';
@@ -8,6 +8,28 @@ import { Texto } from './Texto';
 
 const nativo = Platform.OS !== 'web';
 const curva = Easing.bezier(...easing.standard);
+
+/**
+ * Altura do teclado aberto (0 fechado). A folha é um Modal e, com o Android de ponta a ponta,
+ * a janela não encolhe com o teclado: sem isso o campo e o botão ficavam atrás dele (issue #19).
+ */
+export function useAlturaTeclado(ligado = true) {
+  const [altura, setAltura] = useState(0);
+  useEffect(() => {
+    if (!ligado || !nativo) return;
+    const ios = Platform.OS === 'ios';
+    const abre = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', (e) =>
+      setAltura(e.endCoordinates.height),
+    );
+    const fecha = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setAltura(0));
+    return () => {
+      abre.remove();
+      fecha.remove();
+      setAltura(0);
+    };
+  }, [ligado]);
+  return altura;
+}
 
 /**
  * Folha (bottom sheet) — o Design System ainda não tem modal; esta folha usa só as variáveis:
@@ -24,11 +46,13 @@ type Props = {
 
 export function Folha({ visivel, onFechar, titulo, descricao, children }: Props) {
   const { cores } = useTema();
-  const { bottom } = useSafeAreaInsets();
+  const { bottom, top } = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const [montada, setMontada] = useState(visivel);
   const [v] = useState(() => new Animated.Value(0));
 
   if (visivel && !montada) setMontada(true);
+  const teclado = useAlturaTeclado(montada);
 
   useEffect(() => {
     if (!montada) return;
@@ -55,7 +79,9 @@ export function Folha({ visivel, onFechar, titulo, descricao, children }: Props)
             styles.folha,
             {
               backgroundColor: cores.bg.raised,
-              paddingBottom: bottom + inset.lg,
+              // Com o teclado aberto, a folha sobe acima dele e cabe no que sobra da tela.
+              paddingBottom: (teclado > 0 ? teclado : bottom) + inset.lg,
+              maxHeight: height - top - space[16],
               transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [480, 0] }) }],
             },
           ]}

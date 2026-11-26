@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { inset, space, useTema } from '@/theme';
@@ -37,7 +37,7 @@ export function TelaAjustes({
   const { cores } = useTema();
   return (
     <SafeAreaView style={[styles.fundo, { backgroundColor: cores.bg.base }]} edges={['top', 'left', 'right', 'bottom']}>
-      <KeyboardAvoidingView style={styles.fundo} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.fundo} behavior="padding">
         <View style={styles.topo}>
           <CabecalhoVoltar rotulo={voltar} direita={direita} />
         </View>

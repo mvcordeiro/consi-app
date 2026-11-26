@@ -128,7 +128,7 @@ export function TelaOnboarding({
         <Image source={textura} resizeMode="cover" style={styles.textura} pointerEvents="none" />
       ) : null}
       {evitarTeclado ? (
-        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={styles.flex} behavior="padding">
           {corpo}
         </KeyboardAvoidingView>
       ) : (

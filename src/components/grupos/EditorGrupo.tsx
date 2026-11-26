@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { appPorId, comAppsDoAparelho, useApps } from '@/data/apps';
@@ -79,7 +79,7 @@ export function EditorGrupo({ inicial, novo }: Props) {
       <View style={styles.margemTopo}>
         <CabecalhoVoltar rotulo={novo ? 'Novo grupo' : 'Grupo'} />
       </View>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
           {/* Nome e ícone */}
           <Aparecer style={styles.identidade}>
