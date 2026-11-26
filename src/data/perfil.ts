@@ -5,7 +5,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 
-import { guardarArquivo } from './arquivos';
+import { guardarArquivo, pastaAnexos } from './arquivos';
 import { gravarEstado, lerEstado } from './banco';
 
 const CHAVE = 'consi:perfil:foto';
@@ -19,6 +19,15 @@ async function ler(): Promise<string | null> {
     atual = (await lerEstado(CHAVE)) || null;
   } catch {
     atual = null;
+  }
+  // Foto gravada fora da pasta de anexos (versões antigas, ou a cópia falhou): ela fica no cache
+  // do seletor de imagens e some no "Limpar cache". Copia para os anexos enquanto ainda existe.
+  if (atual && atual.startsWith('file:') && !atual.startsWith(pastaAnexos().uri)) {
+    const guardada = await guardarArquivo(atual).catch(() => atual as string);
+    if (guardada !== atual) {
+      atual = guardada;
+      await gravarEstado(CHAVE, guardada).catch(() => {});
+    }
   }
   return atual;
 }

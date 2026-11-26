@@ -113,6 +113,8 @@ export function migrarAnexos(): Promise<void> {
 }
 
 const abertos = new Map<string, Promise<string>>();
+/** A cópia decifrada de cada anexo, para saber se ela ainda está no cache. */
+const copias = new Map<string, string>();
 
 /**
  * Endereço que dá para mostrar ou tocar: para um anexo cifrado, uma cópia decifrada no cache;
@@ -121,6 +123,13 @@ const abertos = new Map<string, Promise<string>>();
 export function abrirArquivo(uri: string): Promise<string> {
   if (!nativo || !uri.startsWith('file:') || !jaGuardado(uri)) return Promise.resolve(uri);
   let p = abertos.get(uri);
+  // "Limpar cache" do Android apaga as cópias decifradas com o app aberto: decifra de novo.
+  const copia = copias.get(uri);
+  if (p && copia && copia !== uri && !new File(copia).exists) {
+    abertos.delete(uri);
+    copias.delete(uri);
+    p = undefined;
+  }
   if (!p) {
     p = (async () => {
       await migrarAnexos();
@@ -132,6 +141,7 @@ export function abrirArquivo(uri: string): Promise<string> {
       const claro = (await aesDecryptAsync(selado, await chaveDosAnexos())) as Uint8Array;
       const destino = new File(pastaAbertos(), f.name);
       destino.write(claro);
+      copias.set(uri, destino.uri);
       return destino.uri;
     })().catch(() => {
       abertos.delete(uri);
@@ -160,6 +170,7 @@ export function useArquivoAberto(uri: string | null | undefined): string | null 
 export function apagarAnexos() {
   if (!nativo) return;
   abertos.clear();
+  copias.clear();
   for (const [pai, nome] of [
     [Paths.document, 'anexos'],
     [Paths.cache, 'abertos'],
