@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consi · Feedbacks (local)</title>
+<style>
+  :root { --bg:#faf8f5; --card:#fff; --tx:#1f1d1a; --mut:#78716c; --bd:#e7e2db; --ac:#1f6f5c; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--tx); }
+  main { max-width:860px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .mut { color:var(--mut); font-size:13px; }
+  input, select, button { font:inherit; padding:8px 12px; border:1px solid var(--bd); border-radius:8px; background:#fff; }
+  button { cursor:pointer; background:var(--ac); color:#fff; border-color:var(--ac); }
+  button.sec { background:#fff; color:var(--tx); border-color:var(--bd); }
+  #login { display:grid; gap:8px; max-width:320px; margin-top:24px; }
+  .barra { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0; align-items:center; }
+  .barra input[type=search] { flex:1; min-width:180px; }
+  .item { background:var(--card); border:1px solid var(--bd); border-radius:12px; padding:14px 16px; margin-bottom:10px; }
+  .topo { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:6px; }
+  .tag { font-size:12px; font-weight:600; padding:2px 8px; border-radius:99px; background:#eee; }
+  .tag.bug { background:#fde2e0; color:#9b1c1c; }
+  .tag.ideia { background:#e0ecff; color:#1d4ed8; }
+  .tag.elogio { background:#dcf5e6; color:#166534; }
+  .texto { white-space:pre-wrap; margin:6px 0; }
+  img { max-width:240px; max-height:320px; border-radius:8px; border:1px solid var(--bd); display:block; margin-top:8px; }
+  .erro { color:#b91c1c; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Feedbacks do Consi</h1>
+  <div class="mut">Painel local · não faz parte do app · só admin lê</div>
+
+  <form id="login">
+    <input id="email" type="email" placeholder="e-mail do admin" autocomplete="username" required>
+    <input id="senha" type="password" placeholder="senha" autocomplete="current-password" required>
+    <button>Entrar</button>
+    <div id="erro" class="erro" hidden></div>
+  </form>
+
+  <section id="painel" hidden>
+    <div class="barra">
+      <select id="tipo">
+        <option value="">Todos os tipos</option>
+        <option value="bug">Algo deu errado</option>
+        <option value="ideia">Ideia</option>
+        <option value="elogio">Elogio</option>
+        <option value="outro">Outro</option>
+      </select>
+      <input id="busca" type="search" placeholder="Buscar no texto, versão ou aparelho">
+      <button id="atualizar" class="sec" type="button">Atualizar</button>
+      <button id="sair" class="sec" type="button">Sair</button>
+    </div>
+    <div id="resumo" class="mut"></div>
+    <div id="lista"></div>
+  </section>
+</main>
+
+<script>
+const NOME = { bug: 'Algo deu errado', ideia: 'Ideia', elogio: 'Elogio', outro: 'Outro' };
+const $ = (id) => document.getElementById(id);
+let cfg, token = null, itens = [];
+
+const cab = () => ({ apikey: cfg.anonKey, Authorization: `Bearer ${token ?? cfg.anonKey}` });
+
+async function entrar(email, senha) {
+  const r = await fetch(`${cfg.url}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: { apikey: cfg.anonKey, 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password: senha }),
+  });
+  const j = await r.json();
+  if (!r.ok) throw new Error('E-mail ou senha incorretos.');
+  token = j.access_token;
+  const eh = await fetch(`${cfg.url}/rest/v1/rpc/is_admin`, { method: 'POST', headers: { ...cab(), 'content-type': 'application/json' }, body: '{}' });
+  if ((await eh.json()) !== true) { token = null; throw new Error('Esta conta não é admin.'); }
+}
+
+async function carregar() {
+  const r = await fetch(`${cfg.url}/rest/v1/feedback?select=*&order=criado_em.desc&limit=500`, { headers: cab() });
+  if (!r.ok) throw new Error('Não consegui ler os feedbacks.');
+  itens = await r.json();
+  desenhar();
+}
+
+function desenhar() {
+  const t = $('tipo').value, q = $('busca').value.trim().toLowerCase();
+  const l = itens.filter((f) => (!t || f.tipo === t) &&
+    (!q || [f.texto, f.versao, f.aparelho, f.sistema].some((x) => (x ?? '').toLowerCase().includes(q))));
+  $('resumo').textContent = `${l.length} de ${itens.length} feedbacks`;
+  const alvo = $('lista'); alvo.replaceChildren();
+  for (const f of l) {
+    const d = document.createElement('div'); d.className = 'item';
+    const topo = document.createElement('div'); topo.className = 'topo';
+    const tag = document.createElement('span'); tag.className = `tag ${f.tipo}`; tag.textContent = NOME[f.tipo] ?? f.tipo;
+    const meta = document.createElement('span'); meta.className = 'mut';
+    meta.textContent = [new Date(f.criado_em).toLocaleString('pt-BR'), f.versao && `v${f.versao}`, f.plataforma, f.sistema, f.aparelho].filter(Boolean).join(' · ');
+    topo.append(tag, meta);
+    const tx = document.createElement('div'); tx.className = 'texto'; tx.textContent = f.texto;
+    d.append(topo, tx);
+    if (f.print) {
+      const b = document.createElement('button'); b.className = 'sec'; b.type = 'button'; b.textContent = 'Ver print';
+      b.onclick = async () => {
+        b.disabled = true;
+        try {
+          const caminho = f.print.split('/').map(encodeURIComponent).join('/');
+          const r = await fetch(`${cfg.url}/storage/v1/object/authenticated/feedback/${caminho}`, { headers: cab() });
+          if (!r.ok) throw new Error();
+          const img = document.createElement('img'); img.src = URL.createObjectURL(await r.blob()); b.replaceWith(img);
+        } catch { b.textContent = 'Print indisponível'; }
+      };
+      d.append(b);
+    }
+    alvo.append(d);
+  }
+}
+
+async function iniciar() {
+  cfg = await (await fetch('/config.json')).json();
+  $('login').onsubmit = async (e) => {
+    e.preventDefault(); $('erro').hidden = true;
+    try {
+      await entrar($('email').value, $('senha').value);
+      $('senha').value = '';
+      $('login').hidden = true; $('painel').hidden = false;
+      await carregar();
+    } catch (x) { $('erro').textContent = x.message; $('erro').hidden = false; }
+  };
+  $('tipo').onchange = $('busca').oninput = desenhar;
+  $('atualizar').onclick = () => carregar().catch((x) => ($('resumo').textContent = x.message));
+  $('sair').onclick = () => { token = null; itens = []; $('painel').hidden = true; $('login').hidden = false; };
+}
+iniciar();
+</script>
+</body>
+</html>
