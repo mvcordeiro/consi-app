@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { borderWidth, radius, space, useTema } from '@/theme';
 
-import { LogoHome } from '../home/assets';
+import { LogoConsi } from '../hobbies/assets';
 import { Texto } from '../Texto';
 
 /**
@@ -14,7 +14,7 @@ export function RespostaConsi({ texto, titulo = 'Consi respondeu' }: { texto: st
   return (
     <View style={styles.linha} accessible accessibilityLabel={`${titulo}: ${texto}`}>
       <View style={[styles.avatar, { backgroundColor: cores.action.primary.default }]}>
-        <LogoHome width={17} height={20} corTraco={cores.text['on-pressed']} />
+        <LogoConsi width={30} height={11} corTraco={cores.text['on-pressed']} />
       </View>
       <View style={styles.coluna}>
         <Texto estilo="Legenda/Pequena" cor={cores.text.tertiary}>

@@ -3,13 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAviso, useEspacoBarra, useModoImersivo } from '@/components';
+import { ALTURA_CABECALHO_ABA, CabecalhoAba, useAviso, useEspacoBarra, useModoImersivo } from '@/components';
 import {
   Drops,
   Grupos,
   HeroEmocoes,
   SuaSemana,
-  TopoHome,
 } from '@/components/home';
 import { hobbyInfo } from '@/data/catalogo';
 import type { Emocao } from '@/data/emocoes';
@@ -17,7 +16,6 @@ import { respostasSalvas } from '@/data/onboarding';
 import { usePreferencias } from '@/data/preferencias';
 import { space } from '@/theme';
 
-const ALTURA_TOPO = 40;
 const ESPACO_SECAO = space[64];
 
 /**
@@ -49,8 +47,9 @@ export default function Inicio() {
     respostasSalvas().then((r) => setNome(r.nome));
   }, []);
 
-  const topo = top + space[8];
-  const alturaTopo = topo + ALTURA_TOPO;
+  // Mesmo cabeçalho das outras abas: o logo fica na mesma altura da tela de Hobbies.
+  const topo = top;
+  const alturaTopo = topo + ALTURA_CABECALHO_ABA;
   // A hero vai do fim do topo até a barra de navegação: topo + hero = altura da tela.
   const alturaHero = alturaTela - alturaTopo - espacoBarra;
   const arrastando = useCallback((a: boolean) => setArrastandoBalao(a), []);
@@ -77,7 +76,7 @@ export default function Inicio() {
             transform: [{ translateY: saida.interpolate({ inputRange: [0, 1], outputRange: [0, -(alturaTopo + space[16])] }) }],
           }}
         >
-          <TopoHome />
+          <CabecalhoAba />
         </Animated.View>
         <View style={styles.hero}>
           <HeroEmocoes
