@@ -16,7 +16,6 @@ import IconeNotificacao from '../../../assets/home/icone-notificacao.svg';
 import IconeRelogio from '../../../assets/home/icone-relogio.svg';
 import IconeRepetir from '../../../assets/home/icone-repetir.svg';
 import IconeSocial from '../../../assets/home/icone-social.svg';
-import LogoHome from '../../../assets/home/logo.svg';
 import RostoBocaFechada from '../../../assets/home/rosto-boca-fechada.svg';
 import RostoCorado from '../../../assets/home/rosto-corado.svg';
 import RostoPositivo16 from '../../../assets/home/rosto-positivo-16.svg';
@@ -55,7 +54,6 @@ export {
   IconeRelogio,
   IconeRepetir,
   IconeSocial,
-  LogoHome,
   RostoBocaFechada,
   RostoCorado,
   RostoPositivo,
