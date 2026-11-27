@@ -59,6 +59,14 @@ const FRASES: Record<Contexto, string[]> = {
     '{A emoção} ainda está por aí?\nConta pra gente.',
     'Depois {da emoção} de hoje,\ncomo você está?',
     'Oi de novo{, nome}.\nAinda é {a emoção}?',
+    // Servem para qualquer nome, inclusive o que a pessoa deu à emoção (“De boa”): o nome vai
+    // entre aspas e nunca depois de artigo.
+    'Mais cedo você marcou {“emoção”}.\nE agora, como está?',
+    'Ainda em {“emoção”}?\nOu algo mudou?',
+    'Você registrou {“emoção”} hoje.\nComo está agora?',
+    'Depois de {“emoção”},\ncomo você está?',
+    '{“Emoção”} ainda vale?\nConta pra gente.',
+    'Oi de novo{, nome}.\nAinda é {“emoção”}?',
   ],
   madrugada: [
     'Sem sono{, nome}?\nComo você está?',
@@ -163,6 +171,20 @@ async function ler(): Promise<Guardado> {
   return { recentes: [], ultimaAbertura: 0 };
 }
 
+/** Frases que dependem do gênero e do número da emoção ("a alegria", "da raiva"). */
+const PEDE_ARTIGO = /\{(a|A|da) emoção\}/;
+
+/** A emoção foi renomeada pela pessoa em Ajustes? Aí o artigo não vale: o nome pode ser qualquer coisa. */
+function renomeada(id?: string) {
+  const e = emocaoPorId(id);
+  return !!e && e.nome !== e.nomeOriginal;
+}
+
+/** A frase combina com a emoção? Com o nome trocado, só as que não usam artigo. */
+export function fraseServe(modelo: string, emocao?: string) {
+  return !(PEDE_ARTIGO.test(modelo) && renomeada(emocao));
+}
+
 const sortear = <T>(l: T[]) => l[Math.floor(Math.random() * l.length)];
 
 /** Contextos que valem agora, do mais específico para o mais geral. */
@@ -189,7 +211,7 @@ export async function saudacaoDaVez(ultimaEmocao?: RegistroEmocao, agora = new D
   const t = agora.getTime();
   const primeiraDoDia = !g.ultimaAbertura || new Date(g.ultimaAbertura).toDateString() !== agora.toDateString();
 
-  if (g.atual && !primeiraDoDia && t - g.atual.em < DURACAO_MS) {
+  if (g.atual && !primeiraDoDia && t - g.atual.em < DURACAO_MS && fraseServe(g.atual.modelo, g.atual.emocao)) {
     await gravarEstado(CHAVE, JSON.stringify({ ...g, ultimaAbertura: t })).catch(() => {});
     return g.atual;
   }
@@ -204,7 +226,8 @@ export async function saudacaoDaVez(ultimaEmocao?: RegistroEmocao, agora = new D
       : sortear(ordem.slice(1));
 
   // Ainda não ditas há pouco; se todas foram, a dita há mais tempo (nunca a mesma em sequência).
-  const pool = FRASES[escolhido];
+  const emocaoDaFrase = escolhido === 'emocao' ? ultimaEmocao?.id : undefined;
+  const pool = FRASES[escolhido].filter((f) => fraseServe(f, emocaoDaFrase));
   const livres = pool.filter((f) => !g.recentes.includes(f));
   const modelo = livres.length
     ? sortear(livres)
@@ -225,12 +248,17 @@ export function textoDaSaudacao({ modelo, emocao }: Saudacao, nome: string) {
   // Nome trocado em Ajustes (estilo ou nome próprio): entra o nome escolhido, sem artigo,
   // porque não dá para saber o gênero dele.
   const e = emocaoPorId(emocao);
-  const renomeada = !!e && e.nome !== e.nomeOriginal;
-  const comEmocao = renomeada ? e.nome.toLowerCase() : (EMOCAO_NA_FRASE[emocao ?? ''] ?? 'essa emoção');
-  const daEmocao = renomeada ? `de ${comEmocao}` : comEmocao.replace(/^a /, 'da ').replace(/^o /, 'do ');
+  const trocada = renomeada(emocao);
+  // Nome trocado: vai entre aspas, como a pessoa escreveu, sem artigo nem "de" grudado.
+  const citada = e ? `“${e.nome}”` : 'essa emoção';
+  const comEmocao = trocada ? citada : (EMOCAO_NA_FRASE[emocao ?? ''] ?? 'essa emoção');
+  const daEmocao = trocada ? `de ${citada}` : comEmocao.replace(/^a /, 'da ').replace(/^o /, 'do ');
+  const maiuscula = (t: string) => t[0].toUpperCase() + t.slice(1);
   return modelo
     .replace('{, nome}', nome ? `, ${nome}` : '')
-    .replace('{A emoção}', comEmocao[0].toUpperCase() + comEmocao.slice(1))
+    .replace('{“Emoção”}', maiuscula(citada))
+    .replace('{“emoção”}', citada)
+    .replace('{A emoção}', maiuscula(comEmocao))
     .replace('{a emoção}', comEmocao)
     .replace('{da emoção}', daEmocao);
 }
