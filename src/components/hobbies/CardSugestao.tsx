@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Atividade } from '@/data/catalogo';
 import { useAutorExibido } from '@/data/perfil';
@@ -35,7 +35,8 @@ export function CardSugestao({ sugestao, totalComentarios, onIgnorar, onConversa
     : { usuario: 'Alguém da comunidade', iniciais: '·' };
   return (
     <View style={styles.conteudo}>
-      <View style={styles.corpo}>
+      {/* O card todo abre a atividade: com um resumo longo, o "mais" fica cortado nas 2 linhas. */}
+      <Pressable onPress={onMais} accessibilityRole="button" accessibilityLabel={`Abrir ${sugestao.titulo}`} style={styles.corpo}>
         <View style={styles.topo}>
           <View style={styles.autor}>
             <Avatar tamanho={24} foto={autor.foto} iniciais={autor.iniciais} />
@@ -54,12 +55,12 @@ export function CardSugestao({ sugestao, totalComentarios, onIgnorar, onConversa
           </Texto>
           <Texto estilo="Texto/Médio" numberOfLines={2} style={styles.resumo}>
             {`${sugestao.resumo}... `}
-            <Texto estilo="Texto/Médio" cor={cores.text.tertiary} onPress={onMais} accessibilityRole="link">
+            <Texto estilo="Texto/Médio" cor={cores.text.tertiary}>
               mais
             </Texto>
           </Texto>
         </View>
-      </View>
+      </Pressable>
       <View style={styles.acoes}>
         <BotaoCard
           fundo={cores.bg['error-subtle']}
