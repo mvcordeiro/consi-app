@@ -80,7 +80,7 @@ function periodo(em: number) {
  * Dois tipos de momento, que dá para filtrar:
  * - Emoções (check-ins): marcador redondo com o balão, no tom da emoção (agradável, difícil, neutra).
  * - Escolhas da pausa: marcador quadrado com o que a pessoa fez, e o que veio logo depois:
- *     "Instagram ficou para depois" · "Sentiu Fascinação" / "Trocou por Música"
+ *     "Instagram ficou para depois" · "Fascinação" / "Trocou por Música"
  *     "Parou de usar Instagram" (quando já estava usando o app)
  *   O check-in ligado a uma escolha não aparece de novo como momento próprio.
  * Mostra 7 momentos por vez, com "Ver mais".
@@ -444,7 +444,8 @@ function CardCheckin({
 /**
  * Escolha da pausa: "Instagram ficou para depois" (não abriu) ou "Parou de usar Instagram"
  * (já estava usando o app), sem artigo antes do nome do app. Embaixo, o que veio logo depois,
- * se houve: "Sentiu Fascinação" (check-in na mesma pausa) ou "Trocou por Música" (hobby).
+ * se houve: o nome da emoção, como a pessoa o chama, "Fascinação" (check-in na mesma pausa), ou
+ * "Trocou por Música" (hobby). Sem verbo antes da emoção: com nome trocado ("De boa") não quebra a frase.
  * Só leitura, sem arraste.
  */
 function CardEscolha({ escolha, checkin, linha }: { escolha: Resistencia; checkin?: RegistroEmocao; linha: boolean }) {
@@ -458,7 +459,7 @@ function CardEscolha({ escolha, checkin, linha }: { escolha: Resistencia; checki
   const emocao = checkin ? emocaoPorId(checkin.id) : undefined;
   const hobby = escolha.hobby ? hobbyInfo(escolha.hobby as HobbyId) : undefined;
   const titulo = saiu ? `Parou de usar ${nomeApp}` : `${nomeApp} ficou para depois`;
-  const depois = emocao ? `Sentiu ${emocao.nome}` : hobby ? `Trocou por ${hobby.nome}` : saiu ? 'Saiu do app' : 'Não abriu';
+  const depois = emocao ? emocao.nome : hobby ? `Trocou por ${hobby.nome}` : saiu ? 'Saiu do app' : 'Não abriu';
   return (
     <LinhaDoTempo
       hora={hora}
@@ -467,7 +468,7 @@ function CardEscolha({ escolha, checkin, linha }: { escolha: Resistencia; checki
     >
       <View
         accessible
-        accessibilityLabel={`Às ${hora}, ${titulo}. ${depois}`}
+        accessibilityLabel={`Às ${hora}, ${titulo}. ${emocao ? `Emoção: ${depois}` : depois}`}
         style={[styles.card, { backgroundColor: cores.bg.raised, borderColor: cores.border.subtle }]}
       >
         <View style={styles.tituloEscolha}>
