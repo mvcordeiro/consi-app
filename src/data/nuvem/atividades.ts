@@ -4,7 +4,7 @@
  * Quem publica com visibilidade "comunidade" manda para cá e, desde a migration 0006, ela entra
  * publicada na hora no "Para você" de quem tem o mesmo hobby. O admin pode esconder depois.
  * Ler não cria sessão (a RLS libera as publicadas); publicar usa a sessão anônima.
- * O nome de quem publicou é um apelido gerado pelo servidor ("Capivara Alegre"), nunca o @.
+ * O nome de quem publicou é o @handle (migration 0007); sem @ reservado, um apelido gerado pelo servidor ("Capivara Alegre").
  * Só vão texto e blocos: imagens e capa ficam no aparelho.
  */
 import type { NomeIcone } from '@/components/icones';
@@ -41,6 +41,8 @@ export function haQuanto(iso: string, agora = Date.now()) {
 
 function iniciais(nome: string) {
   return nome
+    .replace(/[^\p{L}\s]/gu, ' ')
+    .trim()
     .split(/\s+/)
     .map((p) => p[0] ?? '')
     .join('')

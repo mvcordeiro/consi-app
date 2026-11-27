@@ -71,7 +71,7 @@ export default function Seguranca() {
         </Caixa>
         <Caixa tom="info" icone="rede-mundial" titulo="Sai do celular, só se você usar">
           <Item rotulo="Sugestões e votos">o texto da ideia e os votos. Depois de aprovada, a sugestão fica visível para quem usa o Consi, sem mostrar quem enviou.</Item>
-          <Item rotulo="Atividades para a comunidade">quando você escolhe publicar, o título, o texto, os minutos e o hobby. Ela aparece na hora para quem tem o mesmo hobby, com um apelido (como “Capivara Alegre”) só se você deixar mostrar o autor. Nunca o seu @. Fotos e capa não vão.</Item>
+          <Item rotulo="Atividades para a comunidade">quando você escolhe publicar, o título, o texto, os minutos e o hobby. Ela aparece na hora para quem tem o mesmo hobby, com o seu @ só se você deixar mostrar o autor (sem @, um apelido como “Capivara Alegre”). Fotos e capa não vão.</Item>
           <Item rotulo="Feedback">o texto, o print se você anexar, a versão do app e o modelo do celular. Só quem administra o Consi lê.</Item>
           <Item rotulo="Seu @">só o @, para ninguém usar o mesmo.</Item>
           <Item rotulo="Dados de uso do piloto">avisos como “abriu o app” ou “registrou um momento”, com um código aleatório deste celular. Nunca o texto, nem os nomes dos seus apps ou hobbies. Dá para desligar em Privacidade e dados.</Item>

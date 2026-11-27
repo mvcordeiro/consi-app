@@ -27,7 +27,7 @@ const ESPERA_ENVIO = 4000;
 const DIA = 86_400_000;
 
 /** Dias de uso até o convite para o formulário. */
-export const DIAS_DO_PILOTO = 7;
+export const DIAS_DO_PILOTO = 3;
 
 type Dados = {
   id: string;
@@ -89,7 +89,7 @@ export const codigoDoPiloto = (d: Dados) => d.id.slice(0, 8).toUpperCase();
 
 // ─── Relógio confiável ──────────────────────────────────────────────────────
 /**
- * Os 7 dias do piloto não podem andar só porque a pessoa adiantou a data do celular. A hora vem
+ * Os 3 dias do piloto não podem andar só porque a pessoa adiantou a data do celular. A hora vem
  * do servidor (cabeçalho Date do Supabase) a cada abertura; entre uma leitura e outra, o tempo
  * conta pelo relógio monotônico (performance.now), que não muda com a data do aparelho.
  * Sem rede, vale a última hora do servidor (o contador espera, não pula). Só sem nunca ter
@@ -129,11 +129,11 @@ async function sincronizarRelogio() {
 /** Em que dia do piloto a pessoa está (1 = primeiro dia). Pela hora confiável, não pela do celular. */
 export const diaDoPiloto = (d: Dados, agora = agoraConfiavel(d)) => Math.max(1, Math.floor((agora - d.inicio) / DIA) + 1);
 
-/** Quantos dias completos de piloto já passaram (0 a 7) e se o formulário já pode abrir. */
+/** Quantos dias completos de piloto já passaram (0 a 3) e se o formulário já pode abrir. */
 export function progressoDoPiloto(d: Dados, agora = agoraConfiavel(d)) {
   const passados = Math.max(0, (agora - d.inicio) / DIA);
   return {
-    /** Dia atual, de 1 a 7 (fica em 7 depois do fim). */
+    /** Dia atual, de 1 a 3 (fica em 3 depois do fim). */
     dia: Math.min(DIAS_DO_PILOTO, Math.floor(passados) + 1),
     pronto: passados >= DIAS_DO_PILOTO,
   };
@@ -217,11 +217,11 @@ export function registrar(evento: string, props?: Record<string, string | number
   })();
 }
 
-// ─── Notificação do dia 7 (Android, APK versionCode 9 ou mais novo) ─────────
-const TITULO_CONVITE = 'Como foi sua semana com o Consi?';
-const TEXTO_CONVITE = 'Faz 7 dias de teste. Leva uns 6 minutos e as respostas são anônimas.';
+// ─── Notificação do último dia (Android, APK versionCode 9 ou mais novo) ─────────
+const TITULO_CONVITE = 'Como foi seu teste com o Consi?';
+const TEXTO_CONVITE = 'Faz 3 dias de teste. Leva uns 6 minutos e as respostas são anônimas.';
 
-/** Quando a notificação toca: 7 dias depois da primeira abertura, em horário razoável (9h às 21h). */
+/** Quando a notificação toca: 3 dias depois da primeira abertura, em horário razoável (9h às 21h). */
 function momentoDoConvite(d: Dados) {
   const alvo = new Date(d.inicio + DIAS_DO_PILOTO * DIA);
   if (alvo.getHours() < 9) alvo.setHours(9, 0, 0, 0);

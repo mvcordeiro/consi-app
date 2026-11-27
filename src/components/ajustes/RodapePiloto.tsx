@@ -107,8 +107,8 @@ export function RodapePiloto() {
 
 function rotuloAcessivel(e: Estado) {
   if (e.respondeu) return 'Piloto concluído. Obrigado por participar.';
-  if (e.pronto) return 'Piloto: os 7 dias terminaram.';
-  return `Piloto de teste: dia ${e.dia} de ${DIAS_DO_PILOTO}. O formulário abre depois do sétimo dia.`;
+  if (e.pronto) return 'Piloto: os 3 dias terminaram.';
+  return `Piloto de teste: dia ${e.dia} de ${DIAS_DO_PILOTO}. O formulário abre depois do terceiro dia.`;
 }
 
 const styles = StyleSheet.create({

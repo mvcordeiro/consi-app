@@ -69,7 +69,7 @@ function Pilha() {
   useEffect(() => {
     void migrarAnexos();
   }, []);
-  // Piloto: eventos de uso anônimos (qual tela abriu, sem conteúdo) e o convite do dia 7.
+  // Piloto: eventos de uso anônimos (qual tela abriu, sem conteúdo) e o convite do último dia.
   useEffect(() => {
     iniciarPiloto();
   }, []);
