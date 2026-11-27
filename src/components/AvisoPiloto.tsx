@@ -16,7 +16,7 @@ import { Botao } from './Botao';
 import { Folha } from './Folha';
 
 /**
- * Convite do piloto: depois de 7 dias de uso, uma Folha chama para o formulário final (NPS e
+ * Convite do piloto: depois de 3 dias de uso, uma Folha chama para o formulário final (NPS e
  * sugestões). Só aparece nas abas (nunca por cima da pausa ou do onboarding), uma vez por dia no
  * máximo, e some de vez com "Já respondi". Sem formulário em app.json → expo.extra.piloto, não aparece.
  */
@@ -66,8 +66,8 @@ export function AvisoPiloto() {
     <Folha
       visivel={visivel && nasAbas}
       onFechar={depois}
-      titulo="Como foi sua semana com o Consi?"
-      descricao="Faz 7 dias que você está testando. São uns 6 minutos e ajudam muito o piloto. As respostas são anônimas."
+      titulo="Como foi seu teste com o Consi?"
+      descricao="Faz 3 dias que você está testando. São uns 6 minutos e ajudam muito o piloto. As respostas são anônimas."
     >
       <View style={styles.botoes}>
         <Botao rotulo="Responder agora" onPress={responder} />
