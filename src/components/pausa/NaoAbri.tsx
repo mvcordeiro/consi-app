@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 
-import { space, useTema } from '@/theme';
+import { space, tempo, useTema } from '@/theme';
 
 import { Aparecer, TextoAnimado, fimDoTexto } from '../animacao';
 import { Botao } from '../Botao';
@@ -9,7 +9,7 @@ import { Icone } from '../Icone';
 import { AnelProgresso } from '../onboarding/AnelProgresso';
 
 /** Quanto tempo a tela fica antes de sumir sozinha. */
-export const DURACAO_NAO_ABRI = 10000;
+export const DURACAO_NAO_ABRI = tempo.naoAbri;
 
 const TITULO = 'Boa! Dessa vez você não abriu.';
 /** Quando a pessoa já estava usando o app e escolheu parar. */

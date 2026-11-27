@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { PIN_MAX } from '@/data/travaDiario';
-import { radius, space, useTema } from '@/theme';
+import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Icone, type NomeIcone } from '../Icone';
 import { Texto } from '../Texto';
@@ -77,7 +77,7 @@ export function TecladoPin({
 
 const styles = StyleSheet.create({
   pontos: { flexDirection: 'row', gap: space[16], justifyContent: 'center' },
-  ponto: { width: 14, height: 14, borderRadius: radius.full, borderWidth: 1.5 },
+  ponto: { width: 14, height: 14, borderRadius: radius.full, borderWidth: borderWidth.medium },
   teclado: { flexDirection: 'row', flexWrap: 'wrap', width: 3 * 88, alignSelf: 'center' },
   tecla: { width: 88, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: radius.lg },
 });

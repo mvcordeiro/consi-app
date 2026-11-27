@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { useTema } from '@/theme';
+import { tempo, useTema } from '@/theme';
 
 import { Texto } from '../../Texto';
 import { IconeHobbies } from '../assets';
 import { Cabeca, Casca, vibrar, type PropsMecanica } from './comum';
 
 /** Tempo segurando até revelar: curto o bastante para não cansar. */
-const TEMPO = 1500;
+const TEMPO = tempo.segurarDrop;
 const TAM = 88;
 const TRACO = 5;
 const RAIO = (TAM - TRACO) / 2;

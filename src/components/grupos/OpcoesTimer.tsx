@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ESTILOS_TIMER, type EstiloTimer, type Grupo } from '@/data/gruposHome';
-import { borderWidth, primitivas, radius, space, useTema } from '@/theme';
+import { borderWidth, radius, space, useTema } from '@/theme';
 
 import { Alternancia } from '../Alternancia';
 import { Icone } from '../Icone';
@@ -70,11 +70,12 @@ export function OpcoesTimer({ grupo, onMudar }: { grupo: Grupo; onMudar: (g: Par
 
 /** Miniatura do timer como ele aparece por cima do app (o mesmo desenho do Bolha.kt). */
 export function PreviaTimer({ estilo }: { estilo: EstiloTimer }) {
-  const base = [styles.timer, { backgroundColor: primitivas.blue[900], borderColor: '#6A82EA' }];
+  const { cores } = useTema();
+  const base = [styles.timer, { backgroundColor: cores.timer.bg, borderColor: cores.timer.border }];
   if (estilo === 'bolha') {
     return (
       <View style={[base, styles.bolha]}>
-        <Texto estilo="Legenda/Pequena" cor="#FFFFFF">
+        <Texto estilo="Legenda/Pequena" cor={cores.timer.text}>
           12:03
         </Texto>
       </View>
@@ -82,8 +83,8 @@ export function PreviaTimer({ estilo }: { estilo: EstiloTimer }) {
   }
   return (
     <View style={[base, estilo === 'faixa' ? styles.faixa : styles.pilula]}>
-      <Icone nome="relogio" tamanho={16} cor="#FFFFFF" />
-      <Texto estilo="Legenda/Pequena" cor="#FFFFFF">
+      <Icone nome="relogio" tamanho={16} cor={cores.timer.text} />
+      <Texto estilo="Legenda/Pequena" cor={cores.timer.text}>
         12min
       </Texto>
     </View>

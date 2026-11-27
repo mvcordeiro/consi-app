@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   margem: { paddingHorizontal: space[24] },
   topo: { paddingTop: space[12], gap: 18, marginBottom: 25 },
   centro: { flex: 1, textAlign: 'center' },
-  pagina: { gap: space[20], padding: space[16], borderRadius: 20, borderWidth: 1 },
+  pagina: { gap: space[20], padding: space[16], borderRadius: radius.page, borderWidth: 1 },
   // na linha do tempo, a Página de hoje fica entre a busca e a constelação
   paginaLinha: { paddingTop: 18, paddingBottom: space[32] },
   paginaTopo: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

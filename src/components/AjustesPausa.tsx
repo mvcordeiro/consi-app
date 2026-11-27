@@ -9,7 +9,7 @@ import {
   temPausaDeVerdade,
   usePermissoes,
 } from '@/data/vigia';
-import { space, useTema } from '@/theme';
+import { borderWidth, space, useTema } from '@/theme';
 
 import { Botao } from './Botao';
 import { Texto } from './Texto';
@@ -131,5 +131,5 @@ const styles = StyleSheet.create({
   permissao: { gap: space[8] },
   linha: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   flex: { flex: 1 },
-  ponto: { width: 8, height: 8, borderRadius: 4, borderWidth: 1.5 },
+  ponto: { width: 8, height: 8, borderRadius: 4, borderWidth: borderWidth.medium },
 });

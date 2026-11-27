@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 
 import type { HobbyId } from '@/data/catalogo';
-import { radius, useTema } from '@/theme';
+import { radius, tempo, useTema } from '@/theme';
 
 import { IconeHobby } from '../../hobbies/IconeHobby';
 import { Texto } from '../../Texto';
@@ -12,7 +12,7 @@ import { Casca, ICONE_DROP, vibrar } from './comum';
 const nativo = Platform.OS !== 'web';
 
 /** Duração da animação de revelação, entre o fim da interação e o card da atividade. */
-export const DURACAO_REVELACAO = 1100;
+export const DURACAO_REVELACAO = tempo.revelacaoDrop;
 
 const FAISCAS = 10;
 

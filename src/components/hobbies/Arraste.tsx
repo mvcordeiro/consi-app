@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 
 import { ImpactoVibracao, vibrarImpacto, vibrarSelecao, vibrarSucesso } from '@/data/haptica';
-import { borderWidth, easing, radius, space, useTema } from '@/theme';
+import { borderWidth, easing, mola, radius, space, useTema } from '@/theme';
 
 import { Icone, type NomeIcone } from '../Icone';
 
@@ -73,7 +73,7 @@ export function useArrasteLateral({
 }
 
 export function voltarAoLugar(pan: Animated.Value) {
-  Animated.spring(pan, { toValue: 0, useNativeDriver: nativo, speed: 14, bounciness: 6 }).start();
+  Animated.spring(pan, { toValue: 0, useNativeDriver: nativo, speed: mola.speed, bounciness: mola.bounciness }).start();
 }
 
 export function sairPeloLado(pan: Animated.Value, lado: Lado, largura: number, fim: () => void) {

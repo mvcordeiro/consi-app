@@ -4,13 +4,13 @@ import { StyleSheet, View } from 'react-native';
 import { Aparecer, fimDoTexto, TextoAnimado } from '@/components/animacao';
 import { BotaoSegurar, TelaOnboarding, useTransicao } from '@/components/onboarding';
 import { useOnboarding } from '@/data/onboarding';
-import { gap, spaceFixo as space, useTema } from '@/theme';
+import { gap, spaceFixo as space, tempo, useTema } from '@/theme';
 
 /**
  * F2 · Compromisso — segurar conclui o onboarding e abre a Home.
  * Combinado: 3 segundos (o Figma dizia 5); os textos acompanham.
  */
-const SEGURAR_MS = 3000;
+const SEGURAR_MS = tempo.compromisso;
 const TITULO = 'Assuma um compromisso com você.';
 const SUB = 'Aperta aqui por 3 segundos para confirmar que quer viver com mais intenção a partir de hoje.';
 const T_SUB = fimDoTexto(TITULO, 250);

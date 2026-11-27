@@ -42,7 +42,7 @@ import {
   type Destaque,
   type Momento,
 } from '@/data/momentos';
-import { duration, easing, radius, space, useTema } from '@/theme';
+import { borderWidth, duration, easing, radius, space, useTema } from '@/theme';
 
 const curva = Easing.bezier(...easing.standard);
 const CHAVE_RASCUNHO = 'consi:diario:rascunho';
@@ -561,8 +561,8 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     paddingHorizontal: 20,
     paddingBottom: 14,
-    borderRadius: 20,
-    borderWidth: 1.5,
+    borderRadius: radius.page,
+    borderWidth: borderWidth.medium,
   },
   contagem: { alignSelf: 'flex-end' },
   rodapeCampo: { gap: space[16] },

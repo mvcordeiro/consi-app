@@ -14,7 +14,7 @@ import { Premo } from '@/components/diario/Premo';
 import { OrigemReflexao } from '@/components/diario/OrigemReflexao';
 import { emocaoPorId } from '@/data/emocoes';
 import { diaLongo, editado, emAtual, hora, useMomentos, type Momento } from '@/data/momentos';
-import { space, useTema } from '@/theme';
+import { radius, space, useTema } from '@/theme';
 
 /** De onde o momento veio, para a legenda do pé da entrada. */
 function origemDoMomento(m: Momento) {
@@ -176,9 +176,9 @@ const styles = StyleSheet.create({
   titulos: { alignItems: 'center', gap: space[8] },
   centro: { textAlign: 'center' },
   marcadores: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[8], marginTop: space[8] },
-  cartao: { gap: space[16], paddingTop: 18, paddingHorizontal: 20, paddingBottom: 14, borderRadius: 20 },
+  cartao: { gap: space[16], paddingTop: 18, paddingHorizontal: 20, paddingBottom: 14, borderRadius: radius.page },
   blocos: { gap: space[12] },
-  pergunta: { gap: space[8], padding: space[16], borderRadius: 20, borderWidth: 1 },
+  pergunta: { gap: space[8], padding: space[16], borderRadius: radius.page, borderWidth: 1 },
   perguntaTopo: { flexDirection: 'row', alignItems: 'center', gap: space[8] },
   vazio: { gap: space[16], paddingVertical: space[8] },
   linha: { flexDirection: 'row', gap: 10 },

@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioMiolo: { width: 10, height: 10, borderRadius: radius.full },
-  iconeApp: { width: 52, height: 52, borderRadius: 14 },
+  iconeApp: { width: 52, height: 52, borderRadius: radius['app-icon'] },
   iconeEmocao: { alignItems: 'center', justifyContent: 'center' },
   tamanho: { gap: space[16] },
   exemplo: { gap: space[4], padding: space[16], borderRadius: radius.md, borderWidth: borderWidth.thin },

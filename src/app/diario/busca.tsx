@@ -10,7 +10,7 @@ import { Premo } from '@/components/diario/Premo';
 import { IconeLupa } from '@/components/home/assets';
 import { emocaoPorId } from '@/data/emocoes';
 import { acharTermo, chaveDia, DIAS_CURTOS, hora, nomeMes, plural, useMomentos, type Momento } from '@/data/momentos';
-import { radius, space, tipografia, useTema } from '@/theme';
+import { borderWidth, radius, space, tipografia, useTema } from '@/theme';
 
 type Pagina = { chave: string; data: Date; doDia: Momento[]; achado: Momento };
 
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: space[16],
     borderRadius: radius.full,
-    borderWidth: 1.5,
+    borderWidth: borderWidth.medium,
   },
   entrada: { flex: 1, padding: 0, outlineStyle: 'none' } as object,
   conteudo: { paddingHorizontal: space[24], paddingBottom: space[40] },

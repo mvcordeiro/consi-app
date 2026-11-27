@@ -38,7 +38,7 @@ import {
   useMomentos,
   type Momento,
 } from '@/data/momentos';
-import { duration, radius, space, tipografia, useTema } from '@/theme';
+import { borderWidth, duration, radius, space, tipografia, useTema } from '@/theme';
 import { OrigemReflexao } from '@/components/diario/OrigemReflexao';
 
 /** Onde ficam os outros balões em volta do principal (Figma 737:15765), relativos ao centro. */
@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   alca: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2 },
   cabecalhoFolha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: space[12], paddingBottom: space[4] },
   origem: { marginTop: space[8] },
-  busca: { height: 44, borderRadius: radius.full, borderWidth: 1.5, paddingHorizontal: space[16], justifyContent: 'center', marginTop: space[8] },
+  busca: { height: 44, borderRadius: radius.full, borderWidth: borderWidth.medium, paddingHorizontal: space[16], justifyContent: 'center', marginTop: space[8] },
   entradaBusca: { padding: 0, outlineStyle: 'none' } as object,
   linha: { overflow: 'hidden' },
   excluir: {

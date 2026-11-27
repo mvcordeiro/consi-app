@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   painel: { gap: space[12], padding: space[16], borderRadius: radius.lg },
   horas: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   novoMarcador: { padding: 0, height: 40, paddingHorizontal: space[12], borderWidth: borderWidth.thin, borderRadius: radius.md },
-  campo: { gap: space[12], paddingTop: space[16], paddingBottom: 14, paddingHorizontal: 18, borderRadius: 20, borderWidth: 1.5 },
+  campo: { gap: space[12], paddingTop: space[16], paddingBottom: 14, paddingHorizontal: 18, borderRadius: radius.page, borderWidth: borderWidth.medium },
   anexos: { gap: 10 },
   linha: { flexDirection: 'row', gap: 10 },
   editado: { alignSelf: 'flex-end' },

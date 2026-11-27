@@ -135,6 +135,12 @@ const dark = {
     sage: sage[300],
     accent: blue[500],
   },
+  /** Timer flutuante por cima dos apps: igual nos dois modos, como o desenho nativo (Bolha.kt). */
+  timer: {
+    bg: blue[900],
+    border: blue[400],
+    text: neutral[0],
+  },
 };
 
 type Amplo<T> = { [K in keyof T]: T[K] extends string ? string : Amplo<T[K]> };
@@ -197,6 +203,11 @@ const light: Cores = {
   decor: {
     sage: sage[700],
     accent: orange[500],
+  },
+  timer: {
+    bg: blue[900],
+    border: blue[400],
+    text: neutral[0],
   },
 };
 
@@ -264,9 +275,13 @@ export const radius = {
   card: radiusBase.lg,
   sheet: radiusBase.xl,
   pill: radiusBase.full,
+  /** Páginas e campos do Diário. */
+  page: 20,
+  /** Ícone de app (Personalizar, ícone com a emoção). */
+  'app-icon': 14,
 } as const;
 
-export const borderWidth = { thin: 1, thick: 2 } as const;
+export const borderWidth = { thin: 1, medium: 1.5, thick: 2 } as const;
 
 export const size = {
   'touch-target': 44,
@@ -298,6 +313,15 @@ export const elevacaoPorModo: Record<Modo, Elevacao> = {
 };
 
 // ─── 05 Motion ──────────────────────────────────────────────────────────────
-export const duration = { fast: 120, base: 200, slow: 320 } as const;
+export const duration = { fast: 120, base: 200, slow: 320, enter: 260, emphasis: 500, long: 700 } as const;
+/** Tempos do produto (Figma: 05 Motion, produto/*), em ms. */
+export const tempo = {
+  revelacaoDrop: 1100,
+  segurarDrop: 1500,
+  compromisso: 3000,
+  naoAbri: 10000,
+} as const;
+/** Mola padrão dos Animated.spring (Figma: easing/spring). */
+export const mola = { speed: 14, bounciness: 6 } as const;
 /** cubic-bezier(0.2, 0, 0, 1) — use com Easing.bezier(...easing.standard) */
 export const easing = { standard: [0.2, 0, 0, 1] as const };
