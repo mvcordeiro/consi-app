@@ -179,7 +179,9 @@ class VigiaService : Service() {
     val intervalo = regra.intervaloMin * 60_000L
     val guardado = prefs.proximoLembrete(app)
     val longe = agora - prefs.vistoEm(app)
-    val ciclo = if (guardado > 0 && longe <= intervalo) guardado else agora + intervalo
+    // Um ciclo que venceu enquanto a pessoa estava longe (ex.: no bloqueio) não abre a pausa
+    // assim que ela volta: começa um novo.
+    val ciclo = if (guardado > agora && longe <= intervalo) guardado else agora + intervalo
     prefs.guardarCiclo(app, ciclo, agora)
     return ciclo
   }
@@ -199,6 +201,13 @@ class VigiaService : Service() {
   private fun cuidarTempo(app: String, regra: Regra, agora: Long) {
     val intervalo = regra.intervaloMin * 60_000L
     if (proximoLembrete == 0L) proximoLembrete = agora + intervalo
+    // O tempo escolhido na pausa ("Quanto tempo você precisa?") adia o próximo lembrete para o
+    // fim dele, e é ele que o timer mostra (antes seguia o intervalo do grupo).
+    val liberadoAte = prefs.liberadoAte(app)
+    if (liberadoAte > proximoLembrete) {
+      proximoLembrete = liberadoAte
+      prefs.guardarCiclo(app, proximoLembrete, agora)
+    }
     if (agora < proximoLembrete) return
     // A contagem recomeça daqui, nos dois casos.
     proximoLembrete = agora + intervalo
