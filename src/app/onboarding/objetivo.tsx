@@ -16,9 +16,7 @@ import { gap, spaceFixo as space, useTema } from '@/theme';
  */
 const TEMPO_SEGURAR_MS = 1200;
 const TITULO = 'O que mais importa para você?';
-const SUB = 'Segure a opção que mais combina com você.';
-const T_SUB = fimDoTexto(TITULO, 150);
-const T_OPCOES = fimDoTexto(SUB, T_SUB);
+const T_OPCOES = fimDoTexto(TITULO, 150);
 
 const opcoes: { id: Objetivo; texto: string; Icone: IconeSvg }[] = [
   { id: 'menos-tempo', texto: 'Passar menos tempo dentro dos aplicativos', Icone: IconeTempo },
@@ -44,7 +42,6 @@ export default function C1Objetivo() {
     <TelaOnboarding transicao={transicao}>
       <View style={styles.cabecalho}>
         <TextoAnimado texto={TITULO} estilo="Títulos/Grande" atraso={150} />
-        <TextoAnimado texto={SUB} estilo="Texto/Pequeno" cor={cores.text.secondary} atraso={T_SUB} />
       </View>
 
       <View style={styles.escolha}>
