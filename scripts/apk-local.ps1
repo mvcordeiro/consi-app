@@ -25,7 +25,25 @@ $env:ANDROID_HOME = $sdk
 #   npx eas-cli@latest credentials -p android   (Keystore → Download) e salve como credentials.json + o .jks
 if (-not (Test-Path 'credentials.json')) { throw 'Falta o credentials.json do EAS (veja o comentário acima).' }
 
+$k = (Get-Content credentials.json -Raw | ConvertFrom-Json).android.keystore
+$jks = (Resolve-Path $k.keystorePath).Path -replace '\\', '/'
+
 npx expo prebuild -p android --clean
+
+# Assina o release com a chave do EAS (o modelo do Expo assina com a de debug).
+$g = 'android\app\build.gradle'
+$txt = Get-Content $g -Raw
+$release = @"
+        release {
+            storeFile file('$jks')
+            storePassword '$($k.keystorePassword)'
+            keyAlias '$($k.keyAlias)'
+            keyPassword '$($k.keyPassword)'
+        }
+"@
+$txt = $txt -replace '(signingConfigs\s*\{)', "`$1`n$release"
+$txt = $txt -replace '(release\s*\{[^{}]*?)signingConfig signingConfigs\.debug', '$1signingConfig signingConfigs.release'
+Set-Content $g $txt -Encoding utf8
 Push-Location android
 .\gradlew.bat assembleRelease
 Pop-Location
