@@ -3,3 +3,5 @@ modules/** text eol=lf
 # Binaries inside modules/ must never be converted (fonts and PNGs were getting CRLF→LF and broke).
 modules/**/*.png binary
 modules/**/*.ttf binary
+# Hooks run in bash on every OS: keep LF.
+.githooks/** text eol=lf
