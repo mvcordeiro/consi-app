@@ -27,7 +27,7 @@ npx expo lint
 - Use `npx expo install <pacote>` (e não `npm install`) para adicionar bibliotecas, assim as versões ficam compatíveis com o Expo SDK.
 - Rotas ficam em `src/app/`. Componentes, hooks e utilitários ficam fora dela.
 - Cores, tipografia e espaços vêm dos tokens em `src/theme`, nunca valores soltos.
-- Mensagens de commit no formato `feat:`, `fix:`, `design:`, `docs:` ou `chore:`.
+- Commits no [padrão de commits](https://github.com/iuricode/padroes-de-commits): `:emoji: tipo(escopo): descrição`, por exemplo `✨ feat(hobbies): adicionar filtro`, `🐛 fix(home): ...`, `💄 style(...)` para visual. O hook em `.githooks/commit-msg` confere a mensagem e é ligado pelo `npm install` (ou `git config core.hooksPath .githooks`).
 - Textos do app são em português do Brasil, em linguagem simples.
 
 ## Licença

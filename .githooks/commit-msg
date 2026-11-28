@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Padrão de commits: https://github.com/iuricode/padroes-de-commits
+# Formato: :emoji: tipo(escopo opcional): descrição
+
+TYPES='feat|fix|docs|test|build|perf|style|refactor|chore|ci|raw|cleanup|remove|init|revert|security'
+EMOJI='(:[a-z0-9_+-]+:|[^ -~]+)'
+REGEX="^(${EMOJI}[[:space:]]+)?(${TYPES})(\([a-zA-Z0-9_./-]+\))?(!)?:[[:space:]]+[^[:space:]]"
+
+assunto=$(grep -v '^#' "$1" | grep -v '^[[:space:]]*$' | head -n 1)
+
+case "$assunto" in
+  "Merge "*|"Revert \""*|"fixup! "*|"squash! "*|"amend! "*) exit 0 ;;
+esac
+
+if ! printf '%s' "$assunto" | LC_ALL=C grep -Eq "$REGEX"; then
+  echo "Commit fora do padrão: \"$assunto\"" >&2
+  echo "Use: :emoji: tipo(escopo): descrição   ex.: ✨ feat(hobbies): adicionar filtro" >&2
+  echo "Tipos: ${TYPES//|/, }" >&2
+  exit 1
+fi
