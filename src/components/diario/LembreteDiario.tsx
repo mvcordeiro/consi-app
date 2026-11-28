@@ -121,7 +121,8 @@ export function AjustesLembreteDiario() {
  */
 export function AvisoLembreteDiario() {
   const segmentos = useSegments();
-  const nasAbas = (segmentos[0] as string | undefined) === '(abas)';
+  // Só na primeira vez que a pessoa abre o Diário (não na primeira tela do app).
+  const nasAbas = (segmentos[0] as string | undefined) === '(abas)' && (segmentos[1] as string | undefined) === 'diario';
   const [visivel, setVisivel] = useState(false);
   const [rascunho, setRascunho] = useState<LembreteDiario | null>(null);
 
