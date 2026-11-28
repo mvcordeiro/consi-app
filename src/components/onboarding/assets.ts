@@ -1,5 +1,4 @@
 // Ícones e ilustrações do onboarding, exportados do Figma (arquivo "Consi - Design de Interação").
-import AnelProgressoVazio from '../../../assets/onboarding/anel-progresso-vazio.svg';
 import Caixa1 from '../../../assets/onboarding/caixa-1.svg';
 import Caixa2 from '../../../assets/onboarding/caixa-2.svg';
 import Caixa3 from '../../../assets/onboarding/caixa-3.svg';
@@ -43,7 +42,6 @@ export const textura = require('../../../assets/onboarding/textura.png');
 export type IconeSvg = typeof IconeTempo;
 
 export {
-  AnelProgressoVazio,
   Caixa1,
   Caixa2,
   Caixa3,
