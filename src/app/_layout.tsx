@@ -12,6 +12,7 @@ import { AvisoPiloto } from '@/components/AvisoPiloto';
 import { AvisoLembreteDiario } from '@/components/diario/LembreteDiario';
 import { iniciarPiloto, registrar } from '@/data/piloto';
 import { useAparencia } from '@/data/aparencia';
+import { useAtualizarAoAbrir } from '@/data/atualizarAoAbrir';
 import { HobbiesProvider } from '@/data/hobbiesEstado';
 import { carregarHobbiesPersonalizados } from '@/data/hobbiesPersonalizados';
 import { useVigia } from '@/data/vigia';
@@ -57,6 +58,8 @@ function ComAparencia({ children }: { children: ReactNode }) {
 
 function Pilha() {
   const { cores, modo } = useTema();
+  // Atualização nova (OTA): aplica já na primeira abertura, sem esperar a próxima.
+  useAtualizarAoAbrir();
   // APK Android: regras dos grupos para o vigia nativo, que abre a pausa antes dos apps.
   useVigia();
   // APK Android: as emoções de hoje para os widgets da tela inicial.
